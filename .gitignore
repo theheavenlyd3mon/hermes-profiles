@@ -1,0 +1,27 @@
+# Runtime
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.lock
+*.jsonl
+*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hermes runtime
+.env
+*.env
+gateway_state.json
+channel_directory.json
+.icarus-*
+.skills_prompt_snapshot.json
+.hermes_history
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
