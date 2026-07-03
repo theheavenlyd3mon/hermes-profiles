@@ -22,6 +22,11 @@ profiles/
   media/          — Media library, music, gaming. Quality curation.
   cyber-red/      — Offensive security. Pen testing, red team, exploit dev.
   cyber-blue/     — Defensive security. SOC, IR, forensics, compliance.
+  cyber-blue-cloud/     — Cloud security. IAM, misconfiguration, runtime signals.
+  cyber-blue-compliance/ — Compliance & audit. Policy-as-code, evidence packs.
+  cyber-blue-forensics/ — Forensics & IR. Preservation, acquisition, timeline.
+  cyber-blue-soc/       — SOC & detection. Triage, rule tuning, runbooks.
+  educate/        — Teaching design. Adaptive tutoring, lessons, workshops.
 ```
 
 Each profile contains:
@@ -101,7 +106,7 @@ To set up a fleet:
 | Type | Role | Examples |
 |------|------|----------|
 | **Orchestrator** | Manages a domain, delegates to workers | code, creative, research, security, infra, mlops |
-| **Worker** | Does focused work, reports up | finance, knowledge, homelab, media, social, communication, business, cyber-red, cyber-blue |
+| **Worker** | Does focused work, reports up | finance, knowledge, homelab, media, social, communication, business, cyber-red, cyber-blue, cyber-blue-cloud, cyber-blue-compliance, cyber-blue-forensics, cyber-blue-soc, educate |
 | **Top Orchestrator** | Routes across all domains | senna |
 
 ## Customization
@@ -117,8 +122,8 @@ Common customizations:
 
 ## Guides
 
+- [Getting Started With Hermes Profiles](guides/getting-started-with-hermes-profiles.md) — Beginner orientation: profiles, model choices, fleet composition, `PersRubric`, token compression, `educate` usage
 - [Research Profile Guide](guides/research-profile-guide.md) — Full walkthrough for setting up a research agent
-- More guides coming for other profiles
 
 ## What's NOT In Here
 

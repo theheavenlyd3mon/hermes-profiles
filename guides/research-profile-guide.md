@@ -182,7 +182,7 @@ Gives you: 8-phase ML paper pipeline (literature review → experiments → draf
 
 ## Step 5: Connect to a Knowledge Vault
 
-The researcher needs somewhere to file findings. Set up an Obsidian vault (see the [Obsidian Setup Guide](./hermes-obsidian-setup-guide.md)) and point the researcher at it.
+The researcher needs somewhere to file findings. Set up an Obsidian vault (see the [Obsidian Setup Guide](../hermes-obsidian-setup-guide.md)) and point the researcher at it.
 
 In `~/.hermes/profiles/researcher/.env`:
 
@@ -267,7 +267,7 @@ Search 5: [topic] official documentation
 
 ## Optional: Multi-Agent Integration
 
-If you're running multiple Hermes profiles, the researcher can work as part of a team:
+If you're running multiple Hermes profiles, the researcher can work as part of a team. For onboarding new users or teaching existing operators, the **educate** profile can generate lessons, assessments, and workshop materials from these guides:
 
 | Role | Does What |
 |------|-----------|
@@ -275,8 +275,9 @@ If you're running multiple Hermes profiles, the researcher can work as part of a
 | **Researcher** | Investigates, synthesizes, files knowledge |
 | **Analyst** | Processes data the researcher gathered |
 | **Writer** | Turns research into polished output |
+| **Educate** | Turns findings into lessons, quizzes, and onboarding docs |
 
-The researcher returns findings; other agents act on them. This separation keeps the researcher focused on investigation, not implementation.
+The researcher returns findings; other agents act on them. This separation keeps the researcher focused on investigation, not implementation. Use `educate` to convert research output into repeatable teaching material.
 
 To set this up, see the Hermes docs on [multi-profile workflows](https://hermes-agent.nousresearch.com/docs).
 
