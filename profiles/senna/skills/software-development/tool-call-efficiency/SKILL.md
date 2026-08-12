@@ -97,6 +97,12 @@ If you ran `find . -name '*.db'` and already know the path from `lcm_status`, yo
 ### ❌ The open-loop investigation
 Starting with "let me check X" without a clear stopping criterion. Before every tool call, define: "If the output shows Y, I'm done. If it shows Z, I need one more call. If it shows anything else, I'll stop anyway because I have enough context."
 
+### ❌ Serial GitHub page scrapes for a full skill inventory
+Task: "full list of every skill and how it works" across a skill-pack repo.
+- WRONG: web_extract README then each skill URL or raw.githubusercontent one-by-one (truncation, rate limits, huge call count).
+- RIGHT: one `git clone --depth 1` (or recursive git trees API) plus local parse of every SKILL.md in one code pass. README is overview-only.
+- Same idea for multi-URL research: batch independent fetches first; escalate to clone when depth needs full trees.
+
 ## Pitfalls
 
 - **Exhaustiveness feels productive but isn't.** 13 calls to write a markdown file is 8 more than necessary. The extra calls gave zero additional value to the output.
@@ -122,3 +128,4 @@ When parsing JSON files inside `execute_code` scripts, always use `jq` via `term
 - `references/mem0-2026-token-optimization.md` — The Mem0 playbook that validated the input-side approach: 72% savings from retrieval-based vs. naive context usage
 - `references/thariq-html-effectiveness.md` — The Thariq/Anthropic article on HTML as an output format: absorbing complexity into the artifact to reduce round-trips
 - `references/cli-vs-mcp-token-efficiency.md` — CLI vs MCP token efficiency research: 35x token reduction, 28% higher task completion. Validates CLI-first tool selection as an architectural complement to behavioral efficiency.
+- `references/skill-pack-inventory-bulk-path.md` — Clone-once + parse every SKILL.md for third-party skill-pack full inventories (vs serial GitHub scrapes); import shortlist hygiene.

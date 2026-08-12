@@ -39,7 +39,7 @@ The preferred approach for batch processing: try `youtube-transcript-api` for ra
 # Single playlist (use ABSOLUTE paths — ~ expands to sandbox home in cron/agent context)
 python3 ~/.hermes/profiles/senna/skills/media/youtube-batch-extraction/scripts/batch_unified.py \
   /tmp/PLAYLIST_NAME_urls.txt \
-  --outdir ~/documents/transcripts/PLAYLIST_NAME \
+  --outdir ~/Documents/YouTube-Transcripts/PLAYLIST_NAME \
   --name PLAYLIST_NAME \
   --delay 15 --summary-delay 8
 
@@ -70,7 +70,7 @@ Before running ANY pipeline step, check whether prior runs already completed the
 from hermes_tools import terminal
 
 for name in playlists:
-    outdir = f"~/documents/transcripts/{name}"
+    outdir = f"~/Documents/YouTube-Transcripts/{name}"
     total = terminal(f"ls '{outdir}'/*.md 2>/dev/null | wc -l")["output"].strip()
     good = terminal(f"find '{outdir}' -name '*.md' -size +200c | wc -l")["output"].strip()
     stubs = terminal(f"find '{outdir}' -name '*.md' ! -size +200c | wc -l")["output"].strip()
@@ -181,7 +181,7 @@ tags: [ue5, tutorial, topic, gamedev]
     ```python
     python3 -c "
     import os
-    dest = '~/documents/transcripts/PLAYLIST_NAME'
+    dest = '~/Documents/YouTube-Transcripts/PLAYLIST_NAME'
     for name, content in files.items():
         with open(os.path.join(dest, name), 'w') as f:
             f.write(content)

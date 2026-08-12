@@ -77,6 +77,10 @@ See `references/vault-audit-pattern.md` for the repeatable process of auditing v
 ### Weekly Vault Health Check
 See `references/vault-weekly-summary.md` for the monitoring/reporting workflow — metrics collection, orphan detection, wikilink density, and output format for weekly vault summaries.
 
+### Memory Ecosystem Architecture
+
+See `references/memory-ecosystem-architecture.md` for how the vault fits into the full four-layer memory stack (Mnemosyne → Fabric → LLM-Wiki → Obsidian), including data flow paths, promotion rules, and agent role boundaries.
+
 ### Key Environment Variables
 
 | Variable | Purpose |

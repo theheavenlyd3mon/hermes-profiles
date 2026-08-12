@@ -426,12 +426,33 @@ Codex, Claude Code, OpenCode, Gemini, Antigravity, Cursor, Hermes, Devin, and an
 
 ### When to use Trifecta vs other companion apps
 
-- **Want mobile access to Hermes?** → Trifecta (only option with native iOS/Android)
+- **Want mobile access to Hermes?** → Hermex (native iOS/iPad client for hermes-webui) or Trifecta (native iOS/Android via ACP to the CLI)
 - **Want VS Code integration?** → Trifecta or hermes-lsp
 - **Want full orchestration dashboard?** → Hermes Workspace (more mature)
 - **Want simple desktop chat?** → Hermes Desktop (simpler, more stable)
 
 For detailed deploy guides, see `references/trifecta-deploy-guide.md`.
+
+## Hermex (`uzairansaruzi/hermex`)
+
+Native **SwiftUI iOS/iPadOS** app that is a client for **hermes-webui** (not the CLI directly). 760★, MIT, v1.4.0, actively maintained. This is the native-app counterpart to hermes-webui — Trifecta reaches the CLI via ACP, Hermex reaches the web UI over HTTP.
+
+**Critical gate — needs hermes-webui running:** Hermex talks to the `hermes-webui` HTTP API (`/api/chat/start`, stream-status, etc.). The bare `hermes` CLI agent you chat with in the terminal is NOT enough — stand up `hermes-webui` (see that section) and make it reachable from the phone (LAN IP or tunnel). Verify the web UI works in a browser before blaming the app.
+
+**Setup (sideload, no App Store):**
+```bash
+git clone https://github.com/uzairansaruzi/hermex ~/hermex
+# open ~/hermex/HermesMobile.xcodeproj in Xcode
+```
+- Real Xcode project (`HermesMobile.xcodeproj`), iPhone + iPad universal, 1,354-test suite — nothing to write.
+- Signing & Capabilities → Team = your Apple ID (free tier works; re-sign every 7 days, or $99 dev account = permanent).
+- Unique Bundle Identifier (e.g. `com.you.hermex`).
+- Cable iPhone → Trust Developer (Settings → General → VPN & Device Management) → Product → Run.
+- In-app: add server → paste the webui LAN URL (+ auth if set) → chat. Streaming, session switching, attachments supported.
+
+**When to use Hermex vs Trifecta for mobile:**
+- **Hermex** — you already run `hermes-webui` and want a polished native SwiftUI iPhone/iPad client. No server process beyond webui.
+- **Trifecta** — you want to reach the CLI agent directly via ACP (no webui needed) and/or need Android too.
 
 ## Comparison Matrix (Full)
 
@@ -444,10 +465,11 @@ For detailed deploy guides, see `references/trifecta-deploy-guide.md`.
 | Hermes Web UI | Yes | Any with browser | Low | Low | 6.9k |
 | Claw3D | Yes (3D office) | Any with browser | Medium (Three.js) | Medium (needs adapter) | 1.6k |
 | Trifecta | Yes (mobile+web) | iOS/Android/Desktop/VS Code | Low (Node.js) | Low (npx) | 15 |
+| Hermex | Yes (native app) | iOS/iPadOS | Low (SwiftUI) | Medium (Xcode sideload + needs webui) | 760 |
 
 ## Requirement Logic
 
-- **Want mobile access to Hermes?** → Trifecta (native iOS/Android via ACP)
+- **Want mobile access to Hermes?** → Hermex (native iOS/iPad client for hermes-webui) or Trifecta (native iOS/Android via ACP to the CLI)
 - **Want a real GUI?** → Hermes Desktop (most complete, cross-platform)
 - **Want full orchestration + multi-agent dashboard?** → Hermes Workspace (web, most feature-rich)
 - **Want Mac-native lightweight?** → Swift Mac + Web UI

@@ -109,6 +109,42 @@ grep "Channel directory built:" ~/.hermes/profiles/<name>/logs/gateway.log | tai
 # Low count (< 5) = bot may lack channel visibility permissions
 ```
 
+### Multi-Bot Presence in a Shared Chat vs Home-ChannelScoping
+
+A common user-facing confusion: “only one bot responds in this chat.” The fleet may be fully healthy; the other bots may simply be scoped to their own home channels.
+
+Avoid declaring bots down solely from one chat’s silence. Use this presence check across the fleet:
+
+```bash
+# 1. Verify each profile is connected with the expected bot identity
+for p in ~/.hermes/profiles/*/; do
+  name=$(basename "$p")
+  last=$(grep "Connected as" "$p/logs/gateway.log" | tail -1 || true)
+  chans=$(grep "Channel directory built:" "$p/logs/gateway.log" | tail -1 || true)
+  echo "$name: ${last:-no-discord} | ${chans:-no-channel-dir}"
+done
+```
+
+Cross-check identity and channel count, not just “running.” A profile can be perfectly connected but still not appear in your current thread.
+
+**Compact status table** (useful for user-facing fleet reports):
+
+```
+PROFILE     BOT IDENTITY           CHANNELS   LAST SEEN HERE       NOTES
+senna       Senna#9675             17         now                  active
+code        Hermes Coder#3827      9          occasionally         responds sometimes
+creative    Hermes Graphics#8064   9          now                  active in chat
+finance     Finance#6348           9          not observed         home-channel scoped
+infra       Infra#8657             9          not observed         home-channel scoped
+knowledge   Hermes Secretary#9128 10          not observed         home-channel scoped
+security    Hermes Architect#6170  9          not observed         home-channel scoped
+research    Hermes Researcher#7005 11          not observed         stale allowlist issue possible
+```
+
+**Pitfall — silent home—channel scoping**: Profiles with valid Discord connections still only auto**Pitfall —participate in their configured home channel. If you need broad presence here, patch each profile's Discord channel directory/config, not the gateway lifecycle.
+
+**Pitfall — bot in wrong guild entirely**: If the bot is absent from the server's member list (not just silent in one channel), `DISCORD_GUILD_ID` in `.env` points to a different server. The gateway logs look perfectly healthy — `Connected as <Bot>` succeeds. Diagnose by comparing guild IDs against a known-working bot. Full walkthrough: `references/wrong-guild-diagnosis.md`.
+
 ### 6. Detect Cross-Profile Token Conflicts (.env Symlink Problem)
 
 The most common multi-bot failure: **all profiles share the same Discord token** because their `.env` files are symlinked to `~/.hermes/.env` (the default).
@@ -157,6 +193,22 @@ launchctl kickstart gui/$(id -u)/ai.hermes.gateway-<name>
 ```bash
 grep "Connected as" ~/.hermes/profiles/<name>/logs/gateway.log | tail -10
 ```
+
+**Compare tokens across profiles without printing them** — the first 12 chars of the token identify the bot:
+```bash
+for p in <profileA> <profileB>; do
+  echo "$p: $(grep '^DISCORD_BOT_TOKEN=' ~/.hermes/profiles/$p/.env | cut -d= -f2 | cut -c1-12)"
+done
+```
+
+**Rename a bot without the Developer Portal** — the bot username is PATCHable with its own token (e.g. after a token swap leaves a profile logged in under a misleading app name):
+```bash
+TOKEN=*** '^DISCORD_BOT_TOKEN=*** ~/.hermes/profiles/<name>/.env | cut -d= -f2)
+curl -X PATCH https://discord.com/api/v10/users/@me \
+  -H "Authorization: Bot $TOKEN" -H "Content-Type: application/json" \
+  -d '{"username": "New Bot Name"}'
+```
+This renames the bot for EVERY profile sharing that token — check for sharing first with the prefix comparison above.
 
 ### 7. API Server Port Conflict Resolution
 
@@ -276,14 +328,29 @@ for l in sys.stdin:
 
 ### 10. Check for Common Errors
 
+**Important: `gateway.error.log` accumulates across restarts.** Old errors remain at the top; new errors appear at the bottom. Always `tail` the file — don't grep for a pattern and assume it's current. A gateway may have recovered from an old error but hit a new one.
+
+```bash
+# Show only the LAST error block (most recent restart)
+tail -20 ~/.hermes/profiles/<name>/logs/gateway.error.log
+```
+
 In `gateway.error.log`, look for:
+- `API_SERVER_KEY is required for the API server` → **Fleet-wide crash (June 2026+)**. A hermes-agent update made `API_SERVER_KEY` mandatory for the api_server platform. All profiles with api_server enabled (explicitly or inherited from root config) will crash without it. See `references/api-server-key-required.md` for the full incident. Fix: generate a key, add to all profiles' `.env`:
+  ```bash
+  API_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+  for p in ~/.hermes/profiles/*/; do
+    grep -q '^API_SERVER_KEY=' "$p/.env" 2>/dev/null || echo "API_SERVER_KEY=$API_KEY" >> "$p/.env"
+  done
+  ```
 - `Gateway runtime lock is already held` → duplicate gateway instances
-- `No user allowlists configured` → all unauthorized users denied (not a crash, but means no one can talk to the bot)
+- `No user allowlists configured` → **all messages silently denied.** The bot appears online in the member list, the user types, nothing happens. Log shows `Discord messages are being denied because no allowlist is configured` and `Unauthorized slash attempt: ... reason='user not in DISCORD_ALLOWED_USERS'`. This is NOT a connection problem — the gateway is healthy. Fix: add `DISCORD_ALLOWED_USERS=<discord_user_id>` to the profile's `.env`, then restart. Full diagnostic: `references/allowlist-silent-denial.md`.
 - Model 404 errors → wrong model name in config
 - `Flood control exceeded` → Telegram rate limiting on command registration
 - `WebSocket closed with 4004` → Discord authentication failed — usually token contention between multiple gateway instances sharing the same bot token. See `references/gateway-crash-loop-diagnostic-2026-05-27.md` for a full case study.
 - `RuntimeError: Provider 'X' is set in config.yaml but no API key was found` → Profile's `.env` is missing the API key for its configured provider. See `references/wrong-model-discord-error.md` for full case study. Fix: add key to profile `.env` or switch provider.
 - Session summarization 401 → OpenAI key missing (non-fatal, just can't summarize old sessions)
+- MCP server `Connection closed` / `parked` on every gateway start **after a `hermes update`** → the update swapped the venv and pip-installed MCP server binaries were left behind in the old one. Confirm: `ls ~/.hermes/hermes-agent/venv/bin/ | grep <server>` finds nothing, but a `~/.hermes/hermes-agent/venv.stale.*/bin/<server>` still exists. Get the PyPI package name from the stale venv's `site-packages/*/METADATA`, then `~/.hermes/hermes-agent/venv/bin/pip install <package>`. MCP keepalive `degraded → connected` cycles without full failure are cosmetic — only act if the server's tools actually error.
 
 ## Path Resolution Gotcha
 
@@ -297,16 +364,39 @@ for f in glob.glob(os.path.expanduser("~/.hermes/profiles/*/config.yaml")):
 
 The `find` and `ls` commands may report paths that include repeated segments like `profiles/senna/home/.hermes/profiles/senna/home/.hermes` — this is normal for symlinked Hermes home directories. Use Python's `os.path.realpath()` or `glob.glob()` to resolve the actual location.
 
-## Quick Health Summary Format
+**Don't trust launchctl exit codes alone.** After a crash-restart cycle, launchctl may show stale exit codes (exit=-15 or exit=1) even when the process recovered and is now running. Always cross-check with:
+```bash
+ps aux | grep "hermes_cli.main.*gateway" | grep -v grep
+```
+Or check `gateway.log` for the latest `Connected as` line. The launchctl exit code reflects the last time launchd noticed a state change — if the gateway stabilized after the initial failures, the exit code may never update.
+
+### Model Inventory Per Profile
+
+When reporting fleet status, include each profile's configured model and provider:
+
+```bash
+for p in ~/.hermes/profiles/*/; do
+  name=$(basename "$p")
+  cfg="${p}config.yaml"
+  if [ -f "$cfg" ]; then
+    model=$(grep -A2 "^model:" "$cfg" | grep "default:" | awk '{print $2}')
+    provider=$(grep -A2 "^model:" "$cfg" | grep "provider:" | awk '{print $2}')
+    echo "$name: ${model:-unset} (${provider:-unset})"
+  fi
+done
+```
+
+Include this in the Quick Health Summary table as a MODEL column.
+
+### Quick Health Summary Format
 
 When reporting status, use this compact format that includes bot identity verification (the #tag from Discord connect):
 
 ```
-PROFILE     PID     EXIT  BOT IDENTITY           PLATFORMS        NOTES
-senna       42235   1     Oracle#6348    ⚠️       api,discord     Wrong bot — .env symlink conflict
-researcher  27543   0     Researcher#7005 ✓      api,discord     OK
-secretary   27708   -15   -                      -                Killed, no profile
-architect   31922   0     -                       api              Discord not configured
+PROFILE     PID     EXIT  BOT IDENTITY           MODEL                          PLATFORMS        NOTES
+senna       42235   1     Oracle#6348    ⚠️       tencent/hy3:free (nous)        api,discord     Wrong bot — .env symlink conflict
+researcher  27543   0     Researcher#7005 ✓      tencent/hy3:free (nous)        api,discord     OK
+code        88782   0     Coder#3827 ✓           stepfun/step-3.7-flash (nous)  api,discord     OK
 ```
 
 **BOT IDENTITY column notes:**
@@ -421,6 +511,7 @@ grep -n "^platforms:" ~/.hermes/profiles/<name>/config.yaml | wc -l
 1. Verify `.env` has the real bot token (not placeholder)
 2. Verify `config.yaml` has the platform enabled under `platforms:`
 3. Check gateway.log for connection errors
+4. **401 Unauthorized / "Improper token has been passed"** — the token in `.env` is revoked or reset. The gateway retries endlessly (60s → 120s → 240s backoff) but never connects. Fix: user resets token in Discord Developer Portal → paste into `.env` → **restart the gateway** (it caches the token in memory at startup). See the restart-targeting pitfall below.
 
 ### Stale Launchd Services
 Remove plists for profiles that no longer exist:
@@ -428,6 +519,80 @@ Remove plists for profiles that no longer exist:
 launchctl unload ~/Library/LaunchAgents/ai.hermes.gateway-<old>.plist
 rm ~/Library/LaunchAgents/ai.hermes.gateway-<old>.plist
 ```
+
+## Crash-on-Conversation: connected but dies on first reply
+
+A fleet can be **fully running and logged into Discord** yet crash the instant a real
+message arrives. User-facing symptom: bot is present in the channel (may send a
+session-reset notice), then replies `unexpected error` / `try /reset`. This is NOT a
+connection/token problem and NOT "bots are down" — it is **stale in-memory code** from a
+`hermes-agent` update that was never followed by a fleet restart.
+
+Mechanism: the update added new symbols (e.g. `reset_conversation_context`,
+`TELEGRAM_RICH_MESSAGES_HINT`) to source. Running gateways still import the pre-update
+bytecode. Login code is unchanged (so they connect), but `run_conversation` does
+`from agent.portal_tags import reset_conversation_context` → `ImportError` → the reply
+dies. The symbols exist on disk in the new code; only the *running process* has the stale
+copy. Single `hermes_cli/main.py` on disk — this is NOT the dual-tree failure (step 8).
+
+**Distinguish from "down":** `ps` shows live gateway PIDs AND `gateway.log` shows a recent
+`Connected as <Bot>#<tag>` → not an auth/token issue. The crash shows in `gateway.error.log`
+as an `ImportError` / `cannot import name` nested inside `run_conversation` / `run_sync`.
+
+Full signatures, reproduction recipe, and confirmation one-liner:
+`references/crash-on-conversation-import-errors.md`.
+
+**Fix:** `find ~/.hermes/hermes-agent -name __pycache__ -type d -exec rm -rf {} +`, then
+restart the fleet (every Discord profile) so each gateway re-imports current code. This is
+the same trigger class as the `API_SERVER_KEY` incident — **a `hermes update` without a
+fleet restart leaves gateways serving stale code.** Full one-pass diagnostic
+(import crashes + API_SERVER_KEY + MCP warnings): `bash scripts/gateway-crash-scan.sh`.
+
+## Diagnostic Pitfalls (easy to misread)
+
+**`hermes gateway restart` may silently restart the WRONG profile — always verify the target PID changed (2026-07-20).** When restarting a *specific other* profile's gateway, both `hermes --profile <p> gateway restart` and `HERMES_PROFILE=<p> hermes gateway restart` were observed to restart a *different* profile (the current/default one) while the intended target's PID never budged. In this session two restarts bumped senna's PID; novel stayed at PID 18712 the whole time, still holding the stale in-memory token, still 401ing. **The reliable way to restart one specific profile is launchctl by exact service name:**
+```bash
+launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway-<name>
+```
+**Always verify the restart hit the right target:** capture PID before (`launchctl list | grep <name>`), restart, then confirm the PID changed AND `tail gateway.log` shows a fresh `Connected as <Bot>`. If the PID is unchanged, the command targeted the wrong service — use the launchctl form above. This also applies after a token swap: the gateway caches the token at startup, so an unchanged PID means the new token was never loaded.
+
+**Restart guard activates mid-session in TUI after ~4 restarts (2026-07-20).** The
+`gateway-fleet-restart` skill documents the guard for gateway-backed sessions only
+(pitfall #4). In practice, the guard also activates in TUI sessions after a threshold
+of ~4 successful `hermes --profile <p> gateway restart` calls in one session. Both
+`hermes --profile <p> gateway restart` AND `launchctl kickstart -k` are blocked once
+it triggers. Strategy: restart as many profiles as possible in the first batch (they
+succeed before the guard arms), then hand the remaining profiles to the user's host
+shell with the `launchctl kickstart -k` loop. Do NOT retry blocked calls — they
+re-block identically.
+
+**`ps` false-negative on `--replace`.** The running command is
+`... -m hermes_cli.main gateway run --replace` — it does NOT contain the literal string
+`hermes_cli.main.*gateway` in a form grep reliably matches with `awk` field splitting, and
+a too-specific grep (`gateway run.*<name>`) can return zero even when the process is alive.
+Two reliable checks: (1) `pgrep -f "gateway run --replace"` for live PIDs; (2) read
+`gateway-exit-diag.log` for the most recent `gateway.start` pid. If `ps` says zero but
+launchctl shows a PID, the process is alive — trust the PID.
+
+**Error-log noise + tail discipline.** `gateway.error.log` is append-only across months of
+restart cycles (Senna's was 51k lines / 6.4 MB). `grep` for a pattern and you'll surface a
+decades-old error. Two rules: (1) always `tail` the file to read the *most recent* state;
+(2) the user's own blocked tool calls and benign WARNINGs (MCP retries, liveness probes)
+pile onto the tail — read the tail for the gateway's own errors, not the agent's chatter.
+The single most informative line is usually an `ImportError` or `cannot import name`.
+
+**Archiving a profile does NOT stop its gateway — zombie processes survive (2026-07-27).** Moving `~/.hermes/profiles/<name>/` to an archive dir leaves the launchd service and the running process alive. The zombie keeps old code in memory, and launchd recreates an empty `state/` dir so the profile looks half-alive. When archiving a profile, also:
+```bash
+launchctl bootout gui/$(id -u)/ai.hermes.gateway-<name>
+rm ~/Library/LaunchAgents/ai.hermes.gateway-<name>.plist
+```
+**Verify the kill with `ps`, not `launchctl list`** — launchctl's table can be stale right after bootout. `ps -p <pid> -o pid,args | grep "gateway run"` returning nothing is the source of truth.
+
+**Verify a fleet restart by process start time, not by "Connected as" alone.** After a restart loop, audit actual start times — profiles the loop silently missed (wrong-target bug above) stand out immediately:
+```bash
+ps aux | grep 'gateway run --replace' | grep -v grep | awk '{print $2, $9, $NF}' | sort
+```
+Any gateway whose start time predates the restart window is still on old code.
 
 ## Fleet Management (Start / Restart After Update)
 
@@ -473,7 +638,10 @@ hermes --profile <name> gateway install
 After `hermes update`, all gateway processes should be restarted to pick up the new code:
 
 ```bash
-# One-liner — restart every Discord gateway:
+# 0. Clear stale bytecode FIRST (prevents ImportError crashes after restart)
+find ~/.hermes/hermes-agent -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null
+
+# 1. Restart every Discord gateway:
 for p in senna architect coder designer foreman oracle researcher secretary; do
   echo "Restarting $p..."
   hermes --profile "$p" gateway restart

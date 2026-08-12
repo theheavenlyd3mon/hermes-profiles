@@ -29,7 +29,7 @@ while keeping personal data on the main account completely isolated.
 ## When To Use
 
 - User wants Hermes on a Windows machine but doesn't trust it with personal files
-- Dedicated dev box with a GPU (4070 Ti, 4090, etc.) for rendering-heavy work
+- Dedicated dev box with a GPU (your GPU, e.g. 12-24GB VRAM, etc.) for rendering-heavy work
 - Cross-machine setup: Mac for daily/personal, Windows for GPU dev
 - Security-conscious: limit blast radius if Hermes is compromised
 
@@ -134,7 +134,7 @@ C:\Users\hermes-dev\
 
 **HERMES CAN ACCESS:**
 - `C:\Users\hermes-dev\` (its own files)
-- GPU (4070 Ti, etc.) — browser rendering, Blender, UE5
+- GPU (your GPU, etc.) — browser rendering, Blender, UE5
 - Network — API calls, subscriptions
 - Chrome/Edge — Three.js preview
 
@@ -321,7 +321,7 @@ Both wrap the same inference engine (llama.cpp). The difference is control vs co
 **Use Ollama when:** quick setup, don't need fine-tuning control, standard models.
 **Use llama.cpp when:** aggressive quantization on constrained VRAM, need exact GPU layer offload, using Unsloth MTP models, debugging gibberish output (fix with bf16 cache).
 
-For 4070 Ti (12GB VRAM) with aggressive quants (UD-IQ2_XXS), llama.cpp's knobs matter — especially `--n-gpu-layers` for partial CPU offload and `--cache-type-k bf16 --cache-type-v bf16` to fix quality issues.
+For your GPU (12GB VRAM) with aggressive quants (UD-IQ2_XXS), llama.cpp's knobs matter — especially `--n-gpu-layers` for partial CPU offload and `--cache-type-k bf16 --cache-type-v bf16` to fix quality issues.
 
 **llama.cpp server mode (replaces Ollama):**
 ```powershell

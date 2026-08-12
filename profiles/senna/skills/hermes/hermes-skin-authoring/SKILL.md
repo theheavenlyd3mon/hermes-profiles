@@ -42,6 +42,22 @@ Skins are stored in YAML files. The canonical locations (in load order):
 
 Both directories function identically. The name of the skin is the `name:` field in the YAML frontmatter, not the filename (though they should match for clarity).
 
+## How the Desktop App Consumes Skins
+
+The desktop app's Themes page merges THREE sources (verified in `apps/desktop/src/themes/`):
+
+1. **Built-in presets** — hardcoded in the app (`presets.ts`: nous, etc.)
+2. **User themes** — pasted via the app UI, stored in renderer localStorage (`user-themes.ts`, key `hermes-desktop-user-themes-v1`). Desktop-only; CLI/TUI never see these.
+3. **Backend-synced skins** — the shared path. The Hermes backend resolves `$HERMES_HOME/skins/*.yaml` and pushes them to the desktop over JSON-RPC (`gateway.ready`, `skin.changed`; `backend-sync.ts`). `skin.ts` converts the skin palette into a desktop theme: it seeds from the load-bearing keys (background, foreground, accent, error) and derives all glass/shadcn surfaces by mixing toward bg/fg. A skin is single-mode; desktop picks `.dark` from background luminance.
+
+Practical consequences:
+
+- **The desktop does NOT read YAML files itself** — the backend does and pushes them. New skins not appearing → restart the backend/gateway and reload the app.
+- **Relaunch mechanics (macOS):** the app is launched with `hermes desktop` from a terminal. Quit with Cmd+Q (closing just the window or terminal can leave the backend alive), then rerun `hermes desktop`. Skins are read at runtime by the backend on connect (`gateway.ready`) — no app rebuild ever needed for skin changes. If new skins still don't show after relaunch, a stale backend is still running: `hermes gateway restart` (or `pkill -f hermes` as the nuclear option) and relaunch.
+- **One skin file themes all three surfaces** (CLI, TUI, desktop). There is no separate "desktop theme" file format; community "desktop theme packs" (e.g. CliffWade/hermes-desktop-theme-pack, 24 WCAG-AA-checked YAMLs) are just plain skins installed to `~/.hermes/skins/`.
+- **`$HERMES_HOME` is profile-aware**: if the desktop is connected to a profile's backend (e.g. senna), it sees `~/.hermes/profiles/senna/skins/`, not the root `~/.hermes/skins/`. Skins installed globally that don't show in the desktop usually means the desktop backend runs under a profile home — copy/symlink the YAMLs into the profile skins dir.
+- Skins carry terminal-only keys (banner/spinner/completion) that the desktop converter ignores — a palette-only skin still works fine on desktop.
+
 ## Skin YAML Schema
 
 A skin has these top-level sections. All are optional — missing fields fall through to defaults.
@@ -448,6 +464,50 @@ Skins can live in **global** (`~/.hermes/skins/`) or **per-profile** (`~/.hermes
 
 Per-profile skin files take priority over global ones with the same `name:` field. Be deliberate about placement.
 
+### Bulk-Importing a Skin Pack (collision hazard)
+
+When installing a public skin pack (`cp skins/*.yaml ~/.hermes/skins/`), same-named
+files are silently OVERWRITTEN — no warning, no merge. Real incident 2026-08-03:
+importing bchop-studio/hermes-skins-pack clobbered the local `netrunner` (7.2K full
+skin with banner_hero/branding/spinner) with the pack's minimal 1.3K palette-only
+variant. The original survived only because the senna profile skins dir still
+mirrored it — recovery was `cp ~/.hermes/profiles/senna/skins/netrunner.yaml ~/.hermes/skins/`.
+
+Before a bulk import:
+1. Diff pack names against `ls ~/.hermes/skins/` (and per-profile dirs) FIRST.
+2. For each collision, decide which version wins — pack skins are usually minimal
+   complete-palette YAMLs (~1.3K, no banner_hero/spinner/branding), so the richer
+   local skin typically wins. Keep the pack's file only if you want the stripped look.
+3. Copy with `cp -i` (prompts per overwrite) or exclude colliding files explicitly.
+4. Verify after import: every file's `name:` field matches its filename
+   (`grep -m1 '^name:' *.yaml`), and spot-check a couple of colors you expected.
+5. Profile skins dirs mirror globals by default, so a clobbered global skin is
+   usually recoverable from the matching per-profile dir — check there before
+   reaching for git or re-downloads.
+
+### Fleet-Wide Sharing via Symlink (multi-profile setups)
+
+Problem: `$HERMES_HOME` is profile-aware, so profiles only see their own `skins/` dir — skins installed to the root `~/.hermes/skins/` are invisible to other profiles' CLIs and to a desktop app connected to a profile backend.
+
+Fix (done fleet-wide 2026-08-04): replace each profile's skins dir with a symlink to the root:
+
+```bash
+cd ~/.hermes/profiles
+for p in */; do
+  p=${p%/}; s="$p/skins"
+  [ -L "$s" ] && continue                                    # already linked
+  if [ -d "$s" ]; then
+    if [ -n "$(ls -A "$s")" ]; then cp "$s"/*.yaml ~/.hermes/skins/; mv "$s" "$s.bak"
+    else rmdir "$s"; fi
+  fi
+  ln -s ~/.hermes/skins "$s"
+done
+```
+
+Pitfall — same-name/different-content collision: when merging a profile dir into root, a filename may exist in both with DIFFERENT skins inside (real case: `senna.yaml` — profile's dragon palette vs root's netrunner-imperial palette). Don't silently overwrite. Rename the divergent one (`senna-imperial.yaml`, and update its `name:` field to match), keep both. Check with `diff -q` per file before copying; identical files need no action.
+
+After symlinking, one canonical set serves every profile and the desktop app regardless of which profile's backend it connects to. Keep the `.bak` dir until verified, then delete.
+
 ### Renaming a Skin
 
 Renaming requires three coordinated changes — skipping any one breaks the skin:
@@ -527,6 +587,7 @@ There are two channels for setting the active skin, and they behave differently:
 - **Per-skin custom color keys.** You can define extra color keys (e.g., `blade_glow`, `blade_edge`) for use in banner_art, but they don't affect the TUI chrome. Only the standard `colors.*` keys drive actual UI rendering.
 - **Wings format is a 2-element list.** Each entry in `spinner.wings` must be `[left_bracket, right_bracket]`. If formatted as a flat list of strings, the spinner code will error silently.
 - **Unquoted `?` in YAML.** The `?` character starts a mapping key in YAML. In `tool_emojis`, always quote: `clarify: "?"` or `clarify: '?'`.
+- **Raw `[#HEX]...[/]` markup visible in terminal output = the string went through plain `print()` instead of the rich console.** Symptom seen 2026-07-27: user closed Hermes and the goodbye gradient printed as literal color tags. Cause: `_print_exit_summary` in `cli.py` printed the goodbye with `print(goodbye)`, while the welcome banner renders via `self._console_print()` (rich, parses markup). Fix: route through `self._console_print(goodbye)` with a plain-`print` fallback (patched locally at `cli.py` ~L13704; note this is a local fork patch — an upstream `hermes update` may revert it, worth an upstream PR). Diagnose rule: grep the render path for `print(` vs `_console_print(`.
 - **Per-character color tags cause vertical text in banners.** When `banner_hero` or `banner_logo` lines use one `[#HEX]char[/]` tag per character, the source line length balloons ~14× the rendered width. If the source exceeds the TUI banner container width, each character wraps to its own row → text appears vertical and misaligned. Fix: use block-grouped color tags (2-4 characters per tag) via `scripts/gradient-color-tags.py`.
 - **Gradient welcome text too long.** Very long welcome strings (~100+ characters) generate huge YAML values. Consider truncating the message or using shorter words. 60-90 characters is manageable.
 - **Verify skin content directly — don't reconstruct from memory or session summaries.** When checking whether a skin file contains expected changes (banner_hero art, specific hex codes, branding text), always `read_file` the actual YAML. Session summaries can be stale, describe a version at a different path, or reference changes that were later overwritten. Trust the literal bytes on disk, not the assistant's reconstruction of what happened in past sessions.
@@ -557,6 +618,20 @@ There are two channels for setting the active skin, and they behave differently:
 | telemate | Retro terminal buddy | Green/amber | — |
 
 **IMPORTANT:** This table describes the skin's intended aesthetic. Always verify on-disk availability with `ls ~/.hermes/skins/` and `ls ~/.hermes/profiles/<profile>/skins/` before suggesting or switching — skins may have been renamed, replaced, or removed since this table was last updated.
+
+**2026-08-03 fleet update:** bulk-imported 49 skins from bchop-studio/hermes-skins-pack
+(50-skin public pack, MIT) into `~/.hermes/skins/`. Only name collision was `netrunner`
+(local richer version kept). The 49 pack skins are minimal complete-palette YAMLs
+(~1.3K each — colors + prompt symbol only, no banner_hero/spinner/branding). Notable
+for the user's noir/game taste: dragon-blood, shadow-thief, forge-master, arcane-tome,
+void-sunset, chrome-rain. Install path for more packs: see Bulk-Importing above.
+
+**2026-08-04 fleet update:** installed 24 more skins from CliffWade/hermes-desktop-theme-pack
+(WCAG-AA-checked palettes, 6 categories; "desktop theme pack" is a misnomer — plain skins)
+into `~/.hermes/skins/` (no collisions). Same day: all 23 profiles' skins dirs replaced
+with symlinks to root — see Fleet-Wide Sharing above. Root's old `senna.yaml` (different
+skin, same name) survives as `senna-imperial.yaml`; senna profile originals backed up at
+`~/.hermes/profiles/senna/skins.bak`.
 
 See `references/skin-details.hybridization-era.md` for the source-skin analysis that fed into the oni skin, and `references/oni-skin-session.md` for the full build log.
 See `references/finding-character-reference-images.md` for how to find and verify canonical images of specific characters (anime, manga, games) for banner_hero conversion — includes a ranked source list and verification workflow.

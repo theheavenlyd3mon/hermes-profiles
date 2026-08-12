@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.hermes.gateway-PROFILE_NAME</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>~/.hermes/hermes-agent/venv/bin/python</string>
+        <string>-m</string>
+        <string>hermes_cli.main</string>
+        <string>--profile</string>
+        <string>PROFILE_NAME</string>
+        <string>gateway</string>
+        <string>run</string>
+        <string>--replace</string>
+    </array>
+    
+    <key>WorkingDirectory</key>
+    <string>~/.hermes/hermes-agent</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>~/.hermes/hermes-agent/venv/bin:~/.hermes/hermes-agent/node_modules/.bin:~/.nvm/versions/node/v24.15.0/bin:~/.bun/bin:~/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Applications/iTerm.app/Contents/Resources/utilities</string>
+        <key>VIRTUAL_ENV</key>
+        <string>~/.hermes/hermes-agent/venv</string>
+        <key>HERMES_HOME</key>
+        <string>~/.hermes/profiles/PROFILE_NAME</string>
+    </dict>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <key>StandardOutPath</key>
+    <string>~/.hermes/profiles/PROFILE_NAME/logs/gateway.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>~/.hermes/profiles/PROFILE_NAME/logs/gateway.error.log</string>
+</dict>
+</plist>

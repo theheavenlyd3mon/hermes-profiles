@@ -182,7 +182,7 @@ For the full installation patterns, discovery scripts, batch copy approach, nest
 - **`read_file` in execute_code deduplicates.** If you read a file, then write it, then try to read it again in the same execute_code script, `read_file` returns `content_returned: false` with a "file unchanged" message. Use `terminal("cat <path>")` instead for re-reads within scripts.
 - **`find` output can be garbled in `execute_code`.** The `find` command's output sometimes gets mangled when run inside `execute_code` scripts — line counts appear as `1F 1D:` prefixes instead of clean paths. Use `terminal()` directly for discovery commands.
 - **`maxdepth` filter affects skill counts.** When counting skills in cyber-red/cyber-blue, `find -maxdepth 2` shows only 6-7 directories because the Anthropic skills are nested deeper. Use `maxdepth 1` on the Anthropic skills subdirectory itself to get the real count (755).
-- **Cron jobs use channel IDs, not profile names.** The `deliver` field in cron jobs uses Discord channel IDs (e.g., `discord:1508955965087551745`), not profile names. Changing profile names or assignments doesn't break cron delivery. This contradicts earlier risk assessments — the actual migration risk for cron is **none**.
+- **Cron jobs use channel IDs, not profile names.** The `deliver` field in cron jobs uses Discord channel IDs (e.g., `discord:<id>`), not profile names. Changing profile names or assignments doesn't break cron delivery. This contradicts earlier risk assessments — the actual migration risk for cron is **none**.
 - **Discord admin requires gateway session.** The `discord_admin` toolset is only available through the Discord gateway adapter where the bot token is accessible. CLI sessions can't access the bot token. Workaround: prepare commands for user to paste in Discord where the gateway has admin access.
 - **Don't forget cross-profile memory design.** Mnemosyne private vs shared, Fabric, kanban comments — each has different visibility.
 - **Token budget matters.** cyber-blue with 530 skills will blow up context. Use progressive disclosure + subdirectory organization.
@@ -194,8 +194,6 @@ For the full installation patterns, discovery scripts, batch copy approach, nest
 - **Magnus skills come from a separate git repo.** `git.brandyapple.com/magnus/agent-skills` — not in the iknowkungfu registry. Clone, then copy to profile's `skills/magnus/` directory. See `profile-bootstrapping` skill's `references/magnus-skill-installation.md` for the full inventory and installation pattern.
 
 ## References
-
-See `references/17-profile-case-study.md` for the full case study: profile list, SOUL.md samples, Discord architecture, Kanban design, implementation plan.
 
 See `references/external-skill-repo-evaluation.md` for the evaluation framework when assessing third-party skill repos (Magnus, iknowkungfu, community), including the Magnus case study with per-profile installation results and Windows team applicability matrix.
 

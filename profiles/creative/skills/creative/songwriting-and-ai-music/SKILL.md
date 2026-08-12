@@ -1,7 +1,7 @@
 ---
 name: songwriting-and-ai-music
 description: "Songwriting craft and Suno AI music prompts."
-tags: [songwriting, music, suno, parody, lyrics, creative]
+related_skills: [suno-music-creation]
 platforms: [linux, macos, windows]
 triggers:
   - writing a song
@@ -66,6 +66,24 @@ METER: The rhythm of stressed vs unstressed syllables.
 - Say it out loud. If you stumble, the meter needs work.
 - Intentionally breaking meter can create emphasis or surprise
 
+### 15 Rhyme Schemes (see `references/rhyme-schemes-catalog.md`)
+
+Quick reference of the most useful schemes:
+
+| Scheme | Pattern | Best In | Example Artist |
+|--------|---------|---------|----------------|
+| **AABB** | Couplets | Verses (clarity) | Elton John |
+| **ABAB** | Alternate | Verses (flow) | Twenty One Pilots |
+| **AAAA** | Monorhyme | Choruses (hypnotic) | Maroon 5 |
+| **ABCB** | Skip-rhyme | Verses (conversational) | Jonas Brothers |
+| **ABCD** | No rhyme | Bridges (free) | Weezer |
+| **AABBA** | Limerick | Bridges (punchy) | John Mayer |
+| **ABABCC** | Closing couplet | Extended chorus | Lewis Capaldi |
+
+**Strategy:** Mix schemes between sections. AABB in verses for
+storytelling clarity; switch to ABAB or monorhyme in the chorus
+for hypnotic memorability. Bridge is where you break patterns.
+
 ---
 
 ## 3. Emotional Arc and Dynamics
@@ -100,19 +118,71 @@ THE HOOK:
 - Works best when melody + lyric + emotion all align
 - Place it where it lands hardest (often first/last line of chorus)
 
-PROSODY — lyrics and music supporting each other:
-- Stable feelings (resolution, peace) pair with settled melodies,
-  perfect rhymes, resolved chords
-- Unstable feelings (longing, doubt) pair with wandering melodies,
-  near-rhymes, unresolved chords
-- Verse melody typically sits lower, chorus goes higher
-- But flip this if it serves the song
+PROSODY — the master framework (see `references/prosody-framework.md` for full detail):
+
+Every element in your song either supports or fights the emotional intent.
+The framework: **Stable vs Unstable**.
+
+**Stable (resolved, certain) pairs with:**
+- Perfect or family rhymes (fire/desire, mud/truck)
+- Diatonic harmony, resolved cadences (V→I)
+- Full chest voice, steady delivery
+- On-beat rhythm, consistent feel
+- Full, warm arrangement
+
+**Unstable (longing, doubt) pairs with:**
+- Assonance or consonance rhymes (life/tide, scene/when)
+- Extended chords, diminished, suspended, unresolved
+- Breathy or strained vocal, head voice
+- Syncopated, off-grid, swung rhythm
+- Sparse, empty, or dissonant arrangement
+
+**Mixing intentionally** creates emotional complexity:
+- Stable memory + unstable present = **nostalgia**
+- Stable beauty + unstable loss = **bittersweet**
+- Stable declaration + unstable delivery = **vulnerability**
+
+**Check your work:** Identify each section's emotional intent, then
+check every element against the stable/unstable table. If something
+fights the intent, change it — or change the intent.
 
 AVOID (unless you're doing it on purpose):
 - Cliches on autopilot ("heart of gold" without earning it)
 - Forcing word order to hit a rhyme ("Yoda-speak")
 - Same energy in every section (flat dynamics)
 - Treating your first draft as sacred — revision is creation
+
+### Object Writing (Pat Pattison's Method)
+
+The most effective warm-up for generating vivid, specific lyrics:
+
+**How:** Set a timer for 10 minutes. Pick a random object, emotion,
+or event. Write using ALL senses — do NOT rhyme or structure.
+
+| Sense | Question to Ask |
+|-------|----------------|
+| **Sight** | What does it look like? Colors, shapes, light? |
+| **Sound** | What sounds accompany it? Close and distant? |
+| **Touch** | What does the physical texture feel like? |
+| **Smell** | What odors hang in the air? |
+| **Taste** | Any taste on the tongue or in the mouth? |
+| **Organic** | What does the body feel? (heart, stomach, chest) |
+| **Motion** | What moves, and how? |
+
+**Example (object: "3AM rain on a car window"):**
+> Streetlights bleed into diamonds on the glass.
+> Wipers hush-thump. Distant bass from someone else's car.
+> Cold seeps through the seal. Fog from my breath.
+> Wet asphalt. Stale coffee. Empty passenger seat.
+> That hollow feeling in my chest.
+
+**After 10 minutes:** Mine the result for lyric material.
+Don't try to force it into a structure yet — just collect
+phrases, images, and sensory hooks. Shape them into sections later.
+
+**When:** Daily or before each writing session. 10 minutes.
+It trains your brain to think in sensory detail instead of
+abstract statements. This IS how you learn to "show, not tell."
 
 ---
 
@@ -250,21 +320,39 @@ ALWAYS:
 
 ---
 
-## 8. Workflow
+## 8. Workflow — General Songwriting
 
 1. Write the concept/hook first — what's the emotional core?
 2. If adapting, map the original structure (syllables, rhyme, stress)
-3. Generate raw material — brainstorm freely before structuring
-4. Draft lyrics into the structure
-5. Read/sing aloud — catch stumbles, fix meter
-6. Build the Suno style description — paint the dynamic journey
-7. Add metatags to lyrics for performance direction
-8. Generate 3-5 variations minimum — treat them like recording takes
-9. Pick the best, use Extend/Continue to build on promising sections
-10. If something great happens by accident, keep it
+3. Generate raw material — use **Object Writing** (section 4) for 10 min to fill your imagery bank with sensory detail
+4. **Apply prosody** — determine stable/unstable intent per section, choose rhyme types, harmonic feel, arrangement density accordingly
+5. Draft lyrics into the structure
+6. Read/sing aloud — catch stumbles, fix meter
+7. Build the arrangement map — energy arc, section textures, dynamics
+8. Add metatags for performance direction
+9. Generate 3-5 variations minimum — treat them like recording takes
+10. Pick the best, use Extend/Continue to build on promising sections
+11. If something great happens by accident, keep it
 
 EXPECT: ~3-5 generations per 1 good result. Revision is normal.
-Style can drift in extensions — restate genre/mood when extending.
+
+### For Suno Output
+
+When the goal is a Suno-ready style prompt + lyrics, load the
+`suno-music-creation` skill which provides a dedicated 8-step pipeline:
+
+1. Parse the brief
+2. Load artist DNA (vocal/production/thematic profile)
+3. Apply prosody framework
+4. Select DSL energy arc (12 patterns)
+5. Apply section texture templates
+6. Build DSL style prompt
+7. Write lyrics with sensory word banks + rhyme strategy
+8. Present as copy-paste output
+
+The skills are designed to be used together: `songwriting-and-ai-music`
+provides the foundational craft (prosody, object writing, rhyme theory);
+`suno-music-creation` executes the production pipeline.
 
 ---
 
@@ -285,3 +373,54 @@ Style can drift in extensions — restate genre/mood when extending.
 - Don't be precious about rules. If a line breaks meter but hits
   harder, keep it. The feeling is what matters. Craft serves art,
   not the other way around.
+
+## 11. Reference Files & Related Skills
+
+Five reference documents live under this skill's `references/` directory:
+for specialized Suno workflows:
+
+| Reference | Covers |
+|-----------|--------|
+| `references/suno-dsl-notation.md` | Mathematical DSL ($E(x)$, $dE/dx$, $b(x)$) for describing precise energy curves and structural layers in Suno. L0-L5 layer notation, binary state switching, exponential swells, noise/chaos elements. |
+| `references/suno-artist-branding.md` | Dual complementary artist branding pattern (RIVEN × SOLA style). Creating contrasting male/female profiles with opposing aesthetics, collab identity, file structure for suno-ready.md and grok-ready.md. |
+| `references/prosody-framework.md` | Stable vs Unstable framework (Pat Pattison/Berklee). Element-level mapping table (rhyme type, harmony, vocal delivery, arrangement). How to apply to RIVEN vs SOLA. |
+| `references/rhyme-schemes-catalog.md` | 15 rhyme schemes from ASCAP (AABB through AABCCB) with prosody effects, section recommendations, and real song examples. |
+| `references/chord-theory-rb-neosoul.md` | R&B vs Neo-Soul harmony comparison. 7 essential chord progressions. RIVEN signature progressions (minor/dark) and SOLA signature progressions (warm/maj7). Reharmonization trick for adding extensions. |
+| **External (in MyGame docs):** | |
+| `Documents/Projects/MyGame/docs/artist-branding/riven-sola-profiles.md` | Full artist profiles — reference blends, vocal signatures, production DNA, thematic territory, chord zones, prosody profiles |
+| `Documents/Projects/MyGame/docs/artist-branding/references/sensory-word-banks.md` | Per-artist thesaurus by sense (7 senses). RIVEN (dark/noir) and SOLA (ethereal/warm) word banks with stable/unstable tags |
+| `Documents/Projects/MyGame/docs/artist-branding/references/section-textures.md` | Per-section production guide for RIVEN, SOLA, and MyGame collab. Instrumentation, vocal, mix notes per section |
+| `Documents/Projects/MyGame/docs/artist-branding/references/chord-progressions.md` | 7 progressions per artist with emotional effect, bass strategy, suggested DSL arc pairings, real song references |
+| `Documents/Projects/MyGame/docs/artist-branding/references/vocal-stacks.md` | Per-section vocal production descriptions for Suno style prompts. Full Persona blurbs for each artist |
+| `Documents/Projects/MyGame/docs/artist-branding/references/rhyme-schemes.md` | 15 rhyme schemes with prosody effects, section recommendations, and per-artist rhyme strategy |
+| `Documents/Projects/MyGame/docs/artist-branding/songwriting-deep-dive-report.md` | Comprehensive research report covering prosody, music theory, lyric systems, arrangement, vocal production, Suno prompting |
+
+Load via: `skill_view(name='songwriting-and-ai-music', file_path='references/<name>.md')`
+
+### Related Skill: suno-music-creation
+
+For the **brief → full-output pipeline** (user gives a concept, you produce
+Style Prompt + Lyrics + DSL arc for Suno), load the dedicated skill:
+
+```
+skill_view(name='suno-music-creation')
+```
+
+This skill provides an 8-step pipeline that builds on the foundational craft
+in this skill. It includes:
+
+- **Artist DNA profiles** — RIVEN (J. Cole × Drake × Kid Laroi × Bryson Tiller)
+  and SOLA (Kehlani × SZA × Ella Mai × Summer Walker × Billie Eilish) with
+  full vocal, production, and thematic DNA
+- **Complete DSL style prompt builder** — mathematical energy arc + plain English
+  layer descriptions = the full style prompt
+- **12 DSL energy arc patterns** (updated) — Classic Build-Drop, Slow Float,
+  One-Way Crescendo, Stutter Dynamics, Ambient Explosion, Crescendo Collapse,
+  Float with Spike, Anti-Chorus, Jagged Push-Pull, Slow Burn, Stutter-Step Drop,
+  Whisper Cascade
+- **Section texture templates** — per-section production language per artist
+- **Persona + DSL hybrid workflow** — for use with Suno Personas
+- **3 copy-paste templates:** style-prompt.md, lyrics.md, dsl-arc.md
+
+See also: `Documents/Projects/MyGame/docs/artist-branding/suno-dsl-cheatsheet.md`
+for the standalone DSL reference card.

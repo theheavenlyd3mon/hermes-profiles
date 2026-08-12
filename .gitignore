@@ -25,3 +25,11 @@ channel_directory.json
 .idea/
 *.swp
 *.swo
+.curator_state
+.curator_backups/
+.hub/
+.usage.json
+.usage.json.lock
+.bundled_manifest
+.archive/
+.curator_suppressed

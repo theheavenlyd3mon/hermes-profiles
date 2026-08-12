@@ -58,12 +58,13 @@ Some are workers: they execute one job well and report back.
 | **communication** | Email, messaging, meetings | cost-effective | Triage, summaries, drafts |
 | **business** | Strategy, marketing, product | cost-effective | Frameworks, experiments |
 | **cyber-red** | Offensive security | strong | Pen tests, exploit PoCs |
-| **cyber-blue** | Defensive security | strong | SOC, IR, forensics, compliance |
 | **cyber-blue-cloud** | Cloud security | strong | IAM, GuardDuty/Sentinel/Defender |
 | **cyber-blue-compliance** | Compliance & policy | strong | Evidence packs, policy-as-code |
 | **cyber-blue-forensics** | Forensics & IR | strong | Preservation, acquisition, timeline |
 | **cyber-blue-soc** | SOC & detection engineering | strong | Triage, rule tuning, runbooks |
 | **educate** | Teaching design | strong | Lessons, adaptive tutoring, workshops |
+| **novel** | Long-form fiction | strong | Plot ledgers, drafting, revision gates |
+| **gamehub-mod** | Discord moderation | cost-effective | Triage cards, audit watch, announcements |
 
 ---
 
@@ -92,18 +93,17 @@ For examples, see the [Research Profile Guide](research-profile-guide.md).
 
 ## Cyber-Blue Specializations
 
-`cyber-blue` is split into specialization paths when your defensive posture needs more than one agent.
+Defensive security ships as four specialization paths rather than one monolith.
 
 | Path | Best For | Distinct Behavior |
 |------|----------|-------------------|
-| **cyber-blue** | General defensive security | SOC, IR, forensics, compliance |
 | **cyber-blue-cloud** | Cloud-heavy environments | IAM boundaries, runtime signals, infra hardening |
 | **cyber-blue-compliance** | Continuous audit burden | Policy-as-code, evidence packs, review-ready artifacts |
 | **cyber-blue-forensics** | Incident-driven work | Preservation-first, acquisition, timelines |
 | **cyber-blue-soc** | Detection/SOC teams | Triage discipline, rule tuning, alert fatigue reduction |
 
-**When to split:** if your team has separate owners for cloud vs. compliance vs. SOC, split.  
-**When to stay monolithic:** if one person wears all hats, keep using `cyber-blue`.
+**When to run all four:** if your team has separate owners for cloud vs. compliance vs. SOC, split.
+**When to run fewer:** if one person wears all hats, pick the one or two that match your workload — **cyber-blue-soc** is the best generalist starting point.
 
 ---
 

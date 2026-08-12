@@ -1,0 +1,835 @@
+#!/usr/bin/env python3
+"""forgejo-cli — Forgejo API client with dual auth (AGENT/USER).
+
+Usage:
+  forgejo-cli <command> [<subcommand>] [OPTIONS]
+
+Commands:
+  issue       Manage issues (list, show, create, comment, label, assign)
+  pr          Manage pull requests (list, show, diff, review, comment, merge)
+  repo        Manage repositories (list, show, create)
+  label       Manage labels (list, create)
+  hook        Manage webhooks (list, create, delete)
+  user        User info and settings
+  comment     Manage comments (list, create, delete)
+
+Global flags:
+  --agent              Use AGENT token (jasper) [default]
+  --user               Use USER token (magnus)
+  --server URL         Forgejo server URL
+  --json               Machine-readable JSON output
+  --dry-run            Preview without making changes
+  --quiet              Suppress non-essential output
+  --verbose            Diagnostic output to stderr
+  --force              Skip confirmations
+"""
+
+import json, os, sys, warnings
+from typing import Optional
+
+# ── Suppress import-time warnings ──────────────────────────────────
+warnings.simplefilter("ignore")
+
+import requests
+
+# ── Paths & Defaults ──────────────────────────────────────────────
+DEFAULT_SERVER = "https://git.brandyapple.com"
+CONFIG_DIR = os.path.expanduser("~/.hermes")
+
+# ── Logging helpers ────────────────────────────────────────────────
+QUIET = False
+JSON_MODE = False
+VERBOSE = False
+FORCE = False
+DRY_RUN = False
+
+def log(msg: str) -> None:
+    if not QUIET and not JSON_MODE:
+        print(msg)
+
+def warn(msg: str) -> None:
+    print(f"Warning: {msg}", file=sys.stderr)
+
+def die(msg: str, code: int = 1) -> None:
+    print(f"Error: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+def info(msg: str) -> None:
+    if VERBOSE:
+        print(f"[info] {msg}", file=sys.stderr)
+
+def emit(human: str, machine: dict) -> None:
+    if JSON_MODE:
+        print(json.dumps(machine))
+    else:
+        print(human)
+
+
+# ── Config loading ─────────────────────────────────────────────────
+def _get_env(key: str, default: str = "") -> str:
+    val = os.getenv(key)
+    if val:
+        return val
+    env_path = os.path.join(CONFIG_DIR, ".env")
+    if os.path.isfile(env_path):
+        try:
+            with open(env_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("export "):
+                        line = line[len("export "):]
+                    if line.startswith(f"{key}="):
+                        return line.split("=", 1)[1].strip("\"'")
+        except OSError:
+            pass
+    return default
+
+
+# ── API Client ─────────────────────────────────────────────────────
+class ForgejoError(Exception):
+    pass
+
+
+class ForgejoClient:
+    """Forgejo API client with dual auth and dry-run support."""
+
+    def __init__(self, server: str, token: str, dry_run: bool = False):
+        self.server = server.rstrip("/")
+        self.token = token
+        self.dry_run = dry_run
+
+    def _headers(self) -> dict:
+        if not self.token and not self.dry_run:
+            die("No API token available. Use --agent or --user, or set FORGEJO_AGENT_TOKEN / FORGEJO_USER_TOKEN")
+        return {"Authorization": f"token {self.token}", "Content-Type": "application/json"}
+
+    def _request(self, method: str, path: str, params: dict = None,
+                 json_data: dict = None) -> dict:
+        url = f"{self.server}{path}"
+
+        if self.dry_run:
+            info(f"[dry-run] {method} {path}")
+            if params:
+                info(f"  params: {json.dumps(params)}")
+            if json_data:
+                info(f"  data: {json.dumps(json_data)[:500]}")
+            return {"_dry_run": True}
+
+        headers = self._headers()
+        try:
+            resp = requests.request(method, url, params=params,
+                                     json=json_data, headers=headers, timeout=30)
+        except requests.ConnectionError as e:
+            raise ForgejoError(f"Cannot connect to {self.server}: {e}")
+
+        if resp.status_code in (200, 201):
+            try:
+                return resp.json() if resp.text.strip() else {}
+            except json.JSONDecodeError:
+                return {"raw": resp.text[:500]}
+
+        if resp.status_code == 204:
+            return {}
+
+        if resp.status_code == 401:
+            raise ForgejoError("Auth failed (401). Check your token.")
+        if resp.status_code == 403:
+            raise ForgejoError("Permission denied (403).")
+        if resp.status_code == 404:
+            raise ForgejoError(f"Not found (404): {path}")
+
+        try:
+            detail = resp.json().get("message", resp.text[:200])
+        except (json.JSONDecodeError, ValueError):
+            detail = resp.text[:200]
+        raise ForgejoError(f"API error ({resp.status_code}): {detail}")
+
+    # ── Issue endpoints ────────────────────────────────────────────
+    def issue_list(self, owner: str, repo: str, state: str = "open",
+                   page: int = 1, limit: int = 50) -> list:
+        r = self._request("GET", f"/api/v1/repos/{owner}/{repo}/issues",
+                          params={"state": state, "page": page, "limit": limit})
+        return r if isinstance(r, list) else []
+
+    def issue_get(self, owner: str, repo: str, index: int) -> dict:
+        return self._request("GET", f"/api/v1/repos/{owner}/{repo}/issues/{index}")
+
+    def issue_create(self, owner: str, repo: str, title: str,
+                     body: str = "", labels: list = None,
+                     assignees: list = None) -> dict:
+        data = {"title": title}
+        if body:
+            data["body"] = body
+        if labels:
+            data["labels"] = labels
+        if assignees:
+            data["assignees"] = assignees
+        return self._request("POST", f"/api/v1/repos/{owner}/{repo}/issues",
+                             json_data=data)
+
+    def issue_edit(self, owner: str, repo: str, index: int,
+                   **kwargs) -> dict:
+        return self._request("PATCH", f"/api/v1/repos/{owner}/{repo}/issues/{index}",
+                             json_data=kwargs)
+
+    def issue_comment(self, owner: str, repo: str, index: int,
+                      body: str) -> dict:
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{index}/comments",
+                    json_data={"body": body})
+
+    def issue_labels(self, owner: str, repo: str, index: int) -> list:
+        r = self._request("GET",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{index}/labels")
+        return r if isinstance(r, list) else []
+
+    def issue_set_labels(self, owner: str, repo: str, index: int,
+                         labels: list) -> dict:
+        return self._request("PUT",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{index}/labels",
+                    json_data={"labels": labels})
+
+    def issue_add_label(self, owner: str, repo: str, index: int,
+                        label_id: int) -> dict:
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{index}/labels",
+                    json_data=[label_id])
+
+    # ── PR endpoints ───────────────────────────────────────────────
+    def pr_list(self, owner: str, repo: str, state: str = "open",
+                page: int = 1, limit: int = 50) -> list:
+        r = self._request("GET", f"/api/v1/repos/{owner}/{repo}/pulls",
+                          params={"state": state, "page": page, "limit": limit})
+        return r if isinstance(r, list) else []
+
+    def pr_get(self, owner: str, repo: str, index: int) -> dict:
+        return self._request("GET", f"/api/v1/repos/{owner}/{repo}/pulls/{index}")
+
+    def pr_diff(self, owner: str, repo: str, index: int) -> str:
+        url = f"{self.server}/api/v1/repos/{owner}/{repo}/pulls/{index}.diff"
+        if self.dry_run:
+            return "[dry-run]"
+        if not self.token:
+            die("No API token available.")
+        try:
+            resp = requests.get(url, headers={"Authorization": f"token {self.token}"},
+                                timeout=30)
+            return resp.text if resp.status_code == 200 else ""
+        except requests.ConnectionError as e:
+            raise ForgejoError(f"Cannot connect: {e}")
+
+    def pr_reviews(self, owner: str, repo: str, index: int) -> list:
+        r = self._request("GET",
+                    f"/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews")
+        return r if isinstance(r, list) else []
+
+    def pr_submit_review(self, owner: str, repo: str, index: int,
+                         body: str, event: str = "COMMENT") -> dict:
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/pulls/{index}/reviews",
+                    json_data={"body": body, "event": event})
+
+    def pr_merge(self, owner: str, repo: str, index: int,
+                 merge_style: str = "merge") -> dict:
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/pulls/{index}/merge",
+                    json_data={"Do": merge_style})
+
+    def pr_comment(self, owner: str, repo: str, index: int,
+                   body: str, commit_id: str = None,
+                   path: str = None, line: int = None) -> dict:
+        data = {"body": body}
+        if commit_id:
+            data["commit_id"] = commit_id
+        if path:
+            data["path"] = path
+        if line:
+            data["line"] = line
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/pulls/{index}/comments",
+                    json_data=data)
+
+    def pr_create(self, owner: str, repo: str, title: str,
+                  head: str, base: str, body: str = "",
+                  draft: bool = False) -> dict:
+        data = {"title": title, "head": head, "base": base}
+        if body:
+            data["body"] = body
+        if draft:
+            data["draft"] = True
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/pulls",
+                    json_data=data)
+
+    # ── Comment endpoints ──────────────────────────────────────────
+    def comment_list(self, owner: str, repo: str, issue_index: int) -> list:
+        r = self._request("GET",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{issue_index}/comments")
+        return r if isinstance(r, list) else []
+
+    def comment_create(self, owner: str, repo: str, issue_index: int,
+                       body: str) -> dict:
+        return self._request("POST",
+                    f"/api/v1/repos/{owner}/{repo}/issues/{issue_index}/comments",
+                    json_data={"body": body})
+
+    def comment_delete(self, owner: str, repo: str, comment_id: int) -> dict:
+        return self._request("DELETE",
+                    f"/api/v1/repos/{owner}/{repo}/issues/comments/{comment_id}")
+
+    # ── Label endpoints ────────────────────────────────────────────
+    def label_list(self, owner: str, repo: str = None, org: str = None) -> list:
+        if org:
+            r = self._request("GET", f"/api/v1/orgs/{org}/labels")
+        else:
+            r = self._request("GET", f"/api/v1/repos/{owner}/{repo}/labels")
+        return r if isinstance(r, list) else []
+
+    def label_create(self, owner: str, repo: str, name: str,
+                     color: str = "#000000", description: str = "") -> dict:
+        return self._request("POST", f"/api/v1/repos/{owner}/{repo}/labels",
+                             json_data={"name": name, "color": color,
+                                        "description": description})
+
+    # ── Hook endpoints ─────────────────────────────────────────────
+    def hook_list(self) -> list:
+        r = self._request("GET", "/api/v1/user/hooks")
+        return r if isinstance(r, list) else []
+
+    def hook_create(self, url: str, secret: str, events: list,
+                    content_type: str = "json") -> dict:
+        return self._request("POST", "/api/v1/user/hooks",
+                    json_data={"type": "forgejo",
+                               "config": {"url": url,
+                                          "content_type": content_type,
+                                          "secret": secret},
+                               "events": events, "active": True})
+
+    def hook_delete(self, hook_id: int) -> dict:
+        return self._request("DELETE", f"/api/v1/user/hooks/{hook_id}")
+
+    # ── User endpoints ─────────────────────────────────────────────
+    def user_get(self) -> dict:
+        return self._request("GET", "/api/v1/user")
+
+    def user_settings_get(self) -> dict:
+        return self._request("GET", "/api/v1/user/settings")
+
+    def user_settings_update(self, **kwargs) -> dict:
+        return self._request("PATCH", "/api/v1/user/settings", json_data=kwargs)
+
+    # ── Repo endpoints ─────────────────────────────────────────────
+    def repo_list(self, owner: str = None) -> list:
+        if owner:
+            r = self._request("GET", f"/api/v1/users/{owner}/repos")
+        else:
+            r = self._request("GET", "/api/v1/user/repos")
+        return r if isinstance(r, list) else []
+
+    def repo_get(self, owner: str, repo: str) -> dict:
+        return self._request("GET", f"/api/v1/repos/{owner}/{repo}")
+
+    def repo_search(self, query: str, limit: int = 20) -> list:
+        r = self._request("GET", "/api/v1/repos/search",
+                          params={"q": query, "limit": limit})
+        if isinstance(r, dict):
+            return r.get("data", [])
+        return []
+
+
+# ── Global flag pre-parser ─────────────────────────────────────────
+GLOBAL_BOOLS = {"--json", "--dry-run", "-n", "--force", "--yes", "-y",
+                "--quiet", "-q", "--verbose", "-v", "--agent", "--user", "--help", "-h"}
+GLOBAL_VALUES = {"--server"}
+
+def _preparse_globals(argv):
+    globals_map = {}
+    filtered = [argv[0]]
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg in GLOBAL_BOOLS:
+            globals_map[arg.lstrip("-").replace("-", "_")] = True
+            i += 1
+        elif arg in GLOBAL_VALUES:
+            key = arg.lstrip("-").replace("-", "_")
+            if i + 1 < len(argv) and not argv[i + 1].startswith("-"):
+                globals_map[key] = argv[i + 1]
+                i += 2
+            else:
+                die(f"{arg} requires a value")
+        elif arg == "--":
+            filtered.extend(argv[i:])
+            break
+        else:
+            filtered.append(arg)
+            i += 1
+    return globals_map, filtered
+
+
+# ── Help ───────────────────────────────────────────────────────────
+def show_help(cmd: str = "", sub: str = ""):
+    if cmd == "issue":
+        print("""Usage: forgejo-cli issue <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List issues (--owner, --repo, --state)
+  show        Show issue details (--owner, --repo, --index)
+  create      Create an issue (--owner, --repo, --title, --body, --labels, --assignees)
+  comment     Add comment (--owner, --repo, --index, --body)
+  label       Set issue labels (--owner, --repo, --index, --labels)
+  assign      Assign issue (--owner, --repo, --index, --assignees)
+
+Examples:
+  forgejo-cli issue list --owner magnus --repo test
+  forgejo-cli issue show --owner magnus --repo test --index 3
+  forgejo-cli issue create --owner magnus --repo test --title "Bug" --body "..." --labels bug
+  forgejo-cli issue comment --owner magnus --repo test --index 3 --body "fixed"
+""")
+    elif cmd == "pr":
+        print("""Usage: forgejo-cli pr <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List PRs (--owner, --repo, --state)
+  show        Show PR details (--owner, --repo, --index)
+  create      Create a PR (--owner, --repo, --title, --head, --base, [--body], [--draft])
+  diff        Get PR diff (--owner, --repo, --index)
+  comment     Add PR comment (--owner, --repo, --index, --body)
+  review      Submit PR review (--owner, --repo, --index, --body, --event)
+  merge       Merge a PR (--owner, --repo, --index)
+
+Examples:
+  forgejo-cli pr create --owner magnus --repo myrepo --title "feat: add auth" --head feat/add-auth --base main --body "Closes #42"
+  forgejo-cli pr diff --owner magnus --repo test --index 1
+  forgejo-cli pr review --owner magnus --repo test --index 1 --body "LGTM" --event approve
+""")
+    elif cmd == "repo":
+        print("""Usage: forgejo-cli repo <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List repos (--owner)
+  show        Show repo details (--owner, --repo)
+  search      Search repos (--query)
+
+Examples:
+  forgejo-cli repo list
+  forgejo-cli repo show --owner magnus --repo test
+""")
+    elif cmd == "label":
+        print("""Usage: forgejo-cli label <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List labels (--owner, --repo)
+  create      Create label (--owner, --repo, --name, --color)
+""")
+    elif cmd == "hook":
+        print("""Usage: forgejo-cli hook <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List webhooks
+  create      Create webhook (--url, --secret, --events)
+  delete      Delete webhook (--id)
+""")
+    elif cmd == "user":
+        print("""Usage: forgejo-cli user <subcommand> [OPTIONS]
+
+Subcommands:
+  show        Show current user info
+  settings    Get/edit user settings
+""")
+    elif cmd == "comment":
+        print("""Usage: forgejo-cli comment <subcommand> [OPTIONS]
+
+Subcommands:
+  list        List comments (--owner, --repo, --index)
+  create      Create comment (--owner, --repo, --index, --body)
+""")
+    else:
+        print(__doc__.strip())
+
+
+# ── Token resolution ───────────────────────────────────────────────
+def _resolve_token(use_user: bool = False) -> str:
+    if use_user:
+        return _get_env("FORGEJO_USER_TOKEN", "")
+    return _get_env("FORGEJO_AGENT_TOKEN", "")
+
+
+# ── Command Handlers ──────────────────────────────────────────────
+
+def cmd_issue(client, args):
+    if not args:
+        show_help("issue")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    owner = repo = index = title = body = state = None
+    labels = []
+    assignees = []
+
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--owner" and i + 1 < len(rest): owner = rest[i + 1]; i += 2
+        elif a == "--repo" and i + 1 < len(rest): repo = rest[i + 1]; i += 2
+        elif a == "--index" and i + 1 < len(rest): index = int(rest[i + 1]); i += 2
+        elif a == "--title" and i + 1 < len(rest): title = rest[i + 1]; i += 2
+        elif a == "--body" and i + 1 < len(rest): body = rest[i + 1]; i += 2
+        elif a == "--state" and i + 1 < len(rest): state = rest[i + 1]; i += 2
+        elif a == "--labels" and i + 1 < len(rest): labels = [int(x.strip()) for x in rest[i + 1].split(",") if x.strip().isdigit()]; i += 2
+        elif a == "--assignees" and i + 1 < len(rest): assignees = [x.strip() for x in rest[i + 1].split(",")]; i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        # validation inline (was val())
+        data = client.issue_list(owner, repo, state or "open")
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for iss in data:
+                print(f"#{iss['number']} [{iss['state']}] {iss['title']}")
+    elif sub == "show":
+        # validation inline (was val())
+        data = client.issue_get(owner, repo, index)
+        emit(f"#{data.get('number')} [{data.get('state')}] {data.get('title')}\n{data.get('body','')}",
+             data)
+    elif sub == "create":
+        # validation inline (was val())
+        if DRY_RUN:
+            emit(f"[dry-run] Would create issue '{title}' in {owner}/{repo}",
+                 {"dry_run": True, "owner": owner, "repo": repo, "title": title})
+            return
+        data = client.issue_create(owner, repo, title, body or "",
+                                    labels or None, assignees or None)
+        emit(json.dumps(data, indent=2),
+             f"Created issue #{data.get('number')}: {data.get('title')}")
+    elif sub == "comment":
+        # validation inline (was val())
+        data = client.issue_comment(owner, repo, index, body)
+        emit(json.dumps(data, indent=2),
+             f"Comment added to #{index}")
+    elif sub == "label":
+        # validation inline (was val())
+        data = client.issue_set_labels(owner, repo, index, labels)
+        emit(json.dumps(data, indent=2),
+             f"Labels set on #{index}: {', '.join(labels)}")
+    elif sub == "assign":
+        # validation inline (was val())
+        data = client.issue_edit(owner, repo, index, assignees=assignees)
+        emit(json.dumps(data, indent=2),
+             f"Assigned #{index} to {', '.join(assignees)}")
+    else:
+        die(f"Unknown issue subcommand: {sub}")
+
+
+def cmd_pr(client, args):
+    if not args:
+        show_help("pr")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    owner = repo = index = title = body = state = event = None
+    commit_id = path = line = None
+    head = base = None
+    draft = False
+
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--owner" and i + 1 < len(rest): owner = rest[i + 1]; i += 2
+        elif a == "--repo" and i + 1 < len(rest): repo = rest[i + 1]; i += 2
+        elif a == "--index" and i + 1 < len(rest): index = int(rest[i + 1]); i += 2
+        elif a == "--body" and i + 1 < len(rest): body = rest[i + 1]; i += 2
+        elif a == "--state" and i + 1 < len(rest): state = rest[i + 1]; i += 2
+        elif a == "--event" and i + 1 < len(rest): event = rest[i + 1]; i += 2
+        elif a == "--head" and i + 1 < len(rest): head = rest[i + 1]; i += 2
+        elif a == "--base" and i + 1 < len(rest): base = rest[i + 1]; i += 2
+        elif a == "--title" and i + 1 < len(rest): title = rest[i + 1]; i += 2
+        elif a == "--draft": draft = True; i += 1
+        elif a == "--commit" and i + 1 < len(rest): commit_id = rest[i + 1]; i += 2
+        elif a == "--path" and i + 1 < len(rest): path = rest[i + 1]; i += 2
+        elif a == "--line" and i + 1 < len(rest): line = int(rest[i + 1]); i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        # validation inline (was val())
+        data = client.pr_list(owner, repo, state or "open")
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for pr in data:
+                print(f"!{pr['number']} [{pr.get('state','')}] {pr.get('title','')}")
+    elif sub == "show":
+        # validation inline (was val())
+        data = client.pr_get(owner, repo, index)
+        emit(json.dumps(data, indent=2),
+             f"!{data.get('number')} [{data.get('state')}] {data.get('title')}")
+    elif sub == "diff":
+        # validation inline (was val())
+        diff = client.pr_diff(owner, repo, index)
+        print(diff)
+    elif sub == "comment":
+        # validation inline (was val())
+        data = client.pr_comment(owner, repo, index, body, commit_id, path, line)
+        emit(json.dumps(data, indent=2), f"PR comment added")
+    elif sub == "review":
+        # validation inline (was val())
+        data = client.pr_submit_review(owner, repo, index, body, event or "COMMENT")
+        emit(json.dumps(data, indent=2), f"Review submitted on !{index}")
+    elif sub == "merge":
+        # validation inline (was val())
+        if not FORCE and not DRY_RUN:
+            die("Use --force or --dry-run to merge PR !{index}")
+        data = client.pr_merge(owner, repo, index)
+        emit(json.dumps(data, indent=2), f"Merged !{index}")
+    elif sub == "create":
+        if not all([owner, repo, title, head, base]):
+            die("Required: --owner, --repo, --title, --head, --base")
+        data = client.pr_create(owner, repo, title, head, base, body or "", draft)
+        pr_num = data.get('number', '?')
+        emit(json.dumps(data, indent=2),
+             f"Created PR #{pr_num}: {title}")
+    else:
+        die(f"Unknown pr subcommand: {sub}")
+
+
+def cmd_repo(client, args):
+    if not args:
+        show_help("repo")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    owner = repo = query = None
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--owner" and i + 1 < len(rest): owner = rest[i + 1]; i += 2
+        elif a == "--repo" and i + 1 < len(rest): repo = rest[i + 1]; i += 2
+        elif a == "--query" and i + 1 < len(rest): query = rest[i + 1]; i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        data = client.repo_list(owner)
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for r in data:
+                print(f"{r.get('full_name','')} [{r.get('language','')}]")
+    elif sub == "show":
+        owner or die("--owner required"); repo or die("--repo required")
+        data = client.repo_get(owner, repo)
+        emit(json.dumps(data, indent=2),
+             f"{data.get('full_name')} - {data.get('description','')}")
+    elif sub == "search":
+        query or die("--query required")
+        data = client.repo_search(query)
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for r in data:
+                print(f"{r.get('full_name','')}")
+    else:
+        die(f"Unknown repo subcommand: {sub}")
+
+
+def cmd_label(client, args):
+    if not args:
+        show_help("label")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    owner = repo = name = color = None
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--owner" and i + 1 < len(rest): owner = rest[i + 1]; i += 2
+        elif a == "--repo" and i + 1 < len(rest): repo = rest[i + 1]; i += 2
+        elif a == "--name" and i + 1 < len(rest): name = rest[i + 1]; i += 2
+        elif a == "--color" and i + 1 < len(rest): color = rest[i + 1]; i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        owner or die("--owner required")
+        data = client.label_list(owner, repo)
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for lbl in data:
+                print(f"{lbl.get('name','')} ({lbl.get('color','')})")
+    elif sub == "create":
+        owner or die("--owner required"); repo or die("--repo required")
+        name or die("--name required")
+        data = client.label_create(owner, repo, name, color or "#000000")
+        emit(json.dumps(data, indent=2), f"Created label '{name}'")
+    else:
+        die(f"Unknown label subcommand: {sub}")
+
+
+def cmd_hook(client, args):
+    if not args:
+        show_help("hook")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    hook_url = secret = events = None
+    hook_id = None
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--url" and i + 1 < len(rest): hook_url = rest[i + 1]; i += 2
+        elif a == "--secret" and i + 1 < len(rest): secret = rest[i + 1]; i += 2
+        elif a == "--events" and i + 1 < len(rest): events = [x.strip() for x in rest[i + 1].split(",")]; i += 2
+        elif a == "--id" and i + 1 < len(rest): hook_id = int(rest[i + 1]); i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        data = client.hook_list()
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for h in data:
+                print(f"#{h.get('id')} {h.get('url','')}")
+    elif sub == "create":
+        hook_url or die("--url required"); secret or die("--secret required")
+        data = client.hook_create(hook_url, secret, events or ["issues"])
+        emit(json.dumps(data, indent=2), f"Created hook #{data.get('id')}")
+    elif sub == "delete":
+        hook_id or die("--id required")
+        data = client.hook_delete(hook_id)
+        emit(json.dumps(data, indent=2), f"Deleted hook #{hook_id}")
+    else:
+        die(f"Unknown hook subcommand: {sub}")
+
+
+def cmd_user(client, args):
+    if not args:
+        show_help("user")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    data = {}
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a.startswith("--"):
+            if i + 1 < len(rest) and not rest[i + 1].startswith("--"):
+                data[a.lstrip("-").replace("-", "_")] = rest[i + 1]
+                i += 2
+            else:
+                data[a.lstrip("-").replace("-", "_")] = True
+                i += 1
+        else:
+            i += 1
+
+    if sub == "show":
+        info = client.user_get()
+        emit(f"{info.get('login')} ({info.get('full_name','')}) - admin={info.get('is_admin',False)}",
+             info)
+    elif sub == "settings":
+        if data:
+            info = client.user_settings_update(**data)
+            emit(json.dumps(info, indent=2), "Settings updated")
+        else:
+            info = client.user_settings_get()
+            emit(json.dumps(info, indent=2), info)
+    else:
+        die(f"Unknown user subcommand: {sub}")
+
+
+def cmd_comment(client, args):
+    if not args:
+        show_help("comment")
+        return
+    sub = args[0]
+    rest = args[1:]
+
+    owner = repo = index = body = None
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--owner" and i + 1 < len(rest): owner = rest[i + 1]; i += 2
+        elif a == "--repo" and i + 1 < len(rest): repo = rest[i + 1]; i += 2
+        elif a == "--index" and i + 1 < len(rest): index = int(rest[i + 1]); i += 2
+        elif a == "--body" and i + 1 < len(rest): body = rest[i + 1]; i += 2
+        else: die(f"Unknown option: {a}")
+
+    if sub == "list":
+        owner or die("--owner required"); repo or die("--repo required"); index or die("--index required")
+        data = client.comment_list(owner, repo, index)
+        if JSON_MODE:
+            print(json.dumps(data))
+        else:
+            for c in data:
+                print(f"[{c.get('id')}] {c.get('user',{}).get('login','')}: {c.get('body','')[:80]}")
+    elif sub == "create":
+        owner or die("--owner required"); repo or die("--repo required")
+        index or die("--index required"); body or die("--body required")
+        data = client.comment_create(owner, repo, index, body)
+        emit(json.dumps(data, indent=2), f"Comment #{data.get('id')} created")
+    else:
+        die(f"Unknown comment subcommand: {sub}")
+
+
+# ── Main ───────────────────────────────────────────────────────────
+def main():
+    global QUIET, JSON_MODE, VERBOSE, FORCE, DRY_RUN
+
+    # Pre-parse global flags
+    globals_map, filtered_argv = _preparse_globals(sys.argv)
+
+    QUIET = globals_map.get("quiet", False) or globals_map.get("q", False)
+    JSON_MODE = globals_map.get("json", False)
+    VERBOSE = globals_map.get("verbose", False) or globals_map.get("v", False)
+    FORCE = globals_map.get("force", False) or globals_map.get("yes", False) or globals_map.get("y", False)
+    DRY_RUN = globals_map.get("dry_run", False) or globals_map.get("n", False)
+    use_user = globals_map.get("user", False)
+    server = globals_map.get("server", DEFAULT_SERVER)
+
+    if JSON_MODE:
+        warnings.simplefilter("ignore")
+
+    args = filtered_argv[1:]
+
+    if not args or "--help" in args or "-h" in args:
+        show_help()
+        return
+
+    cmd = args[0]
+    sub_args = args[1:]
+
+    if "--help" in sub_args or "-h" in sub_args:
+        show_help(cmd)
+        return
+
+    token = _resolve_token(use_user)
+    client = ForgejoClient(server, token, dry_run=DRY_RUN)
+
+    handlers = {
+        "issue": cmd_issue,
+        "pr": cmd_pr,
+        "repo": cmd_repo,
+        "label": cmd_label,
+        "hook": cmd_hook,
+        "user": cmd_user,
+        "comment": cmd_comment,
+    }
+
+    handler = handlers.get(cmd)
+    if handler:
+        try:
+            handler(client, sub_args)
+        except ForgejoError as e:
+            die(str(e))
+    else:
+        die(f"Unknown command: {cmd}")
+        show_help()
+
+
+if __name__ == "__main__":
+    main()

@@ -581,7 +581,6 @@ Static (this skill) + Runtime (Katana plugin) = defense in depth.
 
 ## References
 
-- `references/telegram-security-application-2026-05-09.md` — session-verified command set for applying security hardening via Telegram gateway, including macOS path resolution workaround and config verification via grep.
 
 ## Maintenance
 

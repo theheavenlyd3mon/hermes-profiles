@@ -85,13 +85,13 @@ See `references/memory-ecosystem-architecture.md` for how the vault fits into th
 
 | Variable | Purpose |
 |----------|---------|
-| `OBSIDIAN_VAULT_PATH` | Absolute path to the vault (e.g., `/Users/noctis/Hermes Vault/Hermes`) |
+| `OBSIDIAN_VAULT_PATH` | Absolute path to the vault (e.g., `~/Hermes Vault/Hermes`) |
 | `ICARUS_OBSIDIAN=1` | Enables Icarus → Obsidian sync (opt-in) |
 | `FABRIC_DIR` | Where Icarus stores fabric entries (often under vault path) |
 
 ### Vault Structure (This User — Consolidated 2026-05-27)
 
-The vault at `/Users/noctis/Hermes Vault/Hermes/` is the **second brain** — the agent stores the LLM-Wiki, operational notes, and Fabric entries here. Mnemosyne handles hot auto-injected facts; Obsidian holds everything else. They complement each other.
+The vault at `~/Hermes Vault/Hermes/` is the **second brain** — the agent stores the LLM-Wiki, operational notes, and Fabric entries here. Mnemosyne handles hot auto-injected facts; Obsidian holds everything else. They complement each other.
 
 ```
 ├── llm-wiki/                   # THE BRAIN — Karpathy-pattern compounding knowledge base

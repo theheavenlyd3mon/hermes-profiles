@@ -246,9 +246,8 @@ fabric_recall, evaluate each against existing wiki coverage, handle same-session
 overlaps, create wiki pages, log to two Notion databases (Agent Logbook +
 Decision Log), and write a fabric entry documenting the run.
 
-**Reference:** `references/2026-05-26-fabric-promote-methodology.md` — full
-workflow with candidate evaluation criteria, same-session dedup rules, wiki
-page creation conventions, Notion schema verified, and all known pitfalls.
+**Methodology:** candidate evaluation criteria, same-session dedup rules, wiki
+page creation conventions, and Notion schema — verify against the live stack.
 
 **Quick checklist:**
 1. `fabric_report()` → corpus health
@@ -296,15 +295,77 @@ version of the scan (just `npm audit`) that won't timeout.
 
 **Dojo Nightly Script:**
 The `scripts/dojo-nightly-count.py` script provides a basic method to
-aggregate daily work and log to Notion. For the full multi-source audit
-methodology that the LLM-driven cron job follows — covering Kanban,
-session_search, Fabric, cron outputs, and Obsidian — see
-`references/2026-05-19-dojo-methodology.md`. This reference documents the
-complete audit pattern used in actual dojo-nightly runs.
+aggregate daily work and log to Notion. The LLM-driven cron job extends this
+with a multi-source audit covering Kanban, session_search, Fabric, cron
+outputs, and Obsidian.
 
-The reference file in supply-chain-hardening at
-`references/2026-05-14-supply-chain-scan.md` has full scan output from a
-successful manual run — use it as a template.
+---
+
+## Cross-Profile Cron Script Deployment
+
+This section consolidates the `cross-profile-cron-scripts` skill. When a cron job specifies `profile: <name>`, two things change that break naive assumptions:
+
+### Pitfall 1: Script Path Resolution
+
+The cron runner looks for scripts in `~/.hermes/profiles/<name>/scripts/`, **not** `~/.hermes/scripts/` (default profile).
+
+**Fix:** Symlink or copy the script into the target profile's scripts dir:
+```bash
+ln -sf ~/.hermes/<project>/scripts/<script>.py \
+       ~/.hermes/profiles/<name>/scripts/<script>.py
+```
+
+### Pitfall 2: `$HOME` Override
+
+Hermes profiles override `$HOME` to the profile's own directory (e.g. `~/.hermes/profiles/oracle/home/`). Any script using `$HOME` or `os.path.expanduser("~")` to find files will look in the wrong place.
+
+**Fix:** Never rely on `$HOME` in cron scripts. Use one of:
+1. **Hardcoded absolute path** as default: `Path(os.environ.get("ORACLE_DIR", "~/.hermes/oracle"))`
+2. **Env var** set in the cron job or profile .env
+
+### Debugging "script not found" Failures
+
+When a `no_agent` cron job errors with "script not found":
+
+1. **Check which profile the job runs under:**
+   ```bash
+   # cronjob list → find the job → check "profile" and "script" fields
+   ```
+
+2. **Verify the symlink exists in the RIGHT profile's scripts dir:**
+   ```bash
+   ls -la ~/.hermes/profiles/<profile>/scripts/<script>.py
+   # NOT ~/.hermes/scripts/ (that's the default profile)
+   ```
+
+3. **Test the script manually:**
+   ```bash
+   python3 ~/.hermes/profiles/<profile>/scripts/<script>.py
+   # If it errors on imports → install deps
+   # If it errors on file paths → check $HOME issue (Pitfall 2)
+   ```
+
+4. **Check if `$HOME` is the issue:**
+   ```bash
+   # The profile's cron overrides $HOME to ~/.hermes/profiles/<profile>/home/
+   # Quick test: run with explicit HOME
+   HOME=~ python3 ~/.hermes/profiles/<profile>/scripts/<script>.py
+   ```
+
+5. **Trigger a manual cron run to verify the fix:**
+   ```bash
+   cronjob run <job_id>  # then check last_status in cronjob list
+   ```
+
+### Checklist for Profile-Scoped Cron Jobs
+
+- [ ] Script exists at `~/.hermes/profiles/<profile>/scripts/<name>` (not just the default profile)
+- [ ] Script uses absolute paths (not `$HOME`) for all file references
+- [ ] Script dependencies are installed (run it manually first)
+- [ ] Manual test run produces no errors: `python3 ~/.hermes/profiles/<profile>/scripts/<name>.py`
+- [ ] `cronjob run <id>` succeeds after deployment
+
+---
 
 ## Pitfalls
 
@@ -530,29 +591,3 @@ successful manual run — use it as a template.
 ## Reference Files
 
 - `references/gitradar-data-format.md` — GitRadar `recommendations.json` structure, label definitions, jq parsing patterns, and file location with profile HOME path note.
-- `references/2026-05-14-catchup-run.md` — full catch-up run log from
-  May 14, 2026 showing the missed overnight pipeline, wave execution, and
-  user-requested spacing pattern.
-- `references/2026-05-15-auth-expiry-catchup.md` — auth-expiry diagnosis and
-  catch-up run from May 15, 2026. Covers detection via logs, differential
-  diagnosis from machine-sleep, and completion verification patterns.
-- `references/2026-05-19-dojo-methodology.md` — full dojo-nightly
-  multi-source audit methodology (Added May 19, 2026). Documents the
-  Kanban + session_search + Fabric + cron + Obsidian audit pattern used
-  by the LLM-driven cron job. Supersedes the script-only approach.
-- `references/2026-05-19-gitradar-profile-path-mismatch.md` — profile home
-  path mismatch diagnosis and resolution patterns for cron scripts that
-  expect `~` to resolve to user home but cron overrides `$HOME` to profile home.
-- `references/2026-05-21-stale-next-run-at-catchup.md` — catch-up run where
-  stale `next_run_at` values were discovered on supply-chain-advisory-check
-  and foreman-autonomous-loop. Documents the detection pattern for jobs
-  stuck with next_run_at in the past.
-- `references/2026-05-26-fabric-promote-methodology.md` — full fabric → wiki
-  promotion workflow: corpus health assessment, candidate evaluation, same-session
-  dedup, wiki page creation conventions, dual-Notion logging, all known pitfalls
-  discovered across 5 curation runs.
-- `references/2026-05-28-script-reconstruction.md` — cron script reconstruction
-  from session history. Documents 3 lost scripts (kanban-gate.sh,
-  supply-chain-scan.sh, model-pricing-watcher.py), their patterns (gate, no_agent
-  scan, snapshot diff), verification checklist, and the no_agent silent-success
-  failure mode.

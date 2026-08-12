@@ -895,6 +895,7 @@ When ingesting multiple sources at once, batch the updates:
 6. Write a single log entry covering the batch
 
 - **For research-driven ingests** (user asks to "research X and add to wiki" rather than handing a source), see `references/batch-research-ingest-workflow.md` for the full workflow: parallel searches → extract → gap analysis → batch ingest.
+- **For freestyle / topic-selection passes** (user says "pick N topics in {domains} and run the full pipeline"), see the "Freestyle / Topic-Selection Research Pass" variant in that same reference: gap analysis leads (pick topics with no existing page), then parallel sweep, raw `sha256` capture with the `__COMPUTE__` batch technique, and batch ingest. Watch for the cron-category coverage gap.
 - **For external catalog review** (user points at a large structured source like an awesome-list, knowledge base, or curated repo), see the "External Catalog Review" variant in the same reference file. Key difference: the source is already structured, so the workflow is delegate-extract → gap-analyze → batch-create rather than search → extract → create.
 
 ### Archiving

@@ -1,7 +1,7 @@
 ---
 name: hermes-profile-migration
 description: Execute a multi-profile Hermes migration — create profiles, deploy SOUL.md, seed skills, pin critical skills, remap cron, update Discord, restart gateway. Covers rollback strategy and validation.
-version: 1.1.0
+version: 1.2.0
 author: Senna / Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -191,7 +191,28 @@ ls ~/soul-archive/       # Confirm all SOUL.md files archived
 
 **Profiles that may already be gone:** Renamed profiles (oracle→finance, designer→creative, secretary→knowledge) often get removed during the rename step, before archival. Check for them first — if gone, their SOUL.md may have been lost. The `general` profile (Hermes default) is sometimes present and not part of the migration — confirm with user before deleting.
 
+## Ad-hoc Profile Retirement (no migration)
+
+Retiring profiles outside a migration (fleet cleanup, "we don't need X anymore"). This fleet's convention is `~/.hermes/profiles/.archived/` — archive = `mv profile .archived/profile`, not `rm -rf` + separate soul-archive.
+
+1. **Inventory first.** `ls ~/.hermes/profiles/` AND `ls ~/.hermes/profiles/.archived/`. A profile can exist in BOTH places — the live copy may be debris (no SOUL.md, no sessions, stripped dirs) left over from a previous archive. If already archived: delete the live debris dir, keep the archived copy unless the user says purge.
+2. **Coverage check before archiving a parent that was split into sub-profiles.** Diff the parent's real skill set against the children:
+   ```bash
+   # parent's actual skills (empty category dirs don't count)
+   find <parent>/skills -name 'SKILL.md' | sed 's|<parent>/skills/||;s|/SKILL.md||'
+   # flag any missing from ALL children
+   for s in $(find <parent>/skills -name 'SKILL.md' | sed 's|<parent>/skills/||;s|/SKILL.md||'); do
+     find <child1>/skills <child2>/skills ... -name SKILL.md -path "*$(basename $s)*" | grep -q . || echo "MISSING: $s"
+   done
+   ```
+   "Missing from children" ≠ "lost" — check the rest of the fleet (e.g. `security`, `senna`) before concluding. Only archive when every parent skill exists somewhere. Real case: cyber-blue parent's only two unique skills already lived in `security`, so archiving was safe.
+3. **Liveness check before moving.** `cat <profile>/gateway.pid` and `kill -0 <pid>` — never mv/rm a profile with a running gateway.
+4. **Update the orchestrator's routing afterward.** senna's SOUL.md TEAM + ROUTE lines will still point at the retired profile — patch both. The SOUL format is dense pipe-delimited single lines; `sed` with `|` delimiters collides with the content, use the patch tool instead.
+5. **Record the retirement** in shared memory (what was archived/deleted, where coverage landed) so future "do we still have X" investigations resolve in one lookup.
+
 ## Pitfalls
+
+- **Bare config = missing sections, not just "minimal."** When a user flags a profile config as "bare," it means only `model:` is set and everything else (agent, tools, display, memory, security, delegation, compression, tts, stt) is relying on Hermes defaults. This isn't necessarily wrong — Hermes has built-in defaults — but it means the profile was never tuned. Before assuming defaults are fine, ask the user if they want to add specific sections (e.g., `security.redact_secrets`, `agent.max_turns`, `display.skin`, `memory.enabled`).
 
 - **Can't restart gateway from inside gateway process.** `hermes gateway restart` is blocked when called from within the running gateway. Must restart from a separate terminal or shell session. If stuck, schedule a one-shot cron job to restart, or ask the user to run it manually.
 - **Subagent file writes don't persist.** Files written by subagents via delegate_task are in an isolated sandbox — they won't exist in the parent terminal. Write deployment files (SOUL.md copies, config changes) directly in the parent context.
@@ -204,6 +225,8 @@ ls ~/soul-archive/       # Confirm all SOUL.md files archived
 - **Orphan profiles outside the migration plan.** Profiles like `general` (Hermes default) may exist alongside migration targets. Always ask the user which profiles to keep vs delete — don't assume the migration plan covers everything in `~/.hermes/profiles/`.
 - **Platform-specific profiles.** Some profiles only exist on certain machines (e.g., `ue5` on Windows PC, not Mac). Don't flag their absence as an error — confirm with user whether they're expected.
 - **Users may want to keep profiles marked for deletion.** The migration plan may mark old profiles (architect, designer, etc.) for decommission, but the user might change their mind mid-migration. Always confirm with the user before archiving/deleting old profiles. If they want to keep one, it needs its own bot token (not shared with its replacement), its own channel, and its own slot in the gateway fleet.
+- **Gateway shows ghost entries for deleted profiles.** `hermes gateway list` may still show deleted profiles as "not running" if their launchd plist was installed before deletion. The ghost entry persists until the plist is manually removed (`rm ~/Library/LaunchAgents/ai.hermes.gateway-<name>.plist`) or `hermes gateway install` is re-run for remaining profiles. Ghost entries are cosmetic but confusing — they make it look like the profile still exists when it doesn't. Always check `ls ~/.hermes/profiles/` for ground truth, not the gateway list.
+- **Profile disappearance investigation is expensive.** When a user asks "do we still have X profile?", the answer may require cross-referencing 4+ sources: filesystem (`ls ~/.hermes/profiles/`), gateway list (`hermes gateway list`), session history (`session_search`), and memory (`mnemosyne_recall`). If the SOUL.md was never archived, the identity is permanently lost — session transcripts may contain the original draft but extracting it is labor-intensive. Prevention is always cheaper: archive SOUL.md before any profile deletion, even if "we'll never need it again."
 - **Auxiliary provider errors after migration.** If `auxiliary.title_generation` or `auxiliary.vision` use `provider: nous` but no `NOUS_API_KEY` is set, session startup throws errors. Fix: switch to the profile's main LLM provider. Example for xiaomi: `hermes config set auxiliary.title_generation.provider xiaomi`, `hermes config set auxiliary.title_generation.model mimo-v2.5-pro`, `hermes config set auxiliary.title_generation.base_url https://token-plan-sgp.xiaomimimo.com/v1`. Repeat for `auxiliary.vision`. The `base_url` must be set explicitly — auxiliary services don't inherit it from the main model config.
 
 ## Rollback Strategy
@@ -222,7 +245,36 @@ After restart:
 - [ ] Bot display names match new profile names (verify via Discord API: `curl -s https://discord.com/api/v10/users/@me -H 'Authorization: Bot <token>'` — mismatched names = token reuse identity drift, fix in Discord Developer Portal)
 - [ ] No old profile names referenced in active config
 
+## Troubleshooting: Investigating a Lost Profile
+
+When a user asks "do we still have X profile?" and it's not in `ls ~/.hermes/profiles/`:
+
+1. **Check gateway list** — `hermes gateway list` shows ghost entries for deleted profiles (plists persist). Confirms the profile *existed* but not that it *still exists*.
+2. **Check migration map** — `references/june-2026-profile-migration-map.md` (or equivalent). The profile may have been renamed/absorbed (architect→security, oracle→finance, etc.).
+3. **Search session history** — `session_search` for the profile name + "SOUL" or "profile". The session where the SOUL.md was written or the migration was executed will have the details.
+4. **Search LCM** — `lcm_grep` for the profile name across all sessions. Broader recall than session_search.
+5. **Search Mnemosyne** — `mnemosyne_recall` for any saved memory about the profile.
+6. **Check soul-drafts** — `ls ~/Downloads/soul-drafts/` for any archived SOUL.md files from the migration.
+7. **If SOUL.md is gone** — the identity is permanently lost. Options: reconstruct from role description + model fleet assignment, or draft fresh. Session transcripts may contain the original draft content but extraction is labor-intensive.
+
+**Key lesson:** The SOUL.md is the only irreplaceable artifact. Skills, config, and memories are either migrated or disposable. If the SOUL.md wasn't archived before deletion, the profile's identity is gone.
+
+## Related: Publishing Profiles
+
+If the user wants to **share** the migrated profiles publicly (GitHub repo, open source), see `hermes-profile-publishing`. Migration restructures internally; publishing sanitizes and packages externally.
+
+## Creative Profile — Music/Suno Pipeline
+
+The creative profile has a specialized music generation pipeline using [PERSON_NAME] AI:
+
+- **Skills:** `suno-music-creation` (8-step brief→output), `songwriting-and-ai-music` (foundational craft), `trapsoul-vibe-a` (trap soul template)
+- **Artist identities:** RIVEN (male trap soul), SOLA (female alt-R&B/neo-soul), MyGame (collab)
+- **Project docs:** `~/MyGame/docs/artist-branding/` (NOT `~/Documents/Projects/MyGame/` — project was renamed)
+- **Key notation:** DSL (Domain-Specific Language) for energy curves in [PERSON_NAME] style prompts — mathematical lifecycle notation ($S(x)$, $E(x)$, $b=0/1$, L0-L5 layers)
+- **Config note:** Creative profile runs on `openrouter/owl-alpha` (not xiaomi/mimo-v2.5 like most Tier 1 profiles). Its config is minimal — only `model:` section set.
+
 ## References
 
 - `references/migration-execution-log.md` — Real migration execution: 17-profile Mac redesign (2026-06-12), phases executed, issues encountered, timing
 - `references/env-key-distribution.md` — API key audit methodology and distribution map for the 21-profile fleet (5 keys total, grouped by provider)
+- `references/june-2026-profile-migration-map.md` — Concrete old→new profile mapping from the June 2026 redesign: which old profiles became which new ones, bot token reuse, and which SOUL.md files were lost (all of them)

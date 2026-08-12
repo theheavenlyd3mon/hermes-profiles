@@ -91,7 +91,7 @@ If the path doesn't exist, search nearby directories for the actual location:
 # Search for the vault directory containing the wiki
 find "$(dirname "$WIKI_PATH")" -maxdepth 1 -type d -iname "*wiki*" 2>/dev/null
 # Or search the whole vault for SCHEMA.md
-find "/Users/noctis/Hermes Vault/Hermes" -maxdepth 3 -name "SCHEMA.md" 2>/dev/null
+find "~/Hermes Vault/Hermes" -maxdepth 3 -name "SCHEMA.md" 2>/dev/null
 ```
 
 Common causes of WIKI_PATH mismatch:

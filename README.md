@@ -21,12 +21,13 @@ profiles/
   business/       — Strategy, marketing, product. Framework-driven.
   media/          — Media library, music, gaming. Quality curation.
   cyber-red/      — Offensive security. Pen testing, red team, exploit dev.
-  cyber-blue/     — Defensive security. SOC, IR, forensics, compliance.
   cyber-blue-cloud/     — Cloud security. IAM, misconfiguration, runtime signals.
   cyber-blue-compliance/ — Compliance & audit. Policy-as-code, evidence packs.
   cyber-blue-forensics/ — Forensics & IR. Preservation, acquisition, timeline.
   cyber-blue-soc/       — SOC & detection. Triage, rule tuning, runbooks.
   educate/        — Teaching design. Adaptive tutoring, lessons, workshops.
+  novel/          — Long-form fiction pipeline. Plan, draft, revise, export.
+  gamehub-mod/    — Discord community moderation. Triage, audit watch, escalate.
 ```
 
 Each profile contains:
@@ -106,7 +107,7 @@ To set up a fleet:
 | Type | Role | Examples |
 |------|------|----------|
 | **Orchestrator** | Manages a domain, delegates to workers | code, creative, research, security, infra, mlops |
-| **Worker** | Does focused work, reports up | finance, knowledge, homelab, media, social, communication, business, cyber-red, cyber-blue, cyber-blue-cloud, cyber-blue-compliance, cyber-blue-forensics, cyber-blue-soc, educate |
+| **Worker** | Does focused work, reports up | finance, knowledge, homelab, media, social, communication, business, cyber-red, cyber-blue-cloud, cyber-blue-compliance, cyber-blue-forensics, cyber-blue-soc, educate, novel, gamehub-mod |
 | **Top Orchestrator** | Routes across all domains | senna |
 
 ## Customization
@@ -141,7 +142,7 @@ This repo includes skills from the following open-source projects:
 - **Author:** Mahipal (mukul975)
 - **Repo:** [github.com/mukul975/Anthropic-Cybersecurity-Skills](https://github.com/mukul975/Anthropic-Cybersecurity-Skills)
 - **License:** [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-- **Used in:** cyber-red, cyber-blue profiles
+- **Used in:** cyber-red, cyber-blue-* profiles
 - **Description:** 753 cybersecurity skills covering pen testing, forensics, threat intel, IR, cloud security, and more.
 
 ## License

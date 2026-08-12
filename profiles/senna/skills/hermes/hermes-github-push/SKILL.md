@@ -46,9 +46,12 @@ This means:
 ```bash
 gh auth status 2>&1
 gh auth token 2>&1 | head -c 20   # verify token actually exists
+gh api user --jq '.login' 2>&1    # verify token actually WORKS — not just present
 ```
 
-If status says "Logged in" AND token shows a real value — you're good, just push.
+**If `gh auth status` is green and `gh auth token` returns a value BUT `gh api user` returns 401:** the token is stored in your macOS Keychain and the Keychain entry is corrupted/stale. This is the most common failure mode on macOS. Skip directly to the Keychain fix in Step 3.
+
+If status says "Logged in" AND token shows a real value AND `gh api user` returns your username — you're good, just push.
 If status says "Failed" or token says "no oauth token found" — proceed to Step 2.
 
 ### Step 2: Check session history FIRST
@@ -70,7 +73,13 @@ They'll get a code to paste in browser. Once it says "✓ Logged in", **verify b
 gh auth token 2>&1 | head -c 20
 ```
 
-**Pitfall:** `gh auth login --web` can say "✓ Logged in" but NOT persist the token — especially on macOS where `gh` stores tokens in the system Keychain. If `gh auth token` returns "no oauth token found", the Keychain entry is corrupted or inaccessible. Fix:
+**Pitfall:** `gh auth login --web` can say "✓ Logged in" but NOT persist the token — especially on macOS where `gh` stores tokens in the system Keychain. If `gh auth token` returns "no oauth token found", the Keychain entry is corrupted or inaccessible.
+
+**How to diagnose:** Check if the token lives in the file or only in Keychain.
+```bash
+cat ~/.config/gh/hosts.yml
+```
+If the `users.<username>:` block has NO `oauth_token:` field, the token is in Keychain only — and when `gh api user` returns 401, the Keychain entry is stale. Fix:
 ```bash
 # Delete stale keychain entry and retry
 security delete-generic-password -s "gh:github.com" 2>/dev/null
@@ -134,12 +143,39 @@ GITHUB_TOKEN="$TOKEN" gh api user --jq '.login'
 
 **Pitfall:** `gh` CLI does NOT read `.env` files. Setting `GITHUB_TOKEN` in `.env` only helps if you explicitly `export` it in the shell. For `gh` to use it, pass it inline: `GITHUB_TOKEN="$TOKEN" gh ...`
 
+## Repo Creation
+
+`gh repo create` requires a PAT with **different scope** than push/pull access. A token that passes `gh auth status` and `gh api user` may still fail on repo creation:
+
+```bash
+# Pre-check: test if the token can create repos
+gh api /user/repos --jq '.[0].name' 2>&1
+# If this returns data: token has read access to repos you own — createRepo may still fail
+# If this errors with 403/401: token lacks even read access — createRepo will definitely fail
+```
+
+**`gh repo create` → `Resource not accessible by personal access token (createRepository)`**
+
+The PAT has enough scope for auth, API reads, and pushes, but lacks the `createRepository` permission.
+
+Fixes (pick one):
+1. **User creates repo manually** (fastest — 15 seconds). Open `https://github.com/new`, create empty public repo, then just `git push`.
+2. **Add `createRepository` scope to the PAT.** Classic PAT: add `repo` scope (covers create + push). Fine-grained PAT: add `Administration: Read and write` under Repository permissions.
+3. **Use the browser** to create the repo via GitHub's web UI if browser tools are available.
+
+After repo exists (regardless of method), set remote and push:
+```bash
+git remote add origin https://github.com/<user>/<repo>.git
+git push -u origin main
+```
+
 ## Common Failure Patterns
 
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `could not read Username` | No auth configured | Run `gh auth login` in real terminal |
 | `Invalid username or token` | Token expired/bad | Re-run `gh auth login` or regenerate PAT |
+| `Resource not accessible (createRepository)` | PAT lacks create-repo scope | Create repo manually in browser, then push |
 | `Host key verification failed` | SSH key issue | Use HTTPS, not SSH |
 | `Device not configured` | Sandboxed terminal can't prompt | Copy gh config from real home |
 | `no oauth token found` | Keychain entry corrupted | `security delete-generic-password -s "gh:github.com"` then re-login |

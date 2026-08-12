@@ -77,7 +77,7 @@ MagicMirror² is **MIT licensed** — you can freely modify, redistribute, and u
    git remote add upstream https://github.com/MagicMirrorOrg/MagicMirror.git
    ```
 3. **Secure install procedure** (always use these steps, in order):
-   a. **Vet dependencies** — before installing, assess the dependency tree. See `supply-chain-hardening` skill, Layer 0 (Pre-Install Dependency Risk Assessment). For a worked example, see `supply-chain-hardening` → `references/magicmirror-dependency-analysis.md`
+   a. **Vet dependencies** — before installing, assess the dependency tree. See `supply-chain-hardening` skill, Layer 0 (Pre-Install Dependency Risk Assessment).
    b. **Pin exact versions** — strip `^` from all production dependencies in `package.json` to prevent range resolution from introducing unexpected code
    c. **Remove unnecessary deps** — if features won't be used (e.g., pm2 process manager), uninstall them before install
    d. **Install production-only** — `npm install --only=prod --omit=dev` (excludes devDependencies entirely)

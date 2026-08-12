@@ -415,6 +415,13 @@ If the task is code-related, include exact file paths, likely test targets, and 
 Save the plan with `write_file` under:
 - `.hermes/plans/YYYY-MM-DD_HHMMSS-<slug>.md`
 
+### Non-code planning (adaptation)
+Plan Mode's task template is built for code (write-failing-test → implement → verify). It also serves
+*research/decision* plans (e.g. hackathon rule-capture, build-formulation) where "tasks" are read-only
+research + scoring steps, not TDD cycles. In that case: keep the Goal/context/approach/risks structure,
+but the steps are investigation + a decision framework. The real implementation plan is written later,
+after the user picks a direction. Do not force TDD steps onto non-code planning.
+
 Treat that as relative to the active working directory / backend workspace. Hermes file tools are backend-aware, so using this relative path keeps the plan with the workspace on local, docker, ssh, modal, and daytona backends.
 
 ### Interaction style
@@ -422,7 +429,10 @@ Treat that as relative to the active working directory / backend workspace. Herm
 - If the request is clear enough, write the plan directly.
 - If no explicit instruction accompanies `/plan`, infer the task from the current conversation context.
 - If it is genuinely underspecified, ask a brief clarifying question instead of guessing.
+- If the build hinges on an unanswered user decision, SURFACE THE QUESTIONS IN YOUR REPLY as numbered items — do NOT only bury them in the plan file. User signal (Spark session): "how about you tell me the questions for me to answer" — they want the questions in front of them, not hidden in a doc they must open.
 - After saving the plan, reply briefly with what you planned and the saved path.
+
+**Competition/hackathon entries:** If the user hasn't yet chosen WHAT to build (problem not formulated, rules not extracted), use the `web3-hackathon-entry` skill first for Phase A (requirements-capture + build-formulation + scoring matrix). Only invoke this skill's Plan Mode for Phase B — the actual implementation task breakdown — once the build is chosen.
 
 ## Remember
 

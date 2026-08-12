@@ -50,18 +50,30 @@ Map all Hermes-related directories and running processes:
 ### 2. File Permission Audit
 Check that sensitive files are **not world-readable**:
 ```bash
-# Files to check (must be 600 or 400)
-~/.hermes/archive/.env
-hermes-webui/.env
-hermes-workspace/.env
+# Check .env files (expected: 600)
+stat -f '%SA %N' ~/.hermes/.env
+find ~/.hermes/profiles -name ".env" -not -path "*/home/*" -exec stat -f '%A %N' {} \; 2>/dev/null
+
+# Check auth files (expected: 600)
+stat -f '%A %N' ~/.hermes/auth.json ~/.hermes/auth.lock 2>/dev/null
+# If profile auth.json is a symlink, resolve it and audit target too.
+readlink -f ~/.hermes/profiles/*/auth.json 2>/dev/null
+
+# Check sensitive root DBs (expected: 600)
+stat -f '%A %N' ~/.hermes/kanban.db ~/.hermes/state.db ~/.hermes/gateway_state.json 2>/dev/null
+
+# Check sensitive profile-state DBs/files (expected: 600)
+find ~/.hermes/profiles -maxdepth 2 \( -name 'state.db' -o -name 'lcm.db' -o -name 'kanban.db' -o -name 'gateway_state.json' -o -name 'verification_evidence.db' -o -name 'auth.lock' \) -exec stat -f '%A %N' {} \; 2>/dev/null
 
 # Git directories must not be world-readable
-~/.hermes/.git
-hermes-webui/.git
-hermes-workspace/.git
+stat -f '%A %N' ~/.hermes/hermes-agent/.git
+stat -f '%A %N' ~/hermes-webui/.git 2>/dev/null
+find ~/.hermes -maxdepth 3 -name .git -type d -exec stat -f '%A %N' {} \; 2>/dev/null
 ```
 
 **Expected:** All `600` (owner read/write only). Anything `644` or looser is a finding.
+
+**Pitfall — macOS redacts API keys in terminal output:** macOS Terminal.app's security framework replaces live secret values with `***` when output passes through `cat`/`head`/`echo`. This means `grep 'OPENROUTER_API_KEY' .env` may show `***` even though the actual value on disk is live. To bypass: use `sed -n 's/^[^#]*=[^ ]//p' .env` or `xxd .env | less` to verify the actual bytes. The auditor must note this redaction and not assume `***` means the key is a placeholder.
 
 ### 3. Secrets Detection
 Scan for live credentials in `.env` files and source code:
@@ -151,6 +163,34 @@ Count `.env` files across project — too many increases risk of accidental expo
 - Single `.env` at project root (gitignored)
 - Or use OS keychain / secret manager
 - Archive directories should NOT contain active credentials
+- State-snapshot directories should NOT contain active `.env` files with live keys
+
+**Pitfall — `diff -q` can lie about .env identity.** Two `.env` files with the same set of API keys can show as `DIFFERENT` under `diff -q` when only formatting, blank lines, or key ordering differs. Always compare key sets, not raw files:
+
+```bash
+# CORRECT: compare key sets to check identity
+grep -E '^[A-Z_]+=' profile/.env | cut -d= -f1 | sort > /tmp/keys_a.txt
+grep -E '^[A-Z_]+=' root/.env | cut -d= -f1 | sort > /tmp/keys_b.txt
+comm -23 /tmp/keys_a.txt /tmp/keys_b.txt  # keys in A NOT in B
+comm -13 /tmp/keys_a.txt /tmp/keys_b.txt  # keys in B NOT in A
+# Empty output from both == identical key sets
+
+# WRONG: diff -q reports DIFFERENT even when keys are identical
+diff -q root/.env profile/.env  # misleading for identity check
+```
+
+This nuance matters when auditing .env sprawl: finding 16+ "DIFFERENT" files that all have identical keys leads to false urgency. Files that differ only in formatting are still candidates for consolidation, but the risk assessment should note that the keys themselves are the same.
+
+**Hidden attack surface — snapshot/state-snapshot `.env` copies:** Hermes may write pre-update or backup copies under `profiles/<name>/state-snapshots/*/`. These files are easy to overlook but carry live keys and must be included in sprawl counts and secret scans.
+
+```bash
+# Include snapshot copies in total attack surface
+find ~/.hermes -name ".env" 2>/dev/null | wc -l
+find ~/.hermes -name ".env" -not -path "*/home/*" 2>/dev/null | wc -l
+find ~/.hermes/profiles -path "*/state-snapshots/*/.env" 2>/dev/null
+```
+
+If snapshot `.env` files exist, treat them as archive copies: delete keys from them, rotate those keys, and prefer exporting only config metadata without secrets during updates.
 
 ### 10. Process & Service Privileges
 Verify no Hermes services run as `root`:
@@ -159,10 +199,23 @@ ps aux | grep -E 'hermes|postgres|python.*hermes'
 ```
 All should run as regular user (`<user>` in your case).
 
+### 11. Dashboard / Gateway Auth
+Do not stop at listener binding. Even local-only binds matter if hostbinding changes in config or future launch options.
+- Look for blank password/password_hash values in:
+  - `~/.hermes/config.yaml`
+  - `~/.hermes/profiles/<active>/config.yaml`
+- Look at WebUI plugin/auth config for `basic` or `drain` auth plugins enabled.
+- If dashboard password is unset: treat like unauthenticated surface.
+- Remediation: set `dashboard.basic_auth.password`; ensure blank-password condition cannot enable auth plugins accidentally.
+
 ### 11. Firewall & System Hardening
 - macOS: Enable Application Firewall (System Preferences → Security → Firewall)
 - Consider `pfctl` rules to restrict inbound connections to port 8787 if webUI exposed
 - SSH: Ensure `PasswordAuthentication no`, `PermitRootLogin no`
+
+**Pitfall — `sshd_config` comments can mislead on macOS:** Security-related directives may appear in commented form while defaults still apply. `sshd -T` returns the effective runtime config and is authoritative; prefer it over grepping the raw config file.
+- **macOS SSH often has unset or enabled defaults.** `sshd_config` may not contain an explicit enabled `PasswordAuthentication yes`, which keeps password auth enabled. Explicitly set `PasswordAuthentication no`, `PubkeyAuthentication yes`, and `PermitRootLogin prohibit-password`.
+- Validate with: `sshd -T | grep -iE 'passwordauthentication|permitrootlogin|pubkeyauthentication'`
 
 ## Output Format
 
@@ -215,9 +268,31 @@ This skill covers **pre-deploy** and **periodic** security. For **runtime** secu
 
 ### Most Frequent Issues
 
-1. **`.env` with `0644` permissions**  
-   Cause: `umask 022` default or `cp` preserves perms  
+1. **`.env` with `0644` permissions**  \
+   Cause: `umask 022` default or `cp` preserves perms  \
    Fix: `chmod 600 .env` and add to shell profile: `umask 077`
+
+2. **`auth.lock` world-readable (644)**  \
+   Cause: `auth.lock` is a 0-byte mutex created by Hermes with default umask — not sensitive content, but loose perms signal sloppy umask  \
+   Fix: `chmod 600 ~/.hermes/auth.lock`
+   Also audit profile-state DBs: `state.db`, `lcm.db`, `kanban.db`, `verification_evidence.db`, `gateway_state.json` in `~/.hermes/profiles/<name>/`.
+
+3. **Profile state DB world-readable (644)**  \
+   Cause: Hermes sometimes creates profile-level DBs with default umask  \
+   Fix: `find ~/.hermes/profiles -maxdepth 2 \( -name state.db -o -name lcm.db -o -name kanban.db -o -name gateway_state.json \) -exec chmod 600 {} \;`
+
+4. **Shared `auth.json` via profile symlink**  \
+   Cause: Some profiles symlink `auth.json` to the root, so profile compromise accesses the root credential pool  \
+   Fix: Decide whether isolation is intentional; if not, remove symlink and use per-profile auth stores. If intentional, ensure the shared store is still protected under root permissions.
+
+5. **Empty dashboard/gateway password**  \
+   Cause: `dashboard.basic_auth.password: ''` and `password_hash: ''` in config  \
+   Risk: If bind address ever leaves localhost, auth surface is unauthenticated  \
+   Fix: Use `hermes config set dashboard.basic_auth.password <strong>` before external exposure.
+
+6. **Real API keys in archive/snapshot copies**  \
+   Cause: Pre-update `/state-snapshots/*/.env` or backup directories live alongside real data  \
+   Fix: Delete keys from snapshots, rotate those keys, and prevent update tools from exporting `.env` into snapshot dirs.
 
 2. **Real API keys in archive/**  
    Cause: Backup/archive directory not gitignored or encrypted  
@@ -244,6 +319,42 @@ This skill covers **pre-deploy** and **periodic** security. For **runtime** secu
 7. **PostgreSQL exposed**  
    Cause: `pg_hba.conf` allows non-localhost  
    Fix: Ensure `listen_addresses = 'localhost'` and `host all all 127.0.0.1/32 md5`
+
+8. **Profile `.env` sprawl — 24+ copies of the same keys**  
+   Cause: Each Hermes profile created with `--clone-all` inherits a full `.env` copy  
+   Fix: Consolidate to one canonical `.env` at root; profile `.env` should contain **only** profile-specific overrides (discord tokens, device-specific paths). Run `hermes profile list` — if profiles share 90%+ of their env keys, they're all at risk from a single leaked file.  
+   **Real-world measurement:** A 22-profile installation had **62 total .env files** (22 top-level + 40 nested inside profile `home/` directories), each carrying the same set of **20 API keys** — that's **320 redundant key declarations**. Run the full count:
+   ```bash
+   find ~/.hermes -name ".env" 2>/dev/null | wc -l
+   find ~/.hermes -name ".env" -not -path "*/home/*" 2>/dev/null | wc -l
+   ```
+   The second count (excluding home) shows the visible surface; the first is the true attack surface. If they diverge significantly, those nested home-directory .env files are invisible to standard scanning.
+
+   **Key-set verification (before renaming):** Before consolidating, verify that the actual API keys are identical — not just that the files look similar. `diff -q` can report DIFFERENT when only formatting or key ordering differs:
+
+   ```bash
+   # Verify key identity across profiles
+   ROOT=/Users/user/.hermes/.env
+   for p in business code finance; do
+     f=/Users/user/.hermes/profiles/$p/.env
+     comm -23 <(grep -E '^[A-Z_]+=' "$ROOT" | cut -d= -f1 | sort) \
+             <(grep -E '^[A-Z_]+=' "$f" | cut -d= -f1 | sort)
+   done
+   # If all profiles produce empty output, keys are identical.
+   # Only then is it safe to remove the per-profile .env.
+   ```
+
+9. **Multiple gateway processes running**  
+   Cause: One gateway per profile, each with its own `.env` and `config.yaml`  
+   Fix: `ps aux | grep -c "hermes.*gateway"` — if >1, choose a primary profile, move its config to root, stop the extras. Multi-gateway increases attack surface and means credential pools aren't shared.
+
+10. **Large profile sandbox home (>500MB)**  
+    Cause: Cron jobs, subagents, and delegation workers accumulate `.cache/`, `.npm/`, `.gem/` in `~/.hermes/profiles/<name>/home/`  
+    Fix: Check with `du -sh ~/.hermes/profiles/senna/home/.cache 2>/dev/null`. Clean with `rm -rf ~/.hermes/profiles/*/home/.cache 2>/dev/null`. These caches are regenerated on demand.
+
+11. **`auth.lock` world-readable (644)**  
+    Cause: `auth.lock` is a 0-byte mutex created by Hermes with default umask — not sensitive content, but loose perms signal sloppy umask  
+    Fix: `chmod 600 ~/.hermes/auth.lock`
 
 ## Remediation Workflow
 
@@ -311,4 +422,6 @@ Save audit results as: `Hermes Vault/Hermes/Operations/Security/audit-YYYY-MM-DD
 
 ## Change Log
 
+- **2026-07-06** — Added dashboard/gateway blank-password auth check; added macOS SSH default-auth note and `sshd -T` validation; flagged snapshot `.env` copies as archive-equivalent exposure plus `.env` key-set verification nuance; added recommendation to audit external-facing bind/port combinations beyond 127.0.0.1 defaults.
+- **2026-06-26** — Added macOS `***` redaction pitfall; fixed `-perm` syntax to use `stat -f '%A'`; added auth.lock, multiple gateways, profile .env sprawl, and sandbox cache findings to Common Issues; added reference example file with live audit commands
 - **2026-04-25** — Initial version, based on first full-system audit of the Hermes installation

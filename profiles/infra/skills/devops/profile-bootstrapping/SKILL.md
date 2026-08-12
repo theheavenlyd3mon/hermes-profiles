@@ -592,7 +592,7 @@ After pulling, run `./install.sh` to copy updated profiles to `~/.hermes/profile
 
 **Pitfall: profiles in repo are copies, not symlinks.** Edits on the target machine don't sync back. Always edit on the authoring machine and push. If you need bidirectional sync, use the repo as the source of truth on both sides.
 
-**2026-06-04: Created `theheavenlyd3mon/windowshermes` repo with 4 domain profiles (ue5-coder, threejs-coder, blender-coder, designer), 28 knowledge pages, and install script. Reference projects: ActionRoguelike (Tom Looman UE5 C++ reference) and ALIS (plugin architecture template) forked under same account.**
+**2026-06-04: Created `<your-github-username>/windowshermes` repo with 4 domain profiles (ue5-coder, threejs-coder, blender-coder, designer), 28 knowledge pages, and install script. Reference projects: ActionRoguelike (Tom Looman UE5 C++ reference) and ALIS (plugin architecture template) forked under same account.**
 
 **2026-06-08: Added `arch` profile (system design & reasoning specialist). Updated all profiles to use AtomicBot TurboQuant fork + AtomicChat UDT GGUFs. Added docs/ with full setup guides. Repo now has 5 profiles, dual-backend support (Ollama or AtomicBot llama.cpp), and model-specific scripts for building, starting, and downloading GGUFs.**
 
@@ -604,7 +604,7 @@ Current fleet (8 bots with Discord gateways, as of May 27, 2026):
 
 | Profile | Channel | Gateway | Role | auto_thread |
 |---------|---------|---------|------|-------------|
-| senna | #nexus-hq | ✅ launchd | Coordinator, front door | true |
+| senna | #your-orchestrator-channel | ✅ launchd | Coordinator, front door | true |
 | architect | #architecture | ✅ launchd | System design | true |
 | coder | #engineering | ✅ launchd | Code implementation | true |
 | designer | #design-studio | ✅ launchd | Master UI & Graphics | **false** |
@@ -624,6 +624,6 @@ Non-Discord profiles (for Kanban dispatch):
 | reviewer | Quality gate, code review | (configured) |
 | security | Security audit, vuln scanning | (configured) |
 
-Server ID: 1508910747382583610. Channel IDs in `references/discord-multi-bot-setup.md`.
+Server ID: <id>. Channel IDs in `references/discord-multi-bot-setup.md`.
 
 **Deleted profiles (2026-05-27):** council, explorer, librarian — generic boilerplate with no custom SOUL.md, no Discord bots, no unique purpose. Removed to reduce clutter.

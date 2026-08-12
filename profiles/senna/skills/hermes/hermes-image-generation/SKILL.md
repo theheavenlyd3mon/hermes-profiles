@@ -169,9 +169,26 @@ the CURRENT profile's config, not the target. Always verify with:
 hermes config path   # confirms which config file is being edited
 ```
 
+**Pitfall:** `HERMES_PROFILE=<name> hermes ...` is IGNORED — the env var does
+not switch profiles; `config`, `plugins`, and `tools` commands keep reading
+the current profile. Use the global flag instead:
+`hermes --profile <name> config path` (confirm first), `plugins list`, `tools list`.
+
 For profiles without their own FAL key, `use_gateway: true` routes through the
 Nous managed gateway. The FAL key in the gateway's .env covers all profiles on
 the same machine.
+
+## Third-Party Image Plugins
+User plugins (e.g. hermes-image-studio) live in `~/.hermes/plugins/` or a
+profile's own `plugins/` dir, register their own toolset, and typically gate
+on `FAL_KEY` at call time. Verify install:
+`hermes --profile <name> plugins list --user --plain` (shows name/version/enabled).
+Audit before enabling: grep the source for outbound URLs (should be the
+provider's endpoints only) and for hardcoded author-machine paths (output
+dirs like `/Volumes/...`) — override via the plugin's env var in the
+profile's `.env`. To confirm tools register without a paid generation,
+dry-run `register(ctx)` with a stub ctx (`register_tool` appends to a list)
+via the hermes-agent venv python, importlib-loading the plugin `__init__.py`.
 
 ## Gateway Restart
 

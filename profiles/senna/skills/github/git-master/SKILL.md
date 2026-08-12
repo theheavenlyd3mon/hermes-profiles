@@ -24,7 +24,8 @@ This skill teaches GitHub concepts, guides learners through workflows step-by-st
 
 Core philosophy: explain the *why* before the *how*. Every concept comes with a plain-language explanation, a real-world analogy, and the practical steps to execute it.
 
-**References directory:** Contains detailed diagnostic guides — `references/token-location-diagnosis.md` for tracing where tokens live across `gh`, `.env`, and git credential stores. `references/fork-pr-file-inspection.md` for reading files from fork PRs before they're merged. `references/divergent-branch-recovery.md` for fixing local/remote history mismatches and cherry-pick conflict resolution.
+**References directory:** Contains detailed diagnostic guides — `references/token-location-diagnosis.md` for tracing where tokens live across `gh`, `.env`, and git credential stores. `references/fork-pr-file-inspection.md` for reading files from fork PRs before they're merged. `references/divergent-branch-recovery.md` for fixing local/remote history mismatches, cherry-pick conflict resolution, **and the parallel-restructure case** (two sides renamed/deduped the same files — path diffs are misleading; use content-similarity instead).
+**Scripts directory:** `scripts/reconcile_probe.py` — a safe, reversible probe that dry-runs the merge (tallying conflict codes, then aborts) and classifies local-unique files as dup/overlap/genuine by all-vs-all Jaccard similarity. Run it BEFORE deciding any reconcile strategy on a divergent clone.
 
 ## When to Use This Skill
 

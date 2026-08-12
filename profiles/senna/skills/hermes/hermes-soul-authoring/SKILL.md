@@ -1,7 +1,7 @@
 ---
 name: hermes-soul-authoring
 description: Write, review, audit, and evolve SOUL.md persona files for Hermes Agent profiles. Covers the official structure, required sections from the multi-agent-team pattern, anti-patterns, critical review methodology, and practical templates.
-version: 1.5.0
+version: 1.6.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -20,7 +20,12 @@ QUICKREF: Structure{Identity,Style,Avoid,Defaults}→Audit{Scope,Operational,Ten
 
 ## What SOUL.md Is
 
-- **Slot #1** in system prompt — replaces default identity entirely. `~/.hermes/profiles/<name>/SOUL.md`
+- **Slot #1** in system prompt — replaces default identity entirely.
+- **Loaded from:** `$HERMES_HOME/SOUL.md`. But `HERMES_HOME` depends on active profile:
+  - **Default/no profile** → `HERMES_HOME` = `~/.hermes/` → reads `~/.hermes/SOUL.md`
+  - **Profile `<name>` active** → `HERMES_HOME` = `~/.hermes/profiles/<name>/` → reads `~/.hermes/profiles/<name>/SOUL.md`
+- **Per-profile SOUL.md IS auto-loaded** when that profile is active. `_apply_profile_override()` sets `HERMES_HOME` to the profile directory before `load_soul_md()` runs, so `get_hermes_home() / "SOUL.md"` resolves to the profile's SOUL.md. The root `~/.hermes/SOUL.md` is only for the default profile.
+- Per-profile SOUL.md files are NOT blueprints — they are live identities. Copying to root is only needed when you want the default (no-profile) session to use that persona.
 - **Behavioral contract** — not a role description. Immutable per session.
 - **Rule of thumb:** profile-wide behavior → SOUL.md. Project-specific → AGENTS.md.
 
@@ -218,7 +223,7 @@ All 10 team profiles converted from prose to compressed DSL. Results:
 
 ### Compressed DSL Sections for Team Profiles
 
-Team specialist profiles use this 9-section structure (derived from Senna's format, adapted for specialists):
+Team specialist profiles use this structure
 
 ```
 # {Name}
@@ -373,6 +378,79 @@ AVOID: {AntiPattern1}. {AntiPattern2}. {AntiPattern3}. {AntiPattern4}.
 - Profile has a Discord bot → use the full 6-section team pattern
 - Profile is a generalist (senna) → use the prose Identity/Style/Avoid/Defaults structure
 
+## Research-Grounded Approach — Before You Draft
+
+**Signal from user (2026-06-26):** "lets see if we can /learn about the unreal 5.8 conventions to create more specific skills rather than guessing... reputable skills that work with the mcp and assist our agent workflow to be smooth and less friction."
+
+**Rule:** Before drafting domain-specific SOUL.md or skills for a technology, research the actual docs first. Do not guess API conventions, deprecations, or workflow patterns. The user explicitly values accuracy over speed.
+
+### Research Protocol
+1. **Search release notes** — `web_search` for `<technology> release notes <version>` from authoritative source (dev.epicgames.com, docs.python.org, etc.)
+2. **Extract authoritative docs** — `web_extract` on the release notes page. Get specific API changes, deprecations, new features.
+3. **Search API changes** — `web_search` for `<technology> <version> deprecated API changes migration guide` to catch what release notes miss
+4. **Search ecosystem** — `web_search` for `<technology> <version> MCP` or `<technology> <version> agent integration` for tooling that enables agent workflows
+5. **Search third-party sources** — community migration guides (slowburn.dev, strayspark.studio, etc.) often have the most concise API change lists
+6. **Compile a research brief** — save as `research/<topic>-research-brief.md` before drafting any skill or SOUL.md
+7. **Draft from the research, not from memory** — every claim about API, convention, or deprecation must trace back to the research brief
+8. **Flag unknowns explicitly** — if the research didn't cover something, say "not found in research" rather than guessing
+
+### Pitfall: Stale Skills from Memory
+❌ Writing domain skills from memory of an older version (e.g., writing UE 5.0 patterns for a UE 5.8 profile).
+✅ Always check the actual version's docs. A 5-minute research pass prevents hours of wrong skill output.
+
+### Example: UE 5.8 Research (2026-06-26)
+- Release notes extracted from dev.epicgames.com: MegaLights Production Ready, Lumen Lite (2x faster), Iris Replication Production Ready, Mesh Terrain Experimental
+- 21 C++ API deprecations documented (FProperty::ElementSize → GetElementSize(), UClass::ClassDefaultObject → GetDefault<>(), RunUBT replaces UnrealBuildTool, etc.)
+- 3 MCP bridge options found: native Unreal MCP plugin (UE 5.8 built-in), AgenticLink (professional), ue5-mcp-bridge (open source)
+- Research saved to `research/ue5-8-research-brief.md` before any SOUL.md drafting
+
+See `references/research-grounded-approach.md` for a template workflow checklist.
+
+### Standalone Profile Pattern (Non-Team, Isolated Machines)
+
+For profiles running on a separate machine (e.g., Windows PC for game dev) with **no Discord bot, no Kanban, no team handoffs**, use this pattern:
+
+```
+# {Profile Name}
+
+IDENTITY: {Role}{Focus1,Focus2}. {Architectures}. {CorePrinciple}. {NotBoundaries}.
+PersRubric(NEO-PI-R,0-100): O2E:…|O:Int:…|O:AI:…|E:Adv:…|E:Int:…|E:Lib:…|C:SE:…|C:Ord:…|C:Dt:…|C:AS:…|C:SD:…|C:Cau:…|E:W:…|E:G:…|E:A:…|E:AL:…|E:ES:…|E:Ch:…|A:Tr:…|A:SF:…|A:Alt:…|A:Comp:…|A:Mod:…|A:TM:…|N:Anx:…|N:Ang:…|N:Dep:…|N:SC:…|N:Immod:…|N:V:…
+STYLE: {Tone}. {CommunicationPattern}. {QualityStandard}.
+AVOID: {AntiPattern1}|{AntiPattern2}|{AntiPattern3}|{AntiPattern4}|{AntiPattern5}|{AntiPattern6}
+DEFAULTS: Lang=EN. {Tool1}|{Tool2}|{Framework}|{Convention}|{Version}.
+
+## Focus
+{2-4 paragraphs covering: what the agent does, its domain expertise, 
+key technologies it works with, and its design/philosophy approach}
+
+## {Domain} Standards
+- {Standard 1 with specific conventions}
+- {Standard 2 with tool-specific details}
+- {Standard 3 with version-aware patterns}
+
+## Verification
+Before marking done:
+- [ ] {Gate 1}
+- [ ] {Gate 2}
+- [ ] {Gate 3}
+
+## Skills for this profile
+Core: {skill1}, {skill2}, {skill3}, ...
+Reference: {skill4}, {skill5}
+```
+
+**When to use:** Profiles on a separate machine with no fleet coordination, no Discord bot presence, no Kanban board. The profile's work is self-contained — user reviews output directly.
+
+**When NOT to use:** Team members in a multi-agent fleet need the full 6-section structure (Team Roster, Collaboration Matrix, Decision Authority).
+
+**Real examples (2026-06-26):**
+- `ue5-coder` — UE 5.8 C++ specialist for Windows PC
+- `designer` — Game visual designer (scenes, UI, art direction)
+- `world-builder` — Narrative and world design (characters, cities, lore)
+- `game-director` — Technical and creative overseer for the whole project
+
+See `references/standalone-profile-examples.md` for full files.
+
 ### Domain Coder Pattern (Standalone Agents)
 
 For standalone coding agents that aren't fleet members (e.g., UE5 coder, Three.js coder running on a local machine with Ollama), use an even simpler structure — no Team Roster, Collaboration Matrix, Decision Authority, or Quality Gates needed. The user reviews output directly.
@@ -417,6 +495,49 @@ When building profiles for a repo (like `windowshermes`), **always check what al
 
 **This session's example:** User had `worldbuilder`, `abilities`, `ue5-coder`, `designer`, `arch` already in windowshermes repo. I created `world-builder` (wrong name) and `abilities` (duplicate). Wasted effort.
 
+## Structured Persona Composer: hersona
+
+`hersona` is a schema-validated persona-attribute library that can **render Hermes-compatible SOUL.md** directly. It is not a voice cheat sheet; it is a persona runtime layer built for composition, conflict checking, intensity scoring, and multilingual output.
+
+Use it when:
+- You want measurable, composable persona attributes instead of freeform SOUL prose.
+- You need conflict-safe blends across personality / speech / archetype / visual / hobby.
+- You want deterministic intensity checks (`measure_intensity`) without LLM cost.
+- You are generating SOUL.md programmatically or validating persona consistency.
+
+Do not use it when:
+- You only need one simple voice tweak — direct SOUL.md edit is faster.
+- The target profile needs persona continuity/history beyond the initial contract.
+- You are authoring private per-user attributes that should not go into a shared template repo.
+
+### What it gives you
+- 201 attributes across `personality / speech / archetype / visual / hobby`, each as YAML.
+- `render_soul(...)` outputs Hermes-style markdown with `name / personality / tone / behavioral guidelines`, preserving anything below the generated block when overwriting.
+- `run_persistent(...)` writes SOUL.md and prints a `config.yaml` block for profile application.
+- `export_blend(...)` outputs `json / messages / markdown / openai_assistants / langchain_system_message`.
+- `BlendResult` exposes `.names`, `.attributes`, `.conflicts`, and `.prompt`.
+
+### Hermes skill path
+```bash
+hermes skills tap add shiro-0x/hersona
+hermes skills install hersona
+hermes skills install hersona-initializer
+```
+
+Then from the installed skill, render directly to profile SOUL.md or export to markdown and paste.
+
+### When to prefer hersona over manual SOUL prose
+- Multiple roles need distinct, repeatable voice contracts.
+- You want to audit persona compatibility across roles before committing them.
+- You need i18n-native persona content (`content_i18n.<lang>`) without translation drift.
+- You want deterministic downstream checks: endings, catchphrases, first-person markers.
+
+See `references/hersona-integration.md` for the actual schema fields, CLI commands, verified output shapes, and the exact mapping to SOUL.md sections.
+
+## Publishing Profiles Externally
+
+When SOUL.md files are ready and the user wants to share them publicly (GitHub repo), see `hermes-profile-publishing`. The publishing workflow handles sanitization (stripping personal paths, Discord channels, hardware references), per-profile README generation, skill packaging, and licensing checks. SOUL.md files should be **rewritten from scratch** with generic placeholders for public sharing — don't try to patch personal references out of working files.
+
 ## Anti-Patterns — Common Mistakes
 
 ### Creating profiles that already exist
@@ -458,6 +579,18 @@ When building profiles for a repo (like `windowshermes`), **always check what al
 ### Leaving out Defaults
 ❌ No fallback behavior for ambiguous situations.
 ✅ **Defaults:** "English unless user writes otherwise. If unsure who to route to, ask. If corrected, acknowledge and fix."
+
+### Jargon dumps for beginners
+❌ Assuming the user knows engine terminology because they’re interested in the domain.
+✅ Mentorship-mode SOULs should chunk explanations: one new term per concept, dependency map before steps, and explicit beginner checks in gates.
+
+### Overprescribing implementation to learners
+❌ Giving a complete architecture or production-grade route before the user has proven a smallest-viable path.
+✅ Mentorship mode defaults to scaffold-first: smallest test bed, dependency check, then one increment that ships.
+
+### Silent approval / deadline blindness
+❌ A director persona says “looks good” without tradeoff review, or recommends work that doesn’t feed the current slice.
+✅ Oversight personas must state tradeoffs explicitly and check whether the work serves the current milestone or a future that may not ship.
 
 ## Critical Review Methodology
 
@@ -521,7 +654,27 @@ For game design multi-agent teams (narrive, gameplay, visuals, tech), see `refer
 - `references/compression-pass-2026-05-15.md` — Log of the Proteus-compression pass applied to this skill: before/after metrics, which sections were compressed vs preserved in prose
 - `references/domain-specialist-examples.md` — 4 real domain specialist SOUL.md files (UE5, Three.js, Blender, Designer) with PersRubric calibration rationale, AVOID patterns by technology, and DEFAULTS encoding for tool/framework choices
 - `references/domain-team-coordination.md` — How to tie domain specialists into a coordinated team: delegate vs profile-native, goal-based workflow, shared vault pattern, team skill pattern. Real example: Eldrath game design team
-- `references/game-design-team-full-souls.md` — Complete SOUL.md files for game design domain specialists (world-builder, abilities, ue5-coder, designer) with full Role/Philosophy/Standards/Camaraderie sections
+- `references/game-design-team-full-souls.md` — Complete SOUL.md files for 5 game design roles: world-builder, abilities, ue5-coder, designer, and game-director (overseer/architect). Also includes the standalone hybrid format (compressed DSL + Focus/Verification/Skills sections) for non-team profiles on isolated machines.
 - `references/profile-splitting-strategy.md` — When a profile has too many skills (>150), split by sub-domain into child profiles with a parent router pattern. Includes real example: cyber-blue 530 skills → 4 child profiles
 - `references/subagent-file-isolation.md` — Subagents write to isolated sandboxes; files don't persist to parent terminal. Workarounds for deploying files created by delegated tasks
 - `references/batch-drafting-17-profiles.md` — Lessons from batch-drafting 17 SOUL.md files with parallel subagents: format drift pitfalls, orchestrator vs worker structure rules, PersRubric calibration table, size results
+- `references/standalone-profile-examples.md` — 4 standalone SOUL.md files for a Windows game dev team (ue5-coder, designer, world-builder, game-director). No Discord, no Kanban, no handoffs — self-contained profiles on an isolated machine.
+- `references/research-grounded-approach.md` — Workflow checklist for researching technology docs before drafting domain-specific skills. Prevents guessing on API conventions and deprecations.
+- `references/game-director-mentor-variant.md` — Mentor-specific director variant requirements and pitfall list.
+- `references/hersona-integration.md` — `hersona` schema fields, verified CLI commands, output shapes, and exact mapping to Hermes SOUL.md / config.yaml.
+
+### Mentorship-Oriented Director SOULs
+
+When the director persona is also the learner’s primary mentor on a solo project, use the mentor variant pattern. This is distinct from advisor-only directors because the answers affect a beginner’s execution confidence and pacing.
+
+Required additions beyond normal director SOUL:
+- **Mentorship Contract** in `DEFAULTS` or a short prose block: why-before-how, scaffold-first, chunked explanations, smallest viable path default.
+- **Beginner-Check Gates** before recommending implementation work: executable without floundering, assumed priors stated, test-bed path offered, engine-version match confirmed, jargon budget constrained.
+- **Tradeoff Mandate**: every recommendation must state what it enables, what it blocks, and what it costs in learning hours or engine setup.
+- **Failure-Mode Framing**: name the engine-level cost/time pain, not just the rule. “This will collide later in packaging” beats “Don’t do this.”
+
+Pitfalls for this variant:
+- Overprescribing advanced workflows or C++ before the learner has proven Blueprint behavior.
+- Hidden assumptions about Git hygiene, project structure, or systems programming experience.
+- Jargon dumps without glossary, dependency map, or one-concept-per-answer discipline.
+- Treating unfinished draft design docs as authoritative constraints without version checks.

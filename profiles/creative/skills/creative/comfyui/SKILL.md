@@ -652,6 +652,13 @@ python3 scripts/fetch_logs.py --tail-queue --host https://cloud.comfy.org
     Use `comfy --skip-prompt tracking disable` to skip non-interactively.
     `comfyui_setup.sh` does this for you.
 
+12. **Verify GPU VRAM before recommending workflows** — do not assume specs
+    from GPU model names. Common mistakes: your GPU = 12GB (not 16GB),
+    RTX 4060 Ti = 8GB or 16GB (two variants). Always check specs via web
+    search or `hardware_check.py` before recommending resolution limits,
+    model choices (Flux full needs ≥12GB), or batch sizes. User corrected
+    agent on this — factual GPU specs are authoritative, not recall.
+
 12. **Video VRAM is much higher than image** — a 5s 720p video with Wan 2.1 14B
     needs ~65-80 GB VRAM (H100 class). Consumer GPUs: use Wan 2.2 5B Hybrid
     (~8 GB) or AnimateDiff (~18 GB). See `references/video-models-2026.md`.

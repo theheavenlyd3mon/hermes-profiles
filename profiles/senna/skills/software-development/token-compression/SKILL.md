@@ -180,6 +180,17 @@ REDFLAGS: QuickFixNow→Phase1Rerun|SkipTest→RejectChange|MultiFixesSameBug→
 
 ---
 
+## Structural Decomposition (Prerequisite)
+
+DSL compression reduces token count within a file, but **structural decomposition** reduces how much gets loaded into context in the first place. If your SKILL.md is > 15KB, decompose BEFORE compressing:
+
+1. Split into slim SKILL.md (< 8KB) + `references/` for detail
+2. Then apply DSL compression to the behavioral sections of SKILL.md
+
+Compression on a monolithic 28KB file produces a still-large compressed file. Compression on an 8KB core produces something that fits comfortably in context alongside tools, memory, and conversation history.
+
+See `tier-1-2-3-skill-system` → "Skill Sizing & Decomposition" for the full pattern.
+
 ## What To Compress vs Keep Prose
 
 | Compress these ✅ | Keep in prose ❌ |
@@ -278,7 +289,6 @@ After compressing a file:
 
 The Hermes-specific compression patterns are now part of this skill. Key references:
 - `references/compressed-skills-examples.md` — concrete before/after examples from the 2026-05-14 compression pass
-- `references/2026-05-15-soul-authoring-compression.md` — SOUL.md-specific compression with Oracle case study (-33%), PersRubric injection
 - `references/soul-md-compression.md` — SOUL.md compression patterns
 - `references/iknowkungfu-submission-workflow.md` — Full submission pipeline for the iknowkungfu registry
 
@@ -286,6 +296,8 @@ The six techniques are identical across variants. The only difference is tool re
 
 ## References
 
+- `references/onboarding-docs-by-educate.md` — concrete example of using the `educate` profile to generate a beginner guide for profiles, `PersRubric`, and `token-compression`
+- `references/docs-cleanup-dead-links.md` — lesson from a docs audit pass: dead links and omitted entries still exist even when tone checks pass
 - Proteus Mega-Prompt (Stoltz, 2023) — the original compressed DSL research for LLM prompts
 - Hermes Agent SOUL.md format — real-world application of compressed DSL in multi-agent systems (see `hermes-soul-authoring` skill)
 - GSD (Get Shit Done) project — spec-driven development with compressed behavioral contracts

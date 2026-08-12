@@ -248,6 +248,5 @@ Cross-reference against Hermes plugin dependencies — if the upgraded tool is u
 
 ## Reference Files
 
-- `references/2026-05-12-full-audit.md` — full audit output from a macOS Sequoia system showing all brew formulae, git repos, and version deltas. Use as an example of output format and scope.
 - `references/post-update-sweep-checklist.md` — quick parallel checklist for post-update verification, known recovery commands, and symptom→cause table.
 - `references/runtime-diagnostics.md` — macOS runtime diagnostics: CPU hog identification, memory pressure checks, process tree tracing, daemon management. Use when the user says "my Mac is hot", "what's running", or "something is slow".

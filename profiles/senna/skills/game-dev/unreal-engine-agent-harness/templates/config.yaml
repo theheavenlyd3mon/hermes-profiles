@@ -1,0 +1,24 @@
+# Starter config for ue-agent-harness
+# Copy this to your project root and edit the project path.
+
+project:
+  uproject_path: "C:/Projects/YourProject/YourProject.uproject"
+  default_module: "YourProject"
+
+bridge:
+  type: "stub"              # "stub" for off-PC dev, "file" for editor
+  file_path: "./bridge/bridge.json"
+  poll_interval: 0.5
+  timeout: 30.0
+
+llm:
+  provider: "anthropic"
+  model: "claude-sonnet-4"
+  api_key_env: "ANTHROPIC_API_KEY"
+  base_url: ""
+
+agent:
+  max_build_retries: 3
+  memory_enabled: false
+  journal_path: "./progress.md"
+  db_path: "./memory.db"

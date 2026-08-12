@@ -142,20 +142,55 @@ du -sh profiles/<active>/*/ | sort -rh | head -15
 The sandboxed `home/` dir accumulates caches and node_modules. Check systematically:
 
 ```bash
-# Top-level home breakdown
+# Top-level home breakdown (visible directories only)
 du -sh profiles/<name>/home/*/ | sort -rh
+
+# Hidden directories are NOT shown by */ glob — check separately
+du -sh profiles/<name>/home/.npm profiles/<name>/home/.local profiles/<name>/home/.gem 2>/dev/null
+du -sh profiles/<name>/home/.* 2>/dev/null | sort -rh | head -10
 
 # Sub-cache breakdown
 du -sh profiles/<name>/home/Library/Caches/*/ | sort -rh
 ```
 
+**Pitfall — `du -sh */` misses hidden directories.** The glob `*/` in bash does NOT match directories starting with `.`. A profile home of 1.8 GB may show only 3 MB with `du -sh */` because 1.6 GB is in `.npm/` and 223 MB in `.local/`. Always check hidden directories explicitly.
+
 Typical hot spots:
-- `home/Library/pnpm/store/` — global npm package store, often 1+ GB. Safe to prune: `pnpm store prune`
+- `home/.npm/` — **npm package cache** (`_cacache` subdirectory), often **1.6+ GB**. Safe to prune: `rm -rf ~/.hermes/profiles/<name>/home/.npm`. Recreated on demand.
+- `home/.local/` — local build artifacts and compiled binaries (200+ MB). Safe to wipe; regenerated on demand.
+- `home/.gem/` — Ruby gem cache (20-30 MB). Safe to wipe.
+- `home/Library/pnpm/store/` — global npm package store via pnpm, often 1+ GB. Safe to prune: `pnpm store prune`
 - `home/Library/Caches/camoufox/` — browser automation profiles (500 MB+). Safe to wipe; recreated on demand.
 - `home/Library/Caches/ms-playwright/` — Playwright browser binaries (500 MB+). Safe to wipe; recreated on `npx playwright install`.
 - `home/Library/Caches/Homebrew/` — formula downloads (200 MB). Safe: `brew cleanup`.
 - `home/Library/Caches/pip/` — pip wheel cache (60 MB). Safe: `pip cache purge`.
 - `home/hermes-workspace/node_modules/` — companion app deps (1.5 GB). Safe if not actively developing.
+- `home/.hermes/profiles/` — **nested profile tree** (252 KB stubs, not 1.5-2 GB — the bulk is in .npm/.local above). See step 5 below.
+
+**Check for useful data before nuking the sandbox home.** Before blanket-deleting `home/`, look for non-cache directories that may contain useful artifacts:
+```bash
+# List all non-hidden, non-cache directories
+ls -d profiles/<name>/home/*/ 2>/dev/null | grep -v node_modules
+
+# Check for user data (repos, configs, project files)
+ls profiles/<name>/home/windowshermes/ 2>/dev/null && echo "POSSIBLY USEFUL: windowshermes configs"
+```
+Real-world example: a `windowshermes/` directory inside the sandbox was a 2.5 MB git repo containing Windows Hermes install scripts and 4 Windows profiles (blender-coder, ue5-coder, threejs-coder, designer). If the user manages Windows Hermes, relocate this outside the sandbox before wiping: `mv home/windowshermes ~/`.
+
+**Nested .env files:** The profile home directory may also contain a `.hermes/` directory with its own complete profile tree, each with `.env` files. A single installation was found to have **62 .env files total** (22 top-level + 40 nested inside `senna/home/.hermes/profiles/`), each carrying the same set of 20 API keys. Check with:
+
+```bash
+find profiles/<name>/home/.hermes -name ".env" 2>/dev/null | wc -l
+find profiles/<name>/home -name ".env" 2>/dev/null | wc -l
+```
+
+**Session storage (JSONL vs DB):** Active profile session storage may consist of both a `sessions/` directory of JSONL files (~179 MB, 481 files) and a separate `sessions.db` SQLite database. The cron job `session-prune` typically only prunes the DB — the JSONL files may be orphaned accumulation. Check with:
+
+```bash
+ls profiles/<name>/sessions/*.jsonl 2>/dev/null | wc -l
+du -sh profiles/<name>/sessions/ 2>/dev/null
+du -sh profiles/<name>/sessions.db 2>/dev/null
+```
 
 ### 4. Check for duplicate repo checkouts
 
@@ -174,7 +209,27 @@ If multiple full checkouts exist (not symlinks), the profile copy can be replace
 
 **Special case: `~/.hermes/hermes-agent` (root copy)** — This is the CLI backbone (`~/.local/bin/hermes` depends on it). NEVER remove it. If profile copies exist, replace THEM with symlinks to root. See `references/hermes-agent-is-cli-backbone.md` for the full dependency chain and `references/hermes-agent-unused-copy-cleanup.md` for the consolidation workflow.
 
-### 5. Check for orphaned local models in mnemosyne/
+### 5. Check for nested profile tree inside home/.hermes/profiles/
+
+The sandboxed `home/` directory can contain a full nested `.hermes/profiles/` tree — a copy of the entire profile ecosystem inside a single profile's home. This is a high-impact silent space consumer:
+
+```bash
+# Check for nested profile tree
+du -sh profiles/senna/home/.hermes/profiles/ 2>/dev/null
+ls profiles/senna/home/.hermes/profiles/ 2>/dev/null | head -20
+```
+
+**If found:** This nested tree typically includes 21+ profiles, each with its own `.env`, `config.yaml`, and `SOUL.md`. The nested profiles are NOT used by any active process — they're artifacts of a Docker/sandbox home that got persisted. This can add **1.5–2 GB** and **40+ extra .env files**.
+
+The nested tree also contains a separate `mnemosyne/data/mnemosyne.db` — an independent memory database. Running memory operations could theoretically hit this stale DB if a process uses the nested path as HOME.
+
+**Remediation:**
+```bash
+rm -rf ~/.hermes/profiles/<name>/home/
+# Saves 1.5-2 GB and eliminates 40+ duplicate config/.env files
+```
+
+### 6. Check for orphaned local models in mnemosyne/
 
 A pre-profile-migration `home/.hermes/` may persist inside the profile home, containing a stale GGUF model:
 
@@ -192,7 +247,7 @@ du -sh profiles/<name>/home/.hermes/mnemosyne/models/ 2>/dev/null
 
 If a GGUF model (typically ~638 MB for a 1.1B Q4_K_M) sits in an old nested `.hermes` and is not referenced by any profile config, it's orphaned and safe to delete. The old .hermes directory itself may also contain a stale mnemosyne DB and plugin copy.
 
-### 6. Check state-snapshots accumulation
+### 7. Check state-snapshots accumulation
 
 Pre-update snapshots can accumulate quickly:
 
@@ -202,7 +257,13 @@ du -sh profiles/<name>/state-snapshots/
 du -sh profiles/<name>/state-snapshots/*/ | sort -rh | head -10
 ```
 
-Typical snapshot sizes range from 20 MB (first day) to 145 MB (after a week). With 19 snapshots over 6 days, expect ~1.2 GB. Keep the newest 3–5; older ones are safe to delete.
+Typical snapshot sizes range from 20 MB (first day) to 145 MB (after a week). With 19 snapshots over 6 days, expect ~1.2 GB. **Pre-update snapshots can be significantly larger** — a single `20260626-133729-pre-update` snapshot was measured at **750 MB**. Keep the newest 3–5; older ones are safe to delete.
+
+**Remediation:**
+```bash
+rm -rf profiles/senna/state-snapshots/
+# Saves 0.8-1.2 GB typically, up to 750 MB from a single snapshot
+```
 
 ### 7. Identify orphaned root data
 
@@ -322,26 +383,58 @@ hermes skills list --profile <active>
 5. **Gateway/dashboard processes** — Confirm they run from `hermes-agent/` and write state to the active profile before removing root orphans.
 6. **Profile home is NOT `~/.hermes/home`** — It's `profiles/<name>/home/`. This sandboxed directory accumulates macOS-style caches (Library/Caches, pnpm, pip) that can dwarf the rest of the Hermes installation. Don't overlook it.
 7. **Orphaned GGUF models aren't in root** — They hide inside `profiles/<name>/home/.hermes/mnemosyne/models/` as leftover from pre-profile-migration days. Always grep configs to verify they're unreferenced before declaring them orphaned.
-8. **State snapshots are effectively incremental** — The newest one (145 MB) may already contain everything from the older ones (20 MB). Keeping 19 snapshots at 1.2 GB total is rarely useful. Keep 3-5 newest.
-9. **Verify symlinks, not just sizes** — Two 800 MB repos might be a symlink + 800 MB real. Check `ls -la` before computing savings from deduplication.
-10. **NEVER move or delete `~/.hermes/hermes-agent/` (root)** — The `hermes` CLI wrapper at `~/.local/bin/hermes` hard-codes the path `~/.hermes/hermes-agent/venv/bin/hermes`. Moving or removing the root hermes-agent breaks the CLI command entirely (`hermes: command not found`), kills the API, and prevents gateway startup. The user will have to reinstall. The CORRECT approach for profile deduplication is the reverse: keep root as canonical, symlink the profile's hermes-agent to root (not root to profile). See `references/hermes-agent-is-cli-backbone.md`.
-11. **Duplicate YAML keys silently drop earlier values** — If `config.yaml` has `platforms:` defined twice, YAML keeps only the LAST block. The first block (e.g. telegram) silently vanishes. Always merge into a single `platforms:` key. Common symptom: "no messaging platforms enabled" despite telegram being configured.
-12. **GitHub archival needs `administration` PAT scope** — `gh repo archive` fails with `Resource not accessible by personal access token (archiveRepository)` if the PAT lacks the `administration` scope. The user must either: (a) archive via GitHub web UI (Settings → Danger Zone → Archive), or (b) create a new PAT with `administration` scope. Don't retry the command — it will fail the same way. Present the web UI path immediately.
-13. **Pushing hermes-agent forks needs `workflow` PAT scope** — The hermes-agent repo contains `.github/workflows/` files. Pushing to a fork or personal repo fails with `refusing to allow a Personal Access Token to create or update workflow .github/workflows/... without workflow scope`. Fix: add `workflow` scope to the PAT, or use `git format-patch` to save changes locally instead of pushing.
-14. **Profile hermes-agent copies can poison MCP configs** — When a profile has its own hermes-agent checkout (not a symlink), MCP configs may end up pointing to the profile-local venv (`profiles/<name>/hermes-agent/venv/bin/...`) instead of the main venv. This creates a ghost dependency on the duplicate. Before removing a profile hermes-agent copy, grep the profile's config.yaml for any paths referencing it and fix them to use the main venv. See `hermes-mcp-profile-isolation` skill for the full pattern.
+
+8. **Nested profile tree inside home/ is invisible from root** — `du -sh profiles/senna/` shows the senna profile as 3.8 GB but ~1.8 GB of that is a nested copy of the entire profile ecosystem inside `home/.hermes/profiles/`. You must check `profiles/<name>/home/.hermes/profiles/` explicitly — the nested tree is NOT visible from the top-level `profiles/` listing.
+
+9. **Nested .env files inside home/ are easily missed** — Standard `.env` search (`find ~/.hermes -name ".env" -not -path "*/home/*"`) deliberately excludes the home directory. A real installation had 22 top-level .env files but 62 total when including nested home directory copies. Always run the search twice: with and without the home exclusion.
+
+10. **State snapshots can dwarf expected sizes** — The "20-145 MB" range in the Expected Impact section applies to incremental snapshots. Pre-update snapshots (`*-pre-update`) can be **750 MB** for a single snapshot — an order of magnitude larger. Check the full size before estimating savings.
+11. **State snapshots are effectively incremental** — The newest one (145 MB) may already contain everything from the older ones (20 MB). Keeping 19 snapshots at 1.2 GB total is rarely useful. Keep 3-5 newest.
+12. **Verify symlinks, not just sizes** — Two 800 MB repos might be a symlink + 800 MB real. Check `ls -la` before computing savings from deduplication.
+13. **NEVER move or delete `~/.hermes/hermes-agent/` (root)** — The `hermes` CLI wrapper at `~/.local/bin/hermes` hard-codes the path `~/.hermes/hermes-agent/venv/bin/hermes`. Moving or removing the root hermes-agent breaks the CLI command entirely (`hermes: command not found`), kills the API, and prevents gateway startup. The user will have to reinstall. The CORRECT approach for profile deduplication is the reverse: keep root as canonical, symlink the profile's hermes-agent to root (not root to profile). See `references/hermes-agent-is-cli-backbone.md`.
+14. **Duplicate YAML keys silently drop earlier values** — If `config.yaml` has `platforms:` defined twice, YAML keeps only the LAST block. The first block (e.g. telegram) silently vanishes. Always merge into a single `platforms:` key. Common symptom: "no messaging platforms enabled" despite telegram being configured.
+15. **GitHub archival needs `administration` PAT scope** — `gh repo archive` fails with `Resource not accessible by personal access token (archiveRepository)` if the PAT lacks the `administration` scope. The user must either: (a) archive via GitHub web UI (Settings → Danger Zone → Archive), or (b) create a new PAT with `administration` scope. Don't retry the command — it will fail the same way. Present the web UI path immediately.
+16. **Pushing hermes-agent forks needs `workflow` PAT scope** — The hermes-agent repo contains `.github/workflows/` files. Pushing to a fork or personal repo fails with `refusing to allow a Personal Access Token to create or update workflow .github/workflows/... without workflow scope`. Fix: add `workflow` scope to the PAT, or use `git format-patch` to save changes locally instead of pushing.
+17. **Oversized SKILL.md causes context window freeze** — A skill file that's too large (>20KB) will freeze the agent when loaded via `skill_view`, because the tool returns the full content plus metadata (3-4x expansion). Symptoms: agent hangs on turns that trigger the skill. Fix: extract reference sections into `references/` files and keep SKILL.md under 15KB. See `references/oversized-skill-context-freeze.md` for the full diagnosis and remediation pattern.
+18. **Profile hermes-agent copies can poison MCP configs** — When a profile has its own hermes-agent checkout (not a symlink), MCP configs may end up pointing to the profile-local venv (`profiles/<name>/hermes-agent/venv/bin/...`) instead of the main venv. This creates a ghost dependency on the duplicate. Before removing a profile hermes-agent copy, grep the profile's config.yaml for any paths referencing it and fix them to use the main venv. See `hermes-mcp-profile-isolation` skill for the full pattern.
+
+19. **`du -sh */` misses hidden directories** — The bash glob `*/` does NOT match directories starting with `.`. A profile sandbox home of 1.8 GB may show only 3.4 MB in `du -sh profiles/senna/home/*/` because 1.6 GB is in `.npm/` (hidden) and 223 MB in `.local/` (hidden). Always query hidden directories explicitly:
+
+    ```bash
+    du -sh profiles/<name>/home/.* 2>/dev/null | sort -rh | head -10
+    ```
+
+    Or check the most common hidden cache culprits directly:
+
+    ```bash
+    for d in .npm .local .gem .cache .cargo; do
+      sz=$(du -sh "profiles/<name>/home/$d" 2>/dev/null | cut -f1)
+      [ -n "$sz" ] && echo "$sz\t$d"
+    done
+    ```
+
+20. **"Dead path" .env audits must expand `~` before testing existence.** Path-valued env keys (OBSIDIAN_VAULT_PATH, WIKI_PATH, FABRIC_DIR, SHARED_FABRIC_DIR) often store `~/Hermes Vault/...` with quotes and a literal tilde. Testing `[ -e "$raw" ]` without `eval echo` / tilde expansion reports every one as DEAD — a real audit flagged 5 healthy keys this way. Verify: `p=$(eval echo "$(grep -E "^KEY=" .env | cut -d= -f2- | tr -d '"')"); [ -e "$p" ]`. Also note paths with spaces (`Hermes Vault`) fail naive unquoted tests — always quote.
+
+21. **Never remove or disable user-added plugins during cleanup.** Hermes plugin configuration (e.g. `rtk-rewrite`, `hermes-achievements`, `dashboard_auth/nous`) was explicitly enabled by the user. Even if a plugin seems cosmetic (achievements, response rewriting), redundant (krea alongside fal), or unused (dashboard auth in TUI mode), the user added it deliberately. Removing it without explicit confirmation is destructive — assume every enabled plugin serves a purpose you may not see.
+  
+    This applies to: `plugins.enabled` in config.yaml, plugin symlinks in `~/.hermes/plugins/`, and any plugin config files. When writing a slimmed config.yaml, preserve the full `plugins.enabled` list — do not trim it during cleanup.
 
 ## Expected Impact
 
 - Phase 1 typically frees 50–70M of orphaned root data
 - Phase 3 typically frees 60–80M across 10 work profiles
-- Profile-home cache cleanup (pnpm store, camoufox, playwright, homebrew, pip) typically frees 2–4 GB
-- State-snapshot pruning typically frees 0.8–1.0 GB (keep 3-5 instead of 19)
+- Profile-home cache cleanup (pnpm store, camoufox, playwright, homebrew, pip, **.npm, .local, .gem**) typically frees 2–4 GB. **Hidden caches `.npm/` and `.local/` alone can account for 1.8+ GB.**
+- **Nested profile tree stubs** in `home/.hermes/profiles/` — typically only 252 KB (soul.md + config stubs). The 1.5-2 GB figure reported in earlier audits was actually `.npm/` and `.local/` caches inside the same `home/` directory, not the profile tree itself.
+- State-snapshot pruning typically frees 0.8–1.0 GB (keep 3-5 instead of 19). **Pre-update snapshots can add 750 MB each.**
 - Orphaned GGUF model removal frees ~640 MB
 - Duplicate repo deduplication frees 800 MB – 1.7 GB
+- Hermes-agent dev artifact removal (`apps/`, `tests/`, `website/`) frees ~430 MB — safe if not actively developing the Hermes CLI
+- Session JSONL cleanup (if redundant with DB) frees ~180 MB
 - Zero impact on running agents if the active profile is untouched
 
 ## References
 
+- `references/config-slimming-pattern.md` — How to strip Hermes defaults from bloated per-profile config.yaml files (754→75 lines). Use when cleaning up config duplication across multiple profiles.
 - `references/hermes-agent-is-cli-backbone.md` — Why `~/.hermes/hermes-agent/` must NEVER be moved or deleted (CLI dependency chain). **Read this before any directory restructuring.**
 - `references/hermes-agent-unused-copy-cleanup.md` — How to consolidate profile hermes-agent copies into symlinks to root (was previously about removing root — now corrected).
 - `references/post-consolidation-health-check.md` — Verification checklist after symlink consolidation: CLI chain, MCP binaries, gateways, Discord, mnemosyne, dashboard. Run this after any directory restructuring.
@@ -349,5 +442,4 @@ hermes skills list --profile <active>
 - `references/profile-audit-workflow.md` — How to audit all profiles by purpose/role, classify them (active bot vs custom persona vs generic boilerplate), and build a keep/delete recommendation. Use when the user asks "what profiles do we have" or "which ones should we remove".
 - `references/directory-map.md` — Complete structural map of `~/.hermes/` showing where everything lives (config, skills, plugins, databases, apps, data, external paths). Read this when you need to find something or answer "where is X". Covers the path resolution trap in detail.
 - `references/pre-removal-path-audit.md` — Systematic checklist for verifying nothing references a directory before removing it. Covers configs, launchd, shell profiles, cron jobs, plugin symlinks, and .env files. Use before any `rm -rf` under `~/.hermes/`.
-- `references/2026-05-28-ecosystem-cleanup.md` — Real cleanup session removing hermes-office (1 GB) and hermes-solar-system (78 MB). Includes broader ecosystem audit pattern (directories outside ~/.hermes), .gitignore quality scoring, GitHub archival workflow, and the PAT scope limitation pitfall.
-- `references/2026-05-28-gitignore-audit.md` — .gitignore quality audit of user's repos. Includes minimum Node.js template, detection commands for tracked secrets, and key rules (.env vs .env.example).
+- `references/oversized-skill-context-freeze.md` — Diagnosis and fix for skills whose SKILL.md is too large for the context window (token bloat, not disk bloat). Covers the slim-core + references/ decomposition pattern, target sizes, and the real hermes-agent 100KB→15.5KB case study.
