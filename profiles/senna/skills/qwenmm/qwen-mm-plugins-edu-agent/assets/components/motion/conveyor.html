@@ -1,0 +1,209 @@
+<!--
+  K12 Asset: 传送带
+  ID: conveyor
+  Suitable: 摩擦力, 相对运动, 匀速运动, 牛顿第二定律, 功和能
+  CSS Vars: --belt-offset (px, belt surface movement), --speed (for visual reference)
+  JS Hooks: belt-offset increments each frame for surface texture movement
+  Size: 200×30px at 1920×1080
+
+  Variants: (single industrial style)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .conveyor {
+    position: absolute;
+    width: 200px;
+    height: 30px;
+    margin-left: -100px;
+    transform-origin: 50% 50%;
+    z-index: 12;
+    --belt-offset: 0px;
+    --speed: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .conveyor::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 0;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 70%);
+    z-index: -1;
+  }
+
+  /* Belt surface — the moving flat section */
+  .conveyor-belt {
+    position: absolute;
+    left: 14px;
+    top: 4px;
+    width: 172px;
+    height: 12px;
+    border-radius: 2px;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(0,0,0,0.2) 0px,
+        rgba(0,0,0,0.2) 1px,
+        transparent 1px,
+        transparent 8px
+      ),
+      linear-gradient(180deg, rgba(60,60,60,0.95), rgba(30,30,30,0.98) 50%, rgba(50,50,50,0.95));
+    background-position-x: var(--belt-offset);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.06),
+      inset 0 -2px 4px rgba(0,0,0,0.4),
+      0 2px 4px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+
+  /* Belt texture ridges */
+  .conveyor-belt::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(234,234,234,0.04) 0px,
+      rgba(234,234,234,0.04) 2px,
+      transparent 2px,
+      transparent 12px
+    );
+    transform: translateX(var(--belt-offset));
+  }
+
+  /* Belt surface shine */
+  .conveyor-belt::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(180deg, rgba(234,234,234,0.08), transparent);
+  }
+
+  /* Left roller */
+  .conveyor-roller-l {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.35) 0 3px, transparent 8px),
+      radial-gradient(ellipse at 45% 40%, rgba(234,234,234,0.12), transparent 45%),
+      radial-gradient(circle at 65% 68%, rgba(0,0,0,0.25) 0, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(148,163,184,0.9) 0%, rgba(71,85,105,0.95) 100%);
+    box-shadow:
+      inset 2px 2px 5px rgba(255,255,255,0.2),
+      inset -2px -3px 6px rgba(0,0,0,0.3),
+      0 3px 8px rgba(0,0,0,0.25);
+  }
+
+  /* Roller axle left */
+  .conveyor-roller-l::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.4), transparent 50%),
+      radial-gradient(circle, rgba(100,116,139,0.9), rgba(51,65,85,0.95));
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);
+  }
+
+  /* Right roller */
+  .conveyor-roller-r {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.35) 0 3px, transparent 8px),
+      radial-gradient(ellipse at 45% 40%, rgba(234,234,234,0.12), transparent 45%),
+      radial-gradient(circle at 65% 68%, rgba(0,0,0,0.25) 0, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(148,163,184,0.9) 0%, rgba(71,85,105,0.95) 100%);
+    box-shadow:
+      inset 2px 2px 5px rgba(255,255,255,0.2),
+      inset -2px -3px 6px rgba(0,0,0,0.3),
+      0 3px 8px rgba(0,0,0,0.25);
+  }
+
+  /* Roller axle right */
+  .conveyor-roller-r::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.4), transparent 50%),
+      radial-gradient(circle, rgba(100,116,139,0.9), rgba(51,65,85,0.95));
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);
+  }
+
+  /* Frame/support bar underneath */
+  .conveyor-frame {
+    position: absolute;
+    left: 14px;
+    top: 16px;
+    width: 172px;
+    height: 10px;
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.15), transparent 30%),
+      linear-gradient(180deg, rgba(71,85,105,0.8), rgba(51,65,85,0.9));
+    box-shadow:
+      inset 0 1px 2px rgba(0,0,0,0.2),
+      0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Support legs */
+  .conveyor-frame::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    bottom: 0;
+    width: 4px;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(71,85,105,0.7), rgba(100,116,139,0.8));
+    box-shadow:
+      128px 0 0 rgba(71,85,105,0.7);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="conveyor" class="conveyor">
+  <div class="conveyor-frame"></div>
+  <div class="conveyor-belt"></div>
+  <div class="conveyor-roller-l"></div>
+  <div class="conveyor-roller-r"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Belt surface moves via offset — increment each frame
+  var speed = parseFloat(getComputedStyle(conveyorEl).getPropertyValue("--speed")) || 1;
+  var beltOffset = (time * speed * 40) % 200;
+  conveyorEl.style.setProperty("--belt-offset", beltOffset + "px");
+
+  // Roller rotation synced with belt
+  var rollerAngle = time * speed * 80;
+  rollerLEl.style.transform = "rotate(" + rollerAngle + "deg)";
+  rollerREl.style.transform = "rotate(" + rollerAngle + "deg)";
+-->

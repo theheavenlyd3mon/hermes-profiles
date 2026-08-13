@@ -13,7 +13,7 @@ Preserve → Acquire → Analyze → Timeline → Report
 
 Evidence-grade. Minimizes noise during acquisition. Treats every artifact as potential exhibit.
 
-## Skills
+## Skills (43 total)
 - Forge/IR workflows via Anthropic Cybersecurity Skills collection
 - Memory and disk imaging patterns
 - Malware analysis behavior models

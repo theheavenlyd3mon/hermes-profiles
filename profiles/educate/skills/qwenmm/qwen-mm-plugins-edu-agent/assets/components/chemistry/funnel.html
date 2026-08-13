@@ -1,0 +1,222 @@
+<!--
+  K12 Asset: 漏斗
+  ID: funnel
+  Suitable: 过滤, 转移液体, 分离混合物, 倾倒
+  CSS Vars:
+    --fill (0=empty, 1=full, controls liquid level in funnel bowl)
+    --liquid-color (default: rgba(96,165,250,0.5))
+    --drip-progress (0-1, controls drip drop forming and falling from stem tip)
+  JS Hooks: set --fill for liquid level, --drip-progress for drip animation
+  Size: 40×60px at 1920×1080
+
+  Note: Wide conical bowl at top tapering to a narrow stem at bottom.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .funnel {
+    position: absolute;
+    width: 40px;
+    height: 60px;
+    margin-left: -20px;
+    transform-origin: 50% 100%;
+    --fill: 0.5;
+    --liquid-color: rgba(96,165,250,0.5);
+    --drip-progress: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .funnel::after {
+    content: "";
+    position: absolute;
+    left: 6px; right: 6px; bottom: -7px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Conical bowl — wide top tapering down */
+  .fnl-bowl {
+    position: absolute;
+    left: 1px; top: 2px;
+    width: 38px; height: 30px;
+    clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 22%, transparent 78%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06) 50%, rgba(160,200,240,0.08)),
+      radial-gradient(ellipse at 22% 25%, rgba(234,234,234,0.12), transparent 45%),
+      linear-gradient(90deg, rgba(140,180,230,0.1), rgba(120,160,220,0.06) 50%, rgba(140,180,230,0.08));
+    box-shadow:
+      inset 0 -3px 6px rgba(0,0,0,0.05),
+      inset 1px 0 3px rgba(255,255,255,0.06),
+      inset -1px 0 3px rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+
+  /* Bowl outline border */
+  .fnl-bowl-border {
+    position: absolute;
+    left: 1px; top: 2px;
+    width: 38px; height: 30px;
+    clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);
+    border: 1.2px solid rgba(180,210,240,0.28);
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  /* Glass highlight on bowl — reflection stripe on left */
+  .fnl-bowl::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 2px;
+    width: 1.5px; height: 24px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.1) 60%,
+      transparent);
+    transform: rotate(6deg);
+  }
+
+  /* Liquid inside bowl */
+  .fnl-bowl-liquid {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    height: calc(var(--fill) * 24px);
+    max-height: 24px;
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.06) 90%),
+      radial-gradient(ellipse at 35% 20%, rgba(234,234,234,0.1), transparent 50%),
+      linear-gradient(180deg, var(--liquid-color), var(--liquid-color));
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.06),
+      inset 0 -2px 4px rgba(0,0,0,0.06);
+  }
+
+  /* Liquid meniscus in bowl */
+  .fnl-bowl-liquid::before {
+    content: "";
+    position: absolute;
+    left: -1px; right: -1px; top: -2px;
+    height: 3px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 50% 50%,
+        rgba(234,234,234,0.18), transparent 55%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent);
+  }
+
+  /* Rim — top edge of funnel bowl */
+  .fnl-rim {
+    position: absolute;
+    left: 0; top: 0;
+    width: 40px; height: 3px;
+    border-radius: 1.5px;
+    background:
+      linear-gradient(180deg, rgba(200,220,240,0.28), rgba(160,190,230,0.15));
+    border: 0.8px solid rgba(180,210,240,0.22);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  /* Stem — narrow tube below the bowl */
+  .fnl-stem {
+    position: absolute;
+    left: 16px; top: 30px;
+    width: 8px; height: 28px;
+    border-radius: 1px 1px 2px 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 30%, transparent 70%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06)),
+      radial-gradient(ellipse at 25% 25%, rgba(234,234,234,0.1), transparent 50%),
+      linear-gradient(90deg, rgba(140,180,230,0.12), rgba(120,160,220,0.08));
+    border: 1.2px solid rgba(180,210,240,0.28);
+    border-top: none;
+    box-shadow:
+      inset 1px 0 2px rgba(255,255,255,0.06),
+      inset -1px 0 2px rgba(255,255,255,0.04);
+    overflow: visible;
+  }
+
+  /* Stem highlight stripe */
+  .fnl-stem::before {
+    content: "";
+    position: absolute;
+    left: 1px; top: 2px;
+    width: 1px; height: 22px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.25),
+      rgba(234,234,234,0.08) 60%,
+      transparent);
+  }
+
+  /* Liquid stream inside stem (visible when fill > 0) */
+  .fnl-stem-liquid {
+    position: absolute;
+    left: 2px; top: 0;
+    width: 4px; height: 100%;
+    border-radius: 0 0 2px 2px;
+    background: linear-gradient(180deg, var(--liquid-color), var(--liquid-color));
+    opacity: var(--fill);
+  }
+
+  /* Drip drop at stem tip */
+  .fnl-drip {
+    position: absolute;
+    left: 17px; bottom: 0;
+    width: 5px; height: 5px;
+    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.2), transparent 50%),
+      radial-gradient(circle, var(--liquid-color), var(--liquid-color));
+    opacity: 0;
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      0 1px 3px rgba(0,0,0,0.15);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="funnel">
+  <div class="fnl-bowl">
+    <div class="fnl-bowl-liquid"></div>
+  </div>
+  <div class="fnl-bowl-border"></div>
+  <div class="fnl-rim"></div>
+  <div class="fnl-stem">
+    <div class="fnl-stem-liquid"></div>
+  </div>
+  <div class="fnl-drip"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set fill level (0 = empty, 1 = full)
+  var fill = Math.max(0, Math.min(1, fillLevel));
+  funnelEl.style.setProperty("--fill", fill);
+
+  // Animate dripping from stem tip
+  var dp = (time * 1.5) % 1.0;  // drip cycle 0..1
+  var dripEl = funnelEl.querySelector(".fnl-drip");
+  if (fill > 0.05 && dripEl) {
+    if (dp < 0.6) {
+      // Drop forming at tip
+      var scale = dp / 0.6;
+      dripEl.style.opacity = scale * 0.8;
+      dripEl.style.transform = "translateY(0) scale(" + (0.5 + scale * 0.5) + ")";
+    } else {
+      // Drop falling
+      var fallT = (dp - 0.6) / 0.4;
+      var fallY = fallT * fallT * 20;
+      dripEl.style.opacity = Math.max(0, 0.8 - fallT);
+      dripEl.style.transform = "translateY(" + fallY + "px) scale(1)";
+    }
+  } else if (dripEl) {
+    dripEl.style.opacity = 0;
+  }
+
+  // Change liquid color
+  // funnelEl.style.setProperty("--liquid-color", "rgba(251,191,36,0.5)");
+-->

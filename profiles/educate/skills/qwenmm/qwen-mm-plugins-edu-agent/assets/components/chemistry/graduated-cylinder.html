@@ -1,0 +1,195 @@
+<!--
+  K12 Asset: 量筒
+  ID: graduated-cylinder
+  Suitable: 体积测量, 密度实验, 液体量取, 排水法, 不规则固体体积
+  CSS Vars: --level (0-1, liquid fill fraction), --liquid-color (liquid tint)
+  JS Hooks: set --level for liquid height animation
+  Size: 24×80px at 1920×1080
+  Quality: Multi-layer glass with meniscus, scale markings, liquid refraction
+
+  Variants:
+    .gc           — default (water, blue tint)
+    .gc-empty     — empty cylinder
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .graduated-cylinder {
+    position: absolute;
+    width: 24px;
+    height: 80px;
+    margin-left: -12px;
+    transform-origin: 50% 100%;
+    --level: 0.6;
+    --liquid-color: rgba(34, 211, 238, 0.45);
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .graduated-cylinder::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 24px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Glass tube — multi-layer transparency */
+  .gc-tube {
+    position: absolute;
+    left: 2px; top: 4px;
+    width: 20px; height: 72px;
+    border-radius: 2px 2px 8px 8px;
+    background:
+      linear-gradient(90deg,
+        rgba(234,234,234,0.32) 0%,
+        rgba(200,220,255,0.06) 20%,
+        rgba(200,220,255,0.04) 50%,
+        rgba(200,220,255,0.06) 80%,
+        rgba(234,234,234,0.18) 100%),
+      linear-gradient(180deg,
+        rgba(220,235,255,0.12),
+        rgba(200,220,255,0.08) 50%,
+        rgba(180,200,240,0.1));
+    border: 1px solid rgba(160,200,240,0.28);
+    box-shadow:
+      inset 2px 0 6px rgba(255,255,255,0.1),
+      inset -2px 0 4px rgba(255,255,255,0.06),
+      inset 0 -4px 8px rgba(0,0,0,0.06),
+      0 0 6px rgba(140,180,240,0.08);
+    overflow: hidden;
+  }
+
+  /* Left edge reflection */
+  .gc-tube::before {
+    content: "";
+    position: absolute;
+    left: 1px; top: 4px;
+    width: 1.5px; height: 64px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.35),
+      rgba(234,234,234,0.12) 40%,
+      rgba(234,234,234,0.08) 80%,
+      transparent);
+  }
+
+  /* Liquid fill — height driven by --level */
+  .gc-liquid {
+    position: absolute;
+    left: 1px; right: 1px;
+    bottom: 1px;
+    height: calc(var(--level) * 68px);
+    border-radius: 0 0 6px 6px;
+    background:
+      linear-gradient(180deg,
+        rgba(234,234,234,0.12),
+        var(--liquid-color) 8%,
+        var(--liquid-color) 90%,
+        color-mix(in srgb, var(--liquid-color) 80%, rgba(0,0,0,0.15)));
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15),
+      inset 0 -3px 6px rgba(0,0,0,0.08);
+    transition: height 0.6s ease;
+  }
+
+  /* Meniscus — concave surface */
+  .gc-liquid::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: -3px;
+    height: 6px;
+    border-radius: 0 0 50% 50%;
+    background: radial-gradient(ellipse at 50% 80%,
+      rgba(234,234,234,0.25),
+      var(--liquid-color) 60%,
+      transparent 80%);
+  }
+
+  /* Scale markings — etched lines */
+  .gc-scale {
+    position: absolute;
+    left: 1px; top: 4px;
+    width: 20px; height: 68px;
+    pointer-events: none;
+  }
+
+  /* Major scale marks — every 10mL */
+  .gc-scale::before {
+    content: "";
+    position: absolute;
+    right: 1px; top: 2px;
+    width: 6px; height: 62px;
+    background: repeating-linear-gradient(180deg,
+      rgba(100,130,170,0.35) 0px,
+      rgba(100,130,170,0.35) 0.5px,
+      transparent 0.5px,
+      transparent 12.4px);
+  }
+
+  /* Minor scale marks — every 2mL */
+  .gc-scale::after {
+    content: "";
+    position: absolute;
+    right: 1px; top: 2px;
+    width: 3px; height: 62px;
+    background: repeating-linear-gradient(180deg,
+      rgba(120,150,180,0.2) 0px,
+      rgba(120,150,180,0.2) 0.5px,
+      transparent 0.5px,
+      transparent 2.48px);
+  }
+
+  /* Spout — pouring lip */
+  .gc-spout {
+    position: absolute;
+    right: 0; top: 2px;
+    width: 6px; height: 6px;
+    border-radius: 0 4px 0 0;
+    background:
+      linear-gradient(135deg, rgba(200,220,255,0.15), rgba(160,190,230,0.08));
+    border-top: 1px solid rgba(160,200,240,0.22);
+    border-right: 1px solid rgba(160,200,240,0.22);
+  }
+
+  /* Base — thickened bottom */
+  .gc-base {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 24px; height: 6px;
+    border-radius: 0 0 4px 4px;
+    background:
+      linear-gradient(180deg,
+        rgba(200,220,255,0.15),
+        rgba(180,200,230,0.2) 50%,
+        rgba(160,180,210,0.25));
+    border: 1px solid rgba(160,200,240,0.2);
+    border-top: none;
+    box-shadow:
+      inset 0 -1px 2px rgba(0,0,0,0.06),
+      inset 2px 0 3px rgba(255,255,255,0.06);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="graduated-cylinder" class="graduated-cylinder">
+  <div class="gc-tube">
+    <div class="gc-liquid"></div>
+  </div>
+  <div class="gc-scale"></div>
+  <div class="gc-spout"></div>
+  <div class="gc-base"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set liquid level (0 = empty, 1 = full)
+  gcEl.style.setProperty("--level", 0.6);
+
+  // Change liquid color
+  gcEl.style.setProperty("--liquid-color", "rgba(34, 211, 238, 0.45)");
+
+  // Animate fill
+  // var targetLevel = lerp(startLevel, endLevel, progress);
+  // gcEl.style.setProperty("--level", targetLevel);
+-->

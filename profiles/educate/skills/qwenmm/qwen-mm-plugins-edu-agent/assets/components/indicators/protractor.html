@@ -1,0 +1,220 @@
+<!--
+  K12 Asset: 量角器
+  ID: protractor
+  Suitable: 角度测量, 几何画图, 角的认识, 三角形, 旋转
+  CSS Vars: (static)
+  JS Hooks: none (static component, position via transform)
+  Size: 80×44px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .protractor {
+    position: absolute;
+    width: 80px;
+    height: 44px;
+    margin-left: -40px;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.26));
+  }
+
+  /* Ground shadow */
+  .protractor::after {
+    content: "";
+    position: absolute;
+    left: 5px; right: 5px; bottom: -6px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.22), transparent 68%);
+  }
+
+  /* Main semicircular body — semi-transparent */
+  .pt-body {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 80px; height: 40px;
+    border-radius: 40px 40px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.18), transparent 30%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.04)),
+      linear-gradient(180deg, rgba(200,230,255,0.75), rgba(180,210,240,0.7) 50%, rgba(160,200,235,0.65));
+    border: 1px solid rgba(148,163,184,0.35);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.3),
+      inset 0 -2px 6px rgba(0,0,0,0.05),
+      0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  /* Inner semicircle cutout (transparent center area) */
+  .pt-inner {
+    position: absolute;
+    left: 10px; bottom: 0;
+    width: 60px; height: 30px;
+    border-radius: 30px 30px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 40%),
+      linear-gradient(180deg, rgba(200,230,255,0.4), rgba(180,210,240,0.35));
+    border: 1px solid rgba(148,163,184,0.2);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15);
+  }
+
+  /* Degree markings — outer ring (every 10 degrees) */
+  .pt-marks-10 {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 80px; height: 40px;
+    border-radius: 40px 40px 0 0;
+    overflow: hidden;
+  }
+
+  /* Individual degree marks done via SVG approach with conic-gradient */
+  .pt-marks-10::before {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -40px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 180deg,
+        #1e293b 0deg, #1e293b 0.8deg,
+        transparent 0.8deg, transparent 10deg
+      );
+    mask: radial-gradient(circle, transparent 34px, black 34px, black 38px, transparent 38px);
+    -webkit-mask: radial-gradient(circle, transparent 34px, black 34px, black 38px, transparent 38px);
+  }
+
+  /* Fine degree marks (every 1 degree) */
+  .pt-marks-1 {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 80px; height: 40px;
+    border-radius: 40px 40px 0 0;
+    overflow: hidden;
+  }
+
+  .pt-marks-1::before {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -40px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 180deg,
+        #475569 0deg, #475569 0.4deg,
+        transparent 0.4deg, transparent 1deg
+      );
+    mask: radial-gradient(circle, transparent 36px, black 36px, black 38px, transparent 38px);
+    -webkit-mask: radial-gradient(circle, transparent 36px, black 36px, black 38px, transparent 38px);
+  }
+
+  /* Center point marker */
+  .pt-center {
+    position: absolute;
+    left: 50%; bottom: 0;
+    width: 4px; height: 4px;
+    margin-left: -2px; margin-bottom: -2px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.4), transparent 45%),
+      radial-gradient(circle, #ef4444, #dc2626 60%, #991b1b);
+    box-shadow:
+      0 0 2px rgba(239,68,68,0.4),
+      inset 0 1px rgba(255,255,255,0.3);
+    z-index: 3;
+  }
+
+  /* Cross-hair at center */
+  .pt-center::before {
+    content: "";
+    position: absolute;
+    left: -4px; top: 50%;
+    width: 12px; height: 0.5px;
+    margin-top: -0.25px;
+    background: rgba(239,68,68,0.6);
+  }
+
+  .pt-center::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: -4px;
+    width: 0.5px; height: 8px;
+    margin-left: -0.25px;
+    background: rgba(239,68,68,0.6);
+  }
+
+  /* Baseline edge — flat bottom */
+  .pt-baseline {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 80px; height: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 50%),
+      linear-gradient(90deg, #64748b, #94a3b8 20%, #cbd5e1 50%, #94a3b8 80%, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Number labels */
+  .pt-num {
+    position: absolute;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 3.5px;
+    font-weight: 500;
+    color: #1e293b;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  /* Positioned at approximate locations for key angles */
+  .pt-n0   { left: 5px; bottom: 4px; }
+  .pt-n30  { left: 8px; bottom: 18px; }
+  .pt-n60  { left: 20px; bottom: 30px; }
+  .pt-n90  { left: 38px; bottom: 34px; }
+  .pt-n120 { left: 55px; bottom: 30px; }
+  .pt-n150 { left: 67px; bottom: 18px; }
+  .pt-n180 { right: 5px; bottom: 4px; }
+
+  /* Glass reflection */
+  .pt-reflect {
+    position: absolute;
+    left: 15px; bottom: 20px;
+    width: 20px; height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(234,234,234,0.2), transparent 70%);
+    pointer-events: none;
+    transform: rotate(-20deg);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="protractor">
+  <div class="pt-body"></div>
+  <div class="pt-inner"></div>
+  <div class="pt-marks-1"></div>
+  <div class="pt-marks-10"></div>
+  <div class="pt-baseline"></div>
+  <div class="pt-center"></div>
+  <span class="pt-num pt-n0">0</span>
+  <span class="pt-num pt-n30">30</span>
+  <span class="pt-num pt-n60">60</span>
+  <span class="pt-num pt-n90">90</span>
+  <span class="pt-num pt-n120">120</span>
+  <span class="pt-num pt-n150">150</span>
+  <span class="pt-num pt-n180">180</span>
+  <div class="pt-reflect"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Static component — position with transform
+  // protractorEl.style.left = x + "px";
+  // protractorEl.style.top = y + "px";
+  // protractorEl.style.transform = "rotate(" + angle + "deg)";
+
+  // Optional: highlight a measured angle by adding a colored arc
+  // arcEl.style.background = "conic-gradient(from 180deg, rgba(239,68,68,0.2) 0deg, rgba(239,68,68,0.2) " + measuredAngle + "deg, transparent " + measuredAngle + "deg)";
+-->

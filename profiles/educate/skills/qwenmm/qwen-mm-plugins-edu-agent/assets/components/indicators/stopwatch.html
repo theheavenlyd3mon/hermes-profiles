@@ -1,0 +1,267 @@
+<!--
+  K12 Asset: 秒表
+  ID: stopwatch
+  Suitable: 时间测量, 速度计算, 匀速运动, 加速度, 实验计时
+  CSS Vars: --second-angle (degrees, 0=12 o'clock), --running (0/1 for crown button state)
+  JS Hooks: set --second-angle in renderAt() for time display
+  Size: 50×60px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .stopwatch {
+    position: absolute;
+    width: 50px;
+    height: 60px;
+    margin-left: -25px;
+    transform-origin: 50% 50%;
+    --second-angle: 0deg;
+    --running: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .stopwatch::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 58px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.34), transparent 68%);
+  }
+
+  /* Ring loop for lanyard */
+  .sw-ring {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 10px; height: 7px;
+    margin-left: -5px;
+    border: 2px solid #64748b;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    background: transparent;
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 -1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* Ring metallic sheen */
+  .sw-ring::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 6px; height: 5px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.2), transparent);
+  }
+
+  /* Crown button */
+  .sw-crown {
+    position: absolute;
+    left: 50%; top: 5px;
+    width: 8px; height: 6px;
+    margin-left: -4px;
+    border-radius: 2px 2px 1px 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 40%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #475569, #64748b 20%, #94a3b8 45%, #cbd5e1 50%, #94a3b8 55%, #64748b 80%, #475569);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -1px 2px rgba(0,0,0,0.12),
+      0 2px 3px rgba(0,0,0,0.2);
+    transform: translateY(calc(var(--running) * 2px));
+  }
+
+  /* Crown grip lines */
+  .sw-crown::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 1px;
+    width: 4px; height: 3px;
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0px, transparent 1px,
+        rgba(0,0,0,0.15) 1px, rgba(0,0,0,0.15) 2px);
+  }
+
+  /* Main case — metallic body */
+  .sw-case {
+    position: absolute;
+    left: 3px; top: 10px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.18), transparent 35%),
+      linear-gradient(180deg, #94a3b8, #64748b 30%, #475569 60%, #334155 80%),
+      linear-gradient(180deg, #475569, #1e293b);
+    border: 2px solid rgba(71,85,105,0.5);
+    box-shadow:
+      inset 0 3px 5px rgba(255,255,255,0.15),
+      inset 0 -4px 8px rgba(0,0,0,0.25),
+      0 6px 14px rgba(0,0,0,0.3);
+  }
+
+  /* Dial face — white */
+  .sw-face {
+    position: absolute;
+    left: 7px; top: 14px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 45% 38%, #ffffff, #f8fafc 30%, #f1f5f9 60%, #e2e8f0 90%);
+    box-shadow:
+      inset 0 1px 3px rgba(0,0,0,0.05),
+      inset 0 -1px 4px rgba(0,0,0,0.03);
+  }
+
+  /* Minute scale marks — 60 ticks (represented with repeating gradient) */
+  .sw-ticks {
+    position: absolute;
+    left: 7px; top: 14px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        #334155 0deg, #334155 1deg,
+        transparent 1deg, transparent 6deg
+      );
+    mask: radial-gradient(circle, transparent 14px, black 14px, black 16px, transparent 16px);
+    -webkit-mask: radial-gradient(circle, transparent 14px, black 14px, black 16px, transparent 16px);
+  }
+
+  /* Major tick marks at 5-second intervals */
+  .sw-ticks-major {
+    position: absolute;
+    left: 7px; top: 14px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        #0f172a 0deg, #0f172a 1.5deg,
+        transparent 1.5deg, transparent 30deg
+      );
+    mask: radial-gradient(circle, transparent 13px, black 13px, black 16.5px, transparent 16.5px);
+    -webkit-mask: radial-gradient(circle, transparent 13px, black 13px, black 16.5px, transparent 16.5px);
+  }
+
+  /* Second hand — red */
+  .sw-hand {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 1.5px; height: 15px;
+    margin-left: -0.75px;
+    margin-top: -13px;
+    transform-origin: 50% 13px;
+    transform: rotate(var(--second-angle));
+    background:
+      linear-gradient(180deg, #ef4444, #dc2626 60%, #b91c1c);
+    border-radius: 1px;
+    box-shadow: 0 0 2px rgba(239,68,68,0.3);
+    z-index: 3;
+  }
+
+  /* Hand counterweight */
+  .sw-hand::after {
+    content: "";
+    position: absolute;
+    left: -0.75px; top: 13px;
+    width: 3px; height: 4px;
+    border-radius: 0 0 1.5px 1.5px;
+    background: #ef4444;
+  }
+
+  /* Center pivot */
+  .sw-pivot {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 5px; height: 5px;
+    margin-left: -2.5px; margin-top: -2.5px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, #f8fafc, #94a3b8 50%, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.4),
+      0 1px 2px rgba(0,0,0,0.2);
+    z-index: 4;
+  }
+
+  /* Glass cover */
+  .sw-glass {
+    position: absolute;
+    left: 7px; top: 14px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 35% 28%, rgba(234,234,234,0.28), transparent 45%),
+      radial-gradient(ellipse at 65% 70%, rgba(234,234,234,0.05), transparent 30%);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      inset 0 2px 5px rgba(255,255,255,0.1);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Side button (start/stop) */
+  .sw-btn {
+    position: absolute;
+    right: 1px; top: 22px;
+    width: 5px; height: 8px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 35%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.1)),
+      linear-gradient(90deg, #475569, #94a3b8 50%, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      1px 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Number labels — positioned at 15, 30, 45, 60 second marks */
+  .sw-label {
+    position: absolute;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 4px;
+    font-weight: 600;
+    color: #334155;
+    text-align: center;
+  }
+  .sw-l-15 { left: 32px; top: 29px; }
+  .sw-l-30 { left: 23px; top: 38px; }
+  .sw-l-45 { left: 14px; top: 29px; }
+  .sw-l-60 { left: 23px; top: 18px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="stopwatch">
+  <div class="sw-ring"></div>
+  <div class="sw-crown"></div>
+  <div class="sw-case"></div>
+  <div class="sw-face"></div>
+  <div class="sw-ticks"></div>
+  <div class="sw-ticks-major"></div>
+  <span class="sw-label sw-l-15">15</span>
+  <span class="sw-label sw-l-30">30</span>
+  <span class="sw-label sw-l-45">45</span>
+  <span class="sw-label sw-l-60">60</span>
+  <div class="sw-hand"></div>
+  <div class="sw-pivot"></div>
+  <div class="sw-btn"></div>
+  <div class="sw-glass"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Animate second hand (0-360 degrees in 60 seconds)
+  // var secAngle = (elapsedSeconds % 60) * 6;
+  // stopwatchEl.style.setProperty("--second-angle", secAngle + "deg");
+
+  // Toggle running state
+  // stopwatchEl.style.setProperty("--running", isRunning ? "1" : "0");
+
+  // Smooth continuous sweep:
+  // var angle = (time % 60) * 6;
+  // stopwatchEl.style.setProperty("--second-angle", angle + "deg");
+-->

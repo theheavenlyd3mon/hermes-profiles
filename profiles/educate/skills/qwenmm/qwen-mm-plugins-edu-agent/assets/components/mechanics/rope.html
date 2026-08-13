@@ -1,0 +1,175 @@
+<!--
+  K12 Asset: 绳子/细线
+  ID: rope
+  Suitable: 滑轮组, 定滑轮, 动滑轮, 拔河, 力的传递, 简单机械
+  CSS Vars: --rope-length (default 80px), --tension (0-1, tautness; 1=taut, 0=slack with sag)
+  JS Hooks: set --tension for visual tautness; rotate via transform for direction
+  Size: var(--rope-length) × 4px at 1920×1080
+
+  Variants:
+    .rope-h  — horizontal (default)
+    .rope-v  — vertical (rotate 90deg)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .rope {
+    position: absolute;
+    width: var(--rope-length, 80px);
+    height: 12px;
+    margin-left: calc(var(--rope-length, 80px) / -2);
+    transform-origin: 50% 50%;
+    --rope-length: 80px;
+    --tension: 1;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.22));
+  }
+
+  /* Ground shadow */
+  .rope::after {
+    content: "";
+    position: absolute;
+    left: 6px; right: 6px; bottom: -5px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.25), transparent 68%);
+  }
+
+  /* Main rope body — twisted fiber texture with 4-layer gradient */
+  .rope-body {
+    position: absolute;
+    left: 8px; right: 8px;
+    top: 4px;
+    height: 4px;
+    border-radius: 2px;
+    background:
+      repeating-linear-gradient(65deg,
+        transparent 0 2px,
+        rgba(234,234,234,0.12) 2px 3px,
+        transparent 3px 5px),
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 35%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.2)),
+      linear-gradient(90deg, #9a8060, #c4a87a 20%, #d4bc92 50%, #c4a87a 80%, #9a8060);
+    border: 0.5px solid rgba(130,100,60,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      inset 0 -1px 2px rgba(80,55,25,0.25),
+      0 1px 3px rgba(0,0,0,0.18);
+  }
+
+  /* Additional fiber twist texture overlay */
+  .rope-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background:
+      repeating-linear-gradient(115deg,
+        transparent 0 3px,
+        rgba(160,130,80,0.15) 3px 4px,
+        transparent 4px 7px);
+  }
+
+  /* Top highlight thread */
+  .rope-body::after {
+    content: "";
+    position: absolute;
+    left: 8%; right: 8%;
+    top: 0;
+    height: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.2) 25%, rgba(234,234,234,0.25) 50%, rgba(234,234,234,0.2) 75%, transparent);
+  }
+
+  /* Left end knot */
+  .rope-knot-l {
+    position: absolute;
+    left: 0; top: 2px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 38% 35%, rgba(234,234,234,0.3), transparent 50%),
+      radial-gradient(circle, #c4a87a, #9a7a52 50%, #7a5a32);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(80,50,20,0.25),
+      0 1px 3px rgba(0,0,0,0.25);
+  }
+
+  /* Knot cross-fiber detail */
+  .rope-knot-l::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgba(0,0,0,0.12), transparent 60%);
+    border: 0.5px solid rgba(120,90,50,0.3);
+  }
+
+  /* Right end knot */
+  .rope-knot-r {
+    position: absolute;
+    right: 0; top: 2px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 38% 35%, rgba(234,234,234,0.3), transparent 50%),
+      radial-gradient(circle, #c4a87a, #9a7a52 50%, #7a5a32);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(80,50,20,0.25),
+      0 1px 3px rgba(0,0,0,0.25);
+  }
+
+  /* Knot cross-fiber detail */
+  .rope-knot-r::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, rgba(0,0,0,0.12), transparent 60%);
+    border: 0.5px solid rgba(120,90,50,0.3);
+  }
+
+  /* Sag overlay — visible curve when tension < 1 */
+  .rope-sag {
+    position: absolute;
+    left: 8px; right: 8px;
+    top: 4px;
+    height: 4px;
+    border-radius: 0 0 50% 50%;
+    transform: scaleY(calc((1 - var(--tension, 1)) * 3));
+    transform-origin: 50% 0%;
+    background:
+      radial-gradient(ellipse at 50% 0%,
+        rgba(180,150,100,0.6),
+        rgba(140,110,70,0.3) 50%,
+        transparent 80%);
+    pointer-events: none;
+  }
+
+  .rope-v { transform: rotate(-90deg); }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="rope">
+  <div class="rope-knot-l"></div>
+  <div class="rope-body"></div>
+  <div class="rope-knot-r"></div>
+  <div class="rope-sag"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set tension (1 = taut, 0 = slack/sagging)
+  ropeEl.style.setProperty("--tension", tensionValue);
+
+  // Subtle vibration when tension is high
+  // var vibrate = tension > 0.8 ? 0.3 * Math.sin(time * 20) : 0;
+  // ropeEl.style.transform = "translateY(" + vibrate + "px)";
+
+  // Adjust rope length dynamically
+  // ropeEl.style.setProperty("--rope-length", newLength + "px");
+-->

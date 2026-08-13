@@ -1,0 +1,146 @@
+<!--
+  K12 Asset: 力箭头（力的示意图）
+  ID: force-arrow
+  Suitable: 力的示意图, 力的合成, 力与运动, 重力, 摩擦力, 支持力, 牛顿定律
+  CSS Vars: --arrow-length (default 80px), --arrow-color (default #ef4444 red), --arrow-width (default 3px)
+  JS Hooks: set --arrow-length dynamically for force magnitude; rotate via transform
+  Size: var(--arrow-length)×var(--arrow-width) + arrowhead at 1920×1080
+
+  Variants:
+    .force-gravity   — blue (#3b82f6), points down
+    .force-normal    — green (#22c55e), points up
+    .force-friction  — orange (#f97316), horizontal
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .force-arrow {
+    position: absolute;
+    width: var(--arrow-length, 80px);
+    height: 16px;
+    margin-left: calc(var(--arrow-length, 80px) / -2);
+    transform-origin: 0% 50%;
+    --arrow-length: 80px;
+    --arrow-color: #ef4444;
+    --arrow-width: 3px;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));
+  }
+
+  /* Ground shadow */
+  .force-arrow::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: -5px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.2), transparent 70%);
+  }
+
+  /* Tail dot/circle at start of arrow */
+  .force-tail {
+    position: absolute;
+    left: 0;
+    top: calc(50% - var(--arrow-width, 3px) - 1px);
+    width: calc(var(--arrow-width, 3px) * 2 + 2px);
+    height: calc(var(--arrow-width, 3px) * 2 + 2px);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.45), transparent 55%),
+      radial-gradient(circle, var(--arrow-color, #ef4444), rgba(0,0,0,0.3));
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.3),
+      inset 0 -1px 2px rgba(0,0,0,0.25),
+      0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* Arrow shaft — gradient bar for depth */
+  .force-shaft {
+    position: absolute;
+    left: calc(var(--arrow-width, 3px) + 2px);
+    top: calc(50% - var(--arrow-width, 3px) / 2);
+    width: calc(var(--arrow-length, 80px) - var(--arrow-width, 3px) * 2 - 14px);
+    height: var(--arrow-width, 3px);
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.35), transparent 40%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.25)),
+      linear-gradient(90deg, var(--arrow-color, #ef4444), var(--arrow-color, #ef4444)),
+      linear-gradient(180deg, rgba(234,234,234,0.15), rgba(0,0,0,0.15));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      inset 0 -1px 0 rgba(0,0,0,0.15),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* Top highlight on shaft */
+  .force-shaft::before {
+    content: "";
+    position: absolute;
+    left: 10%; right: 10%;
+    top: 0;
+    height: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.3) 30%, rgba(234,234,234,0.35) 50%, rgba(234,234,234,0.3) 70%, transparent);
+  }
+
+  /* Triangular arrowhead */
+  .force-head {
+    position: absolute;
+    right: 0;
+    top: calc(50% - var(--arrow-width, 3px) - 3px);
+    width: 0; height: 0;
+    border-top: calc(var(--arrow-width, 3px) + 3px) solid transparent;
+    border-bottom: calc(var(--arrow-width, 3px) + 3px) solid transparent;
+    border-left: calc(var(--arrow-width, 3px) * 3 + 4px) solid var(--arrow-color, #ef4444);
+  }
+
+  /* Arrowhead 3D highlight */
+  .force-head::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: calc((var(--arrow-width, 3px) + 3px) * -1);
+    width: 0; height: 0;
+    border-top: calc(var(--arrow-width, 3px) + 3px) solid transparent;
+    border-bottom: calc(var(--arrow-width, 3px) + 3px) solid transparent;
+    border-left: calc(var(--arrow-width, 3px) * 3 + 4px) solid rgba(255,255,255,0.15);
+    clip-path: polygon(0 0, 100% 50%, 0 50%);
+  }
+
+  /* ========== Variant: Gravity (blue, down) ========== */
+  .force-gravity {
+    --arrow-color: #3b82f6;
+    transform: rotate(90deg);
+  }
+
+  /* ========== Variant: Normal force (green, up) ========== */
+  .force-normal {
+    --arrow-color: #22c55e;
+    transform: rotate(-90deg);
+  }
+
+  /* ========== Variant: Friction (orange, horizontal) ========== */
+  .force-friction {
+    --arrow-color: #f97316;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="force-arrow">
+  <div class="force-tail"></div>
+  <div class="force-shaft"></div>
+  <div class="force-head"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set arrow length proportional to force magnitude
+  var len = forceMagnitude * scale;
+  arrowEl.style.setProperty("--arrow-length", len + "px");
+
+  // Rotate arrow to match force direction (0=right, 90=down, -90=up, 180=left)
+  // arrowEl.style.transform = "rotate(" + angleDeg + "deg)";
+
+  // Subtle pulse for emphasis
+  // var pulse = 1 + 0.03 * Math.sin(time * 3);
+  // arrowEl.style.transform = "rotate(" + angleDeg + "deg) scaleX(" + pulse + ")";
+-->

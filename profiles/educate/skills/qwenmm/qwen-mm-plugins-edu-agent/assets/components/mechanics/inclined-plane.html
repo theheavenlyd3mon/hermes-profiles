@@ -1,0 +1,140 @@
+<!--
+  K12 Asset: 斜面
+  ID: inclined-plane
+  Suitable: 斜面问题, 摩擦力, 力的分解, 机械效率, 做功
+  CSS Vars: --angle (slope angle in deg, affects visual tilt)
+  JS Hooks: set --angle in renderAt() to adjust slope steepness
+  Size: 120×60px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .inclined-plane {
+    position: absolute;
+    width: 120px;
+    height: 60px;
+    margin-left: -60px;
+    transform-origin: 50% 100%;
+    --angle: 30deg;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .inclined-plane::after {
+    content: "";
+    position: absolute;
+    left: 5px; right: 5px; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.36), transparent 68%);
+  }
+
+  /* Main wedge body — triangular shape via clip-path */
+  .ip-body {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 120px; height: 60px;
+    clip-path: polygon(0% 100%, 100% 100%, 100% 0%);
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 25%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.18)),
+      linear-gradient(135deg, #8b6914, #a67c2e 25%, #c4953a 50%, #a67c2e 75%, #7a5c10);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.12),
+      inset 0 -3px 6px rgba(0,0,0,0.25);
+  }
+
+  /* Top surface — slightly lighter shade for the slope face */
+  .ip-surface {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 120px; height: 60px;
+    clip-path: polygon(95% 4%, 100% 0%, 100% 100%, 96% 100%);
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.1)),
+      linear-gradient(90deg, #9e7520, #c9a043 50%, #9e7520);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+
+  /* Slope surface highlight (the hypotenuse face) */
+  .ip-slope {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 120px; height: 60px;
+    clip-path: polygon(0% 100%, 100% 0%, 100% 6%, 3% 100%);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.08), transparent 50%),
+      linear-gradient(135deg, #d4a84b, #e8c06a 30%, #d4a84b 70%, #a67c2e);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15);
+  }
+
+  /* Wood grain texture lines */
+  .ip-grain {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 120px; height: 60px;
+    clip-path: polygon(0% 100%, 100% 100%, 100% 0%);
+    background:
+      repeating-linear-gradient(
+        15deg,
+        transparent 0px, transparent 6px,
+        rgba(101,67,10,0.08) 6px, rgba(101,67,10,0.08) 7px
+      );
+    pointer-events: none;
+  }
+
+  /* Back support (vertical right edge) */
+  .ip-back {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 5px; height: 60px;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.15), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 20%),
+      linear-gradient(180deg, #6b5212, #8b6914 40%, #6b5212);
+    border-left: 1px solid rgba(0,0,0,0.2);
+    box-shadow:
+      inset 1px 0 2px rgba(255,255,255,0.08),
+      inset -1px 0 3px rgba(0,0,0,0.2);
+  }
+
+  /* Base bottom edge */
+  .ip-base {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 120px; height: 4px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #5c4510, #7a5c10 20%, #8b6914 50%, #7a5c10 80%, #5c4510);
+    border-top: 1px solid rgba(0,0,0,0.15);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.06),
+      0 2px 4px rgba(0,0,0,0.2);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="inclined-plane">
+  <div class="ip-body"></div>
+  <div class="ip-slope"></div>
+  <div class="ip-grain"></div>
+  <div class="ip-surface"></div>
+  <div class="ip-back"></div>
+  <div class="ip-base"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Adjust visual angle (for illustrative purposes — actual geometry is fixed)
+  // To show different angles, scale or transform the container:
+  // var angle = parseFloat(getComputedStyle(planeEl).getPropertyValue("--angle"));
+  // planeEl.style.transform = "scaleY(" + (Math.tan(angle * Math.PI / 180) / Math.tan(30 * Math.PI / 180)) + ")";
+
+  // Optional: subtle vibration when object slides
+  // var vib = Math.sin(time * 12) * 0.3 * Math.exp(-time * 3);
+  // planeEl.style.transform = "translateX(" + vib + "px)";
+-->

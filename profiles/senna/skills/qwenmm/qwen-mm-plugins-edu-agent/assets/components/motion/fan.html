@@ -1,0 +1,163 @@
+<!--
+  K12 Asset: 风扇/螺旋桨
+  ID: fan
+  Suitable: 圆周运动, 角速度, 转速, 线速度, 电动机, 能量转换
+  CSS Vars: --spin (rotation angle in deg), --blade-color (#3b82f6 default)
+  JS Hooks: set --spin in renderAt() to rotate blades
+  Size: 48x48px at 1920x1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .fan {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+    margin-top: -24px;
+    transform-origin: 50% 50%;
+    --spin: 0deg;
+    --blade-color: #3b82f6;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .fan::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 56px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.34), transparent 68%);
+  }
+
+  /* Blade assembly — rotates with --spin */
+  .fan-blades {
+    position: absolute;
+    inset: 0;
+    transform: rotate(var(--spin));
+    transform-origin: 50% 50%;
+  }
+
+  /* Individual blade — airfoil shape */
+  .fan-blade {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 20px;
+    margin-left: -4px;
+    margin-top: -20px;
+    transform-origin: 50% 100%;
+    border-radius: 4px 4px 2px 2px;
+  }
+
+  .fan-blade-1 {
+    transform: rotate(0deg);
+  }
+  .fan-blade-2 {
+    transform: rotate(120deg);
+  }
+  .fan-blade-3 {
+    transform: rotate(240deg);
+  }
+
+  /* Blade gradient — airfoil thick-to-thin */
+  .fan-blade::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 4px 4px 2px 2px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.25), transparent 35%),
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 25%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.2)),
+      linear-gradient(90deg,
+        var(--blade-color),
+        rgba(59,130,246,0.85) 40%,
+        rgba(37,99,235,0.9) 70%);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      1px 0 3px rgba(0,0,0,0.15);
+  }
+
+  /* Blade trailing edge highlight */
+  .fan-blade::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 2px;
+    width: 1px; height: 16px;
+    background: linear-gradient(180deg, rgba(234,234,234,0.3), rgba(234,234,234,0.05));
+  }
+
+  /* Central hub */
+  .fan-hub {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 14px; height: 14px;
+    margin-left: -7px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 36%, rgba(234,234,234,0.3), transparent 50%),
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 30%),
+      radial-gradient(circle, #cbd5e1, #94a3b8 35%, #64748b 65%, #475569);
+    border: 1.5px solid rgba(71,85,105,0.5);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.25),
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      0 2px 6px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+
+  /* Hub cap — center bolt */
+  .fan-hub::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 5px; height: 5px;
+    margin-left: -2.5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #f8fafc, #94a3b8 60%, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.5),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Motion blur hint overlay — shows at high speed */
+  .fan-blur {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 7px, rgba(59,130,246,0.08) 10px, rgba(59,130,246,0.04) 18px, transparent 22px);
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="fan">
+  <div class="fan-blades">
+    <div class="fan-blade fan-blade-1"></div>
+    <div class="fan-blade fan-blade-2"></div>
+    <div class="fan-blade fan-blade-3"></div>
+  </div>
+  <div class="fan-hub"></div>
+  <div class="fan-blur"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Spin blades: increment angle with angular velocity
+  var spinDeg = angularVelocity * time * 360;
+  fanEl.style.setProperty("--spin", spinDeg + "deg");
+
+  // Motion blur at high speed: show blur overlay when rpm > threshold
+  var speed01 = Math.min(1, rpm / maxRpm);
+  fanBlurEl.style.opacity = speed01 > 0.5 ? (speed01 - 0.5) * 2 : 0;
+
+  // Optional: blade color
+  // fanEl.style.setProperty("--blade-color", "#ef4444");
+-->

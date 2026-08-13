@@ -1,0 +1,148 @@
+<!--
+  K12 Asset: 气泡（上升气泡）
+  ID: bubbles
+  Suitable: 沸腾, 化学反应, 电解, 浮力, 气体溶解度
+  CSS Vars: --bubble-progress (0-1, controls bubble positions along vertical path)
+  JS Hooks: set --bubble-progress in renderAt() to animate rising bubbles
+  Size: 40×80px container at 1920×1080
+
+  Note: 6 bubbles at staggered positions, each wraps from top to bottom.
+  Bubble sizes range 4-8px. Each has a unique start offset for staggering.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .bubbles {
+    position: absolute;
+    width: 40px;
+    height: 80px;
+    margin-left: -20px;
+    transform-origin: 50% 100%;
+    --bubble-progress: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  }
+
+  /* Ground shadow */
+  .bubbles::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: -6px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.18), transparent 70%);
+  }
+
+  /* Individual bubble — base style */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.55), transparent 40%),
+      radial-gradient(circle at 60% 65%, rgba(234,234,234,0.12), transparent 35%),
+      radial-gradient(circle at 50% 50%, rgba(180,220,255,0.18), transparent 60%),
+      linear-gradient(180deg, rgba(200,230,255,0.22), rgba(140,190,240,0.12) 50%, rgba(100,160,220,0.08));
+    border: 0.8px solid rgba(180,210,240,0.35);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -1px 2px rgba(100,160,220,0.1),
+      0 0 3px rgba(140,180,230,0.12);
+  }
+
+  /* Bubble highlight dot — specular reflection */
+  .bubble::before {
+    content: "";
+    position: absolute;
+    left: 22%; top: 18%;
+    width: 28%; height: 28%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234,234,234,0.6), transparent 70%);
+  }
+
+  /* Secondary reflection arc */
+  .bubble::after {
+    content: "";
+    position: absolute;
+    right: 18%; bottom: 22%;
+    width: 18%; height: 12%;
+    border-radius: 50%;
+    background: #ffffff;
+    transform: rotate(-30deg);
+  }
+
+  /* Bubble 1: 8px, offset 0.00 */
+  .bubble-1 {
+    width: 8px; height: 8px;
+    left: 16px;
+    --start-offset: 0;
+    bottom: calc((1 - ((var(--start-offset) + var(--bubble-progress)) - floor(var(--start-offset) + var(--bubble-progress)))) * 72px);
+  }
+
+  /* Bubble 2: 5px, offset 0.18 */
+  .bubble-2 {
+    width: 5px; height: 5px;
+    left: 8px;
+    --start-offset: 0.18;
+  }
+
+  /* Bubble 3: 7px, offset 0.35 */
+  .bubble-3 {
+    width: 7px; height: 7px;
+    left: 24px;
+    --start-offset: 0.35;
+  }
+
+  /* Bubble 4: 4px, offset 0.52 */
+  .bubble-4 {
+    width: 4px; height: 4px;
+    left: 14px;
+    --start-offset: 0.52;
+  }
+
+  /* Bubble 5: 6px, offset 0.7 */
+  .bubble-5 {
+    width: 6px; height: 6px;
+    left: 28px;
+    --start-offset: 0.7;
+  }
+
+  /* Bubble 6: 5px, offset 0.88 */
+  .bubble-6 {
+    width: 5px; height: 5px;
+    left: 18px;
+    --start-offset: 0.88;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="bubbles">
+  <div class="bubble bubble-1"></div>
+  <div class="bubble bubble-2"></div>
+  <div class="bubble bubble-3"></div>
+  <div class="bubble bubble-4"></div>
+  <div class="bubble bubble-5"></div>
+  <div class="bubble bubble-6"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Animate rising bubbles — each bubble has a staggered start offset
+  var progress = (time * 0.3) % 1; // 0..1, controls overall animation phase
+  bubbleContainerEl.style.setProperty("--bubble-progress", progress);
+
+  // Position each bubble individually (required since CSS calc can't do modulo)
+  var containerH = 72; // usable height in px
+  var offsets = [0, 0.18, 0.35, 0.52, 0.7, 0.88];
+  var bubbleEls = bubbleContainerEl.querySelectorAll(".bubble");
+  for (var i = 0; i < bubbleEls.length; i++) {
+    var y = ((offsets[i] + progress) % 1) * containerH;
+    bubbleEls[i].style.bottom = y + "px";
+    // Optional: slight horizontal wobble
+    var wobble = Math.sin((offsets[i] + progress) * Math.PI * 4) * 2;
+    bubbleEls[i].style.marginLeft = wobble + "px";
+    // Optional: fade out near top, fade in near bottom
+    var opacity = y < 8 ? y / 8 : (y > 60 ? (72 - y) / 12 : 1);
+    bubbleEls[i].style.opacity = Math.max(0.3, opacity);
+  }
+
+  // Speed control: change multiplier for faster/slower bubbles
+  // var progress = (time * speed) % 1;
+-->

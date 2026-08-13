@@ -1,0 +1,242 @@
+<!--
+  K12 Asset: 凸透镜/凹透镜
+  ID: lens
+  Suitable: 凸透镜成像, 光的折射, 焦点焦距, 远视眼近视眼矫正
+  CSS Vars: --focal-glow (0-1 for focal point indicator glow)
+  JS Hooks: set --focal-glow for focal point brightness; pulse via Math.sin
+  Size: 12×60px at 1920×1080
+
+  Variants:
+    .lens          — biconvex lens (default, converging)
+    .lens-concave  — biconcave lens (diverging, pinched middle)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .lens {
+    position: absolute;
+    width: 12px;
+    height: 60px;
+    margin-left: -6px;
+    transform-origin: 50% 50%;
+    --focal-glow: 0;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .lens::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    bottom: -8px;
+    width: 32px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Glass body — biconvex shape via border-radius */
+  .lens-body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 60px;
+    border-radius: 50% / 8px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.28) 0%, rgba(180,210,255,0.08) 30%, rgba(180,210,255,0.08) 70%, rgba(234,234,234,0.12) 100%),
+      linear-gradient(180deg, rgba(160,200,255,0.22), rgba(120,170,240,0.16) 50%, rgba(160,200,255,0.2)),
+      radial-gradient(ellipse at 30% 30%, rgba(200,225,255,0.18), transparent 60%),
+      linear-gradient(90deg, rgba(100,160,230,0.14), rgba(80,140,220,0.1) 50%, rgba(100,160,230,0.12));
+    border: 1px solid rgba(160,200,240,0.32);
+    box-shadow:
+      inset 2px 0 4px rgba(255,255,255,0.12),
+      inset -2px 0 4px rgba(255,255,255,0.06),
+      inset 0 3px 6px rgba(200,225,255,0.1),
+      inset 0 -3px 6px rgba(0,0,0,0.06),
+      0 0 8px rgba(140,180,240,0.1);
+    overflow: hidden;
+  }
+
+  /* Left edge highlight — vertical reflection */
+  .lens-body::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 6px;
+    width: 1.5px;
+    height: 48px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.4),
+      rgba(234,234,234,0.15) 50%,
+      transparent 90%);
+  }
+
+  /* Right edge highlight */
+  .lens-body::after {
+    content: "";
+    position: absolute;
+    right: 1px;
+    top: 10px;
+    width: 1px;
+    height: 40px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      transparent 10%,
+      rgba(234,234,234,0.18) 50%,
+      rgba(234,234,234,0.06) 90%);
+  }
+
+  /* Center axis line — optical axis marker */
+  .lens-axis {
+    position: absolute;
+    left: 5px;
+    top: -4px;
+    width: 2px;
+    height: 68px;
+    background: linear-gradient(180deg,
+      rgba(180,210,240,0.08),
+      rgba(180,210,240,0.2) 15%,
+      rgba(180,210,240,0.2) 85%,
+      rgba(180,210,240,0.08));
+    pointer-events: none;
+  }
+
+  /* Focal point indicators — left and right */
+  .lens-focal {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    left: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255,220,100,0.9),
+      rgba(255,180,60,0.4) 50%,
+      transparent 70%);
+    opacity: var(--focal-glow);
+    filter: blur(0.5px);
+  }
+  .lens-focal-left {
+    top: 27px;
+    transform: translateX(-40px);
+  }
+  .lens-focal-right {
+    top: 27px;
+    transform: translateX(40px);
+  }
+
+  /* Focal point glow halo */
+  .lens-focal::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255,220,100,0.3),
+      transparent 70%);
+  }
+
+  /* ============ CONCAVE LENS VARIANT ============ */
+  .lens-concave .lens-body {
+    border-radius: 0;
+    /* Pinched middle via clip-path */
+    clip-path: polygon(
+      0% 0%, 100% 0%,
+      100% 10%, 85% 30%, 80% 50%, 85% 70%, 100% 90%,
+      100% 100%, 0% 100%,
+      0% 90%, 15% 70%, 20% 50%, 15% 30%, 0% 10%
+    );
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.22) 0%, rgba(180,210,255,0.06) 40%, rgba(180,210,255,0.06) 60%, rgba(234,234,234,0.16) 100%),
+      linear-gradient(180deg, rgba(160,200,255,0.2), rgba(120,170,240,0.14) 50%, rgba(160,200,255,0.18)),
+      radial-gradient(ellipse at 25% 35%, rgba(200,225,255,0.14), transparent 55%),
+      linear-gradient(90deg, rgba(100,160,230,0.12), rgba(80,140,220,0.08) 50%, rgba(100,160,230,0.1));
+    border: none;
+    box-shadow:
+      inset 1px 0 3px rgba(255,255,255,0.08),
+      inset -1px 0 3px rgba(255,255,255,0.04),
+      0 0 6px rgba(140,180,240,0.08);
+  }
+
+  .lens-concave .lens-body::before {
+    left: 2px;
+    top: 4px;
+    width: 1px;
+    height: 52px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.2),
+      rgba(234,234,234,0.05) 30%,
+      rgba(234,234,234,0.05) 70%,
+      rgba(234,234,234,0.2));
+  }
+
+  .lens-concave .lens-body::after {
+    right: 2px;
+    top: 4px;
+    width: 1px;
+    height: 52px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.12),
+      rgba(234,234,234,0.03) 30%,
+      rgba(234,234,234,0.03) 70%,
+      rgba(234,234,234,0.12));
+  }
+
+  /* Edge thickening bands for concave — top and bottom */
+  .lens-edge-top,
+  .lens-edge-bottom {
+    position: absolute;
+    left: 0;
+    width: 12px;
+    height: 5px;
+    background:
+      linear-gradient(90deg, rgba(160,200,240,0.2), rgba(140,180,230,0.1) 50%, rgba(160,200,240,0.15));
+    box-shadow: inset 0 0 2px rgba(255,255,255,0.08);
+  }
+  .lens-edge-top {
+    top: 0;
+    border-radius: 3px 3px 0 0;
+  }
+  .lens-edge-bottom {
+    bottom: 0;
+    border-radius: 0 0 3px 3px;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="lens" class="lens">
+  <div class="lens-axis"></div>
+  <div class="lens-body"></div>
+  <div class="lens-focal lens-focal-left"></div>
+  <div class="lens-focal lens-focal-right"></div>
+</div>
+
+<!-- ===== HTML: concave variant ===== -->
+<!--
+<div id="lens" class="lens lens-concave">
+  <div class="lens-axis"></div>
+  <div class="lens-edge-top"></div>
+  <div class="lens-body"></div>
+  <div class="lens-edge-bottom"></div>
+  <div class="lens-focal lens-focal-left"></div>
+  <div class="lens-focal lens-focal-right"></div>
+</div>
+-->
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Focal point glow pulse
+  var focalGlow = 0.5 + Math.sin(time * 3.0) * 0.3;
+  lens.style.setProperty("--focal-glow", Math.max(0, Math.min(1, focalGlow)));
+
+  // Or set focal glow to a static value:
+  // lens.style.setProperty("--focal-glow", 1);
+
+  // Subtle glass shimmer on the body
+  var shimmer = 0.28 + Math.sin(time * 2.1) * 0.04;
+  // lensBody.style.borderColor = "rgba(160,200,240," + shimmer + ")";
+-->

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech Promo Neon UI Atoms Preview</title>
+    <style>
+      :root {
+        --bg: #030306;
+        --panel: rgba(14, 16, 28, 0.88);
+        --line: rgba(160, 178, 255, 0.22);
+        --text: #f6f8ff;
+        --muted: #9aa5bd;
+        --cyan: #46f3ff;
+        --blue: #315dff;
+        --violet: #8e3cff;
+        --pink: #ff4fd8;
+        --lime: #c8ff4a;
+        --gold: #ffd66b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at 18% 6%, rgba(49, 93, 255, 0.24), transparent 28rem), radial-gradient(circle at 86% 2%, rgba(255, 79, 216, 0.18), transparent 28rem), linear-gradient(180deg, #05050a, #000);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      main { width: min(1440px, calc(100vw - 40px)); margin: 0 auto; padding: 44px 0 72px; }
+      header { border: 1px solid var(--line); border-radius: 28px; padding: 34px; background: linear-gradient(135deg, rgba(22, 24, 38, 0.9), rgba(6, 7, 13, 0.75)); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
+      h1 { margin: 0 0 12px; font-size: clamp(34px, 4vw, 62px); letter-spacing: -0.04em; }
+      .lead { max-width: 920px; color: var(--muted); line-height: 1.8; font-size: 18px; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 26px; }
+      .card { border: 1px solid var(--line); border-radius: 24px; background: var(--panel); overflow: hidden; box-shadow: 0 20px 70px rgba(0,0,0,.32); }
+      .head { display: flex; justify-content: space-between; gap: 14px; padding: 22px 24px 14px; }
+      .kicker { color: var(--cyan); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; }
+      h2 { margin: 8px 0 0; font-size: 25px; }
+      .badge { align-self: flex-start; border: 1px solid rgba(200,255,74,.28); border-radius: 999px; padding: 6px 10px; color: rgba(216,255,111,.96); font-size: 12px; }
+      .stage { position: relative; height: 280px; margin: 0 18px; border-radius: 22px; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 44%, rgba(54,63,132,.22), transparent 48%), linear-gradient(180deg, #020207, #000); }
+      .stage::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.024) 1px, transparent 1px); background-size: 54px 54px; opacity: .18; mask-image: radial-gradient(circle, #000, transparent 72%); }
+      .note { padding: 16px 20px 22px; color: var(--muted); line-height: 1.7; font-size: 14px; }
+      .cursor { position: absolute; width: 0; height: 0; border-left: 18px solid #fff; border-top: 12px solid transparent; border-bottom: 12px solid transparent; filter: drop-shadow(0 0 12px rgba(70,243,255,.8)); z-index: 5; }
+      .orb { position: absolute; width: 210px; height: 210px; border-radius: 999px; background: radial-gradient(circle, rgba(255,79,216,.5), rgba(49,93,255,.24) 40%, transparent 68%); filter: blur(22px); animation: breathe 3s ease-in-out infinite; }
+      @keyframes breathe { 0%,100% { transform: scale(.86); opacity:.22; } 50% { transform: scale(1.1); opacity:.52; } }
+      .draw { position: relative; width: 420px; height: 190px; }
+      .draw path { fill: none; stroke: url(#grad); stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 430; stroke-dashoffset: 430; filter: drop-shadow(0 0 18px rgba(70,243,255,.75)); animation: drawLine 2.6s ease-in-out infinite; }
+      .dot-core { position: absolute; left: 195px; top: 74px; width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 0 18px #fff, 0 0 54px var(--violet); animation: pop 2.6s ease-in-out infinite; }
+      .draw .cursor { left: 68px; top: 136px; animation: cursorTrace 2.6s ease-in-out infinite; }
+      @keyframes drawLine { 0%,10% { stroke-dashoffset:430; opacity:0; } 18% { opacity:1; } 62%,86% { stroke-dashoffset:0; opacity:1; } 100% { opacity:0; } }
+      @keyframes pop { 0%,45%,100% { transform:scale(0); opacity:0; } 54%,82% { transform:scale(1); opacity:1; } 62% { transform:scale(1.24); } }
+      @keyframes cursorTrace { 0%,45% { transform:translate(0,0) rotate(-14deg); opacity:0; } 55% { opacity:1; } 74%,88% { transform:translate(142px,-64px); opacity:1; } 100% { opacity:0; } }
+      .pill-wrap { position: relative; width: 470px; height: 150px; }
+      .pill { position: absolute; inset: 34px 36px; border-radius: 999px; background: linear-gradient(90deg, var(--pink), var(--violet), var(--blue), var(--cyan)); box-shadow: 0 0 38px rgba(142,60,255,.7); animation: pillOpen 2.8s ease-in-out infinite; }
+      .pill::after { content: "Focused"; position: absolute; inset: 5px; display: grid; place-items: center; border-radius: inherit; background: #050508; font-weight: 750; font-size: 22px; }
+      .spark { position: absolute; right: 48px; top: 61px; width: 26px; height: 26px; border-radius: 999px; background: #fff; box-shadow: 0 0 18px #fff, 0 0 46px var(--cyan); animation: spark 2.8s ease-in-out infinite; }
+      .pill-wrap .cursor { left: 64px; top: 108px; animation: cursorPill 2.8s ease-in-out infinite; }
+      @keyframes pillOpen { 0%,14% { transform:scaleX(.05) scaleY(.62); opacity:0; } 34%,78% { transform:scale(1); opacity:1; } 64% { transform:scale(1.045); } 100% { transform:scale(.9); opacity:0; } }
+      @keyframes spark { 0%,54%,100% { transform:scale(.2); opacity:0; } 62%,74% { transform:scale(1.25); opacity:1; } }
+      @keyframes cursorPill { 0%,34% { transform:translate(0,0) rotate(-10deg); opacity:0; } 44% { opacity:1; } 60%,84% { transform:translate(328px,-48px); opacity:1; } 100% { transform:translate(328px,-48px); opacity:0; } }
+      .focus { position: relative; width: 440px; height: 220px; }
+      .focus-ring { position:absolute; left:104px; top:12px; width:232px; height:232px; border-radius:999px; border:2px solid transparent; background:linear-gradient(#030309,#030309) padding-box, conic-gradient(from 220deg, transparent, var(--cyan), var(--pink), transparent 70%) border-box; filter:drop-shadow(0 0 20px rgba(70,243,255,.45)); animation:focusRing 3s ease-in-out infinite; }
+      .focus-target { position:absolute; left:146px; top:52px; width:148px; height:148px; border-radius:36px; background:radial-gradient(circle, rgba(255,255,255,.22), rgba(70,243,255,.08) 34%, rgba(4,4,10,.92) 68%); border:1px solid rgba(255,255,255,.16); animation:focusTarget 3s ease-in-out infinite; }
+      .focus-scan { position:absolute; left:118px; top:112px; width:204px; height:3px; border-radius:999px; background:linear-gradient(90deg, transparent, #fff, var(--cyan), transparent); box-shadow:0 0 20px rgba(70,243,255,.75); animation:focusScan 3s ease-in-out infinite; }
+      .focus-chip { position:absolute; left:136px; top:90px; min-width:168px; padding:12px 18px; border-radius:999px; background:rgba(5,6,13,.9); border:1px solid rgba(255,255,255,.18); text-align:center; font-weight:700; animation:focusChip 3s ease-in-out infinite; }
+      @keyframes focusRing { 0%,14% { transform:scale(.58) rotate(-42deg); opacity:0; } 34%,78% { transform:scale(1) rotate(90deg); opacity:1; } 100% { transform:scale(.9) rotate(150deg); opacity:0; } }
+      @keyframes focusTarget { 0%,20% { transform:scale(.72); opacity:0; border-radius:999px; } 42%,80% { transform:scale(1); opacity:1; border-radius:36px; } 58% { transform:scale(1.05); } 100% { opacity:0; } }
+      @keyframes focusScan { 0%,38% { transform:translateY(-54px) scaleX(.3); opacity:0; } 48% { opacity:1; } 70%,82% { transform:translateY(54px) scaleX(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes focusChip { 0%,38% { transform:scale(.88); opacity:0; } 52%,82% { transform:scale(1); opacity:1; } 100% { opacity:0; } }
+      .orbit { position: relative; width: 330px; height: 330px; perspective: 820px; }
+      .ring { position:absolute; inset:45px; border-radius:999px; border:1px solid transparent; background:linear-gradient(#030309,#030309) padding-box, conic-gradient(from 45deg, rgba(70,243,255,.1), rgba(70,243,255,.9), rgba(255,79,216,.65), rgba(200,255,74,.2), rgba(70,243,255,.1)) border-box; transform:rotateX(58deg); animation:ringIn 3.2s ease-in-out infinite; }
+      .signal { position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px; border-radius:999px; background:#fff; box-shadow:0 0 14px #fff, 0 0 40px var(--lime); animation:signalOrbit 3.2s ease-in-out infinite; }
+      .core { position:absolute; left:50%; top:50%; width:72px; height:72px; margin:-36px; border-radius:999px; background:radial-gradient(circle at 35% 30%, #fff, var(--pink) 24%, var(--blue) 58%, #05050b 72%); box-shadow:0 0 24px rgba(255,79,216,.8); animation:corePulse 3.2s ease-in-out infinite; }
+      @keyframes ringIn { 0%,12% { transform:rotateX(58deg) scale(.55); opacity:0; } 34%,82% { transform:rotateX(58deg) scale(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes signalOrbit { 0%,42% { transform:rotate(0deg) translateX(120px) scale(.2); opacity:0; } 52% { opacity:1; } 80% { transform:rotate(250deg) translateX(120px); opacity:1; } 100% { opacity:0; } }
+      @keyframes corePulse { 0%,20%,100% { transform:scale(0); opacity:0; } 35%,82% { transform:scale(1); opacity:1; } 54%,70% { transform:scale(1.16); } }
+      .select { position: relative; width: 440px; height: 210px; }
+      .select-frame { position:absolute; left:74px; top:58px; width:292px; height:96px; border-radius:18px; background:linear-gradient(90deg, var(--gold), var(--pink), var(--violet), var(--cyan)); box-shadow:0 0 28px rgba(255,79,216,.46); animation:selectExpand 3s ease-in-out infinite; }
+      .select-frame::after { content:"Giving Space"; position:absolute; inset:3px; display:grid; place-items:center; border-radius:15px; background:rgba(2,2,6,.96); }
+      .select .cursor { left:62px; top:55px; animation:cursorSelect 3s ease-in-out infinite; }
+      @keyframes selectExpand { 0%,16% { transform:scaleX(.08) scaleY(.35); opacity:0; } 38%,58% { transform:scale(1); opacity:1; } 74%,86% { transform:scaleX(1.13) scaleY(1.12); opacity:1; } 100% { opacity:0; } }
+      @keyframes cursorSelect { 0%,42% { opacity:0; } 52%,82% { transform:translate(-10px,-12px); opacity:1; } 100% { opacity:0; } }
+      .logo { position: relative; width: 440px; height: 220px; }
+      .mini-line { position:absolute; left:145px; top:58px; width:150px; height:3px; border-radius:999px; background:linear-gradient(90deg, var(--pink), var(--cyan), var(--lime)); box-shadow:0 0 20px rgba(70,243,255,.54); animation:logoLine 3.2s ease-in-out infinite; }
+      .brand { position:absolute; left:0; right:0; top:126px; text-align:center; font-size:28px; font-weight:760; letter-spacing:.08em; animation:brandIn 3.2s ease-in-out infinite; }
+      @keyframes logoLine { 0%,12% { transform:scaleX(.05); opacity:0; } 34%,78% { transform:scaleX(1); opacity:1; } 100% { transform:scaleX(.35); opacity:0; } }
+      @keyframes brandIn { 0%,40% { transform:translateY(16px); opacity:0; } 58%,88% { transform:translateY(0); opacity:1; } 100% { opacity:0; } }
+      @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } main { width: min(100vw - 28px, 720px); } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Tech Promo Neon UI Atoms</h1>
+        <p class="lead">科技宣传片 / 产品介绍片原子动效资产。每张卡都是一个可独立复用的能力，不是完整成片。优先复用选择框 Zoom in / Zoom out、品牌收束、光线描边三类效果。</p>
+      </header>
+      <section class="grid">
+        <article class="card"><div class="head"><div><div class="kicker">Atom 01</div><h2>光线描边圆角</h2></div><span class="badge">recommended</span></div><div class="stage"><div class="orb"></div><div class="draw"><svg viewBox="0 0 420 190" width="420" height="190"><defs><linearGradient id="grad" x1="0" x2="1"><stop offset="0%" stop-color="#ff4fd8"/><stop offset="50%" stop-color="#315dff"/><stop offset="100%" stop-color="#46f3ff"/></linearGradient></defs><path d="M65 142 H228 Q278 142 278 92 V42"/></svg><div class="dot-core"></div><div class="cursor"></div></div></div><div class="note">用于片头、产品轮廓、数据路径、Logo 外框。把 SVG path 替换成目标形状即可复用。</div></article>
+        <article class="card"><div class="head"><div><div class="kicker">Atom 02</div><h2>光标激活胶囊</h2></div><span class="badge">hit target</span></div><div class="stage"><div class="orb"></div><div class="pill-wrap"><div class="pill"></div><div class="spark"></div><div class="cursor"></div></div></div><div class="note">用于价值词激活和功能点出现。光标必须真实命中右侧小按钮。</div></article>
+        <article class="card"><div class="head"><div><div class="kicker">Atom 03</div><h2>聚焦扫描镜头</h2></div><span class="badge">reworked</span></div><div class="stage"><div class="orb"></div><div class="focus"><div class="focus-ring"></div><div class="focus-target"></div><div class="focus-scan"></div><div class="focus-chip">Smart Focus</div></div></div><div class="note">替代眼睛图形，用扫描环、目标框和扫描线表现 AI 聚焦。</div></article>
+        <article class="card"><div class="head"><div><div class="kicker">Atom 04</div><h2>环形点阵聚合</h2></div><span class="badge">enrich</span></div><div class="stage"><div class="orb"></div><div class="orbit"><div class="ring"></div><div class="signal"></div><div class="core"></div></div></div><div class="note">用于生态、网络、数据中枢。必须叠加连线、信号流或纵深，避免像普通加载动画。</div></article>
+        <article class="card"><div class="head"><div><div class="kicker">Atom 05</div><h2>选择框扩展留白</h2></div><span class="badge">strong</span></div><div class="stage"><div class="orb"></div><div class="select"><div class="select-frame"></div><div class="cursor"></div></div></div><div class="note">强推荐。用于产品编辑器和核心 UI 镜头，重点保留 Zoom in / Zoom out 空间手感。</div></article>
+        <article class="card"><div class="head"><div><div class="kicker">Atom 06</div><h2>品牌收束</h2></div><span class="badge">ending</span></div><div class="stage"><div class="orb"></div><div class="logo"><div class="mini-line"></div><div class="brand">NEON UI KIT</div></div></div><div class="note">用于片尾 Logo、品牌主张、官网露出。正式项目替换真实 Logo 并保留最终 hold 帧。</div></article>
+      </section>
+    </main>
+  </body>
+</html>

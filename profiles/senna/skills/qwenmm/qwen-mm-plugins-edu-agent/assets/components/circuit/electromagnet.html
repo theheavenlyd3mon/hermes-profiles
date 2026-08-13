@@ -1,0 +1,176 @@
+<!--
+  K12 Asset: 电磁铁
+  ID: electromagnet
+  Suitable: 电磁铁原理, 电磁感应, 磁场, 继电器
+  CSS Vars: --power (0-1, magnetic field strength/glow), --polarity (0=off, 1=N-left, -1=N-right)
+  JS Hooks: set --power and --polarity in renderAt()
+  Size: 60×30px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .electromagnet {
+    position: absolute;
+    width: 60px;
+    height: 30px;
+    margin-left: -30px;
+    margin-top: -15px;
+    --power: 0;
+    --polarity: 0;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .electromagnet::after {
+    content: "";
+    position: absolute;
+    left: -2px; bottom: -7px;
+    width: 64px; height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Iron core — central bar */
+  .emag-core {
+    position: absolute;
+    left: 8px; top: 10px;
+    width: 44px; height: 10px;
+    border-radius: 2px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.12), transparent 30%),
+      linear-gradient(180deg, #64748b, #475569 40%, #334155 70%, #1e293b),
+      linear-gradient(90deg, #475569, #334155);
+    border: 1px solid rgba(100,116,139,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -3px 5px rgba(0,0,0,0.25),
+      0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Copper coil wrapping — center of core */
+  .emag-coil {
+    position: absolute;
+    left: 16px; top: 7px;
+    width: 28px; height: 16px;
+    border-radius: 3px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(180,140,80,0.7) 0px, rgba(212,175,55,0.85) 1.5px,
+        rgba(160,120,60,0.65) 3px, rgba(140,100,40,0.55) 4px),
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 30%),
+      linear-gradient(180deg, #8b6914, #6b4f10);
+    border: 0.5px solid rgba(139,105,20,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -3px 5px rgba(0,0,0,0.2);
+  }
+
+  /* N pole indicator — left */
+  .emag-pole-n {
+    position: absolute;
+    left: 0; top: 10px;
+    width: 10px; height: 10px;
+    border-radius: 2px 0 0 2px;
+    background:
+      linear-gradient(180deg, #dc2626, #991b1b);
+    border: 0.5px solid rgba(220,38,38,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 calc(var(--power) * 6px) rgba(239,68,68, calc(var(--power) * 0.4)),
+      inset 0 1px rgba(255,255,255,0.15);
+  }
+
+  .emag-pole-n::after {
+    content: "N";
+    font-family: "JetBrains Mono", monospace;
+    font-size: 6px;
+    font-weight: 700;
+    color: rgba(255,255,255, calc(0.3 + var(--power) * 0.7));
+  }
+
+  /* S pole indicator — right */
+  .emag-pole-s {
+    position: absolute;
+    right: 0; top: 10px;
+    width: 10px; height: 10px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, #2563eb, #1d4ed8);
+    border: 0.5px solid rgba(37,99,235,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 calc(var(--power) * 6px) rgba(59,130,246, calc(var(--power) * 0.4)),
+      inset 0 1px rgba(255,255,255,0.15);
+  }
+
+  .emag-pole-s::after {
+    content: "S";
+    font-family: "JetBrains Mono", monospace;
+    font-size: 6px;
+    font-weight: 700;
+    color: rgba(255,255,255, calc(0.3 + var(--power) * 0.7));
+  }
+
+  /* Field line glow — left pole */
+  .emag-field-l {
+    position: absolute;
+    left: -6px; top: 6px;
+    width: 10px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse,
+      rgba(239,68,68, calc(var(--power) * 0.25)),
+      transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Field line glow — right pole */
+  .emag-field-r {
+    position: absolute;
+    right: -6px; top: 6px;
+    width: 10px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse,
+      rgba(59,130,246, calc(var(--power) * 0.25)),
+      transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Terminal leads */
+  .emag-lead {
+    position: absolute;
+    bottom: 0;
+    width: 3px; height: 6px;
+    background: linear-gradient(180deg, #94a3b8, #64748b);
+    border-radius: 0 0 1px 1px;
+  }
+  .emag-lead-l { left: 20px; }
+  .emag-lead-r { right: 20px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="electromagnet">
+  <div class="emag-core"></div>
+  <div class="emag-coil"></div>
+  <div class="emag-pole-n"></div>
+  <div class="emag-pole-s"></div>
+  <div class="emag-field-l"></div>
+  <div class="emag-field-r"></div>
+  <div class="emag-lead emag-lead-l"></div>
+  <div class="emag-lead emag-lead-r"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Power level: 0=off, 1=full magnetic strength
+  electromagnetEl.style.setProperty("--power", powerLevel);
+
+  // Polarity: 1=N-left/S-right, -1=N-right/S-left, 0=off
+  electromagnetEl.style.setProperty("--polarity", polarity);
+
+  // Pulsing field effect when powered:
+  // var pulse = 0.7 + 0.3 * Math.sin(time * 4);
+  // electromagnetEl.style.setProperty("--power", pulse);
+-->

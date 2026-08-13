@@ -1,0 +1,137 @@
+<!--
+  K12 Asset: 小球
+  ID: ball
+  Suitable: 自由落体, 弹性碰撞, 平抛运动, 动能定理, 简谐振动, 斜面运动
+  CSS Vars: --ball-color-a (highlight), --ball-color-b (base), --spin (rotation angle)
+  JS Hooks: spin for rolling, translateY for bouncing
+  Size: 32×32px at 1920×1080
+
+  Variants:
+    .ball-blue   { --ball-color-a: #60a5fa; --ball-color-b: #1e3a8a; }  (blue, default)
+    .ball-red    { --ball-color-a: #f87171; --ball-color-b: #991b1b; }  (red)
+    .ball-metal  { --ball-color-a: #cbd5e1; --ball-color-b: #475569; }  (metallic silver)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .ball {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    margin-left: -16px;
+    transform-origin: 50% 50%;
+    z-index: 12;
+    --ball-color-a: #60a5fa;
+    --ball-color-b: #1e3a8a;
+    --spin: 0deg;
+    filter: drop-shadow(0 14px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Cast shadow — elliptical below sphere */
+  .ball::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 32px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.42), transparent 68%);
+    z-index: -1;
+  }
+
+  /* Sphere body — 4-layer gradient: specular, ambient, shadow crescent, base */
+  .ball-body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 28%, rgba(234,234,234,0.72) 0 3px, transparent 8px),
+      radial-gradient(ellipse at 42% 36%, rgba(234,234,234,0.22), transparent 44%),
+      radial-gradient(circle at 68% 72%, rgba(0,0,0,0.28) 0, transparent 52%),
+      radial-gradient(circle at 48% 48%, var(--ball-color-a) 0%, var(--ball-color-b) 100%);
+    box-shadow:
+      inset 3px 3px 8px rgba(255,255,255,0.18),
+      inset -4px -6px 10px rgba(0,0,0,0.3),
+      inset 0 1px 3px rgba(255,255,255,0.25),
+      0 4px 10px rgba(0,0,0,0.22);
+    transform: rotate(var(--spin));
+  }
+
+  /* Subtle equator line for visual rotation reference */
+  .ball-body::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 14px;
+    width: 26px;
+    height: 4px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.12) 30%, rgba(234,234,234,0.15) 50%, rgba(234,234,234,0.12) 70%, transparent);
+  }
+
+  /* Secondary specular reflection */
+  .ball-body::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 20px;
+    width: 6px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234,234,234,0.18), transparent 70%);
+  }
+
+  /* Color variants */
+  .ball-blue { --ball-color-a: #60a5fa; --ball-color-b: #1e3a8a; }
+  .ball-red  { --ball-color-a: #f87171; --ball-color-b: #991b1b; }
+  .ball-red .ball-body {
+    box-shadow:
+      inset 3px 3px 8px rgba(255,255,255,0.18),
+      inset -4px -6px 10px rgba(0,0,0,0.3),
+      inset 0 1px 3px rgba(255,255,255,0.25),
+      0 4px 10px rgba(153,27,27,0.28);
+  }
+
+  .ball-metal {
+    --ball-color-a: #cbd5e1;
+    --ball-color-b: #475569;
+  }
+  .ball-metal .ball-body {
+    background:
+      radial-gradient(circle at 32% 26%, rgba(234,234,234,0.88) 0 3px, transparent 8px),
+      radial-gradient(ellipse at 40% 34%, rgba(234,234,234,0.38), transparent 42%),
+      radial-gradient(circle at 68% 72%, rgba(0,0,0,0.32) 0, transparent 52%),
+      radial-gradient(circle at 48% 48%, var(--ball-color-a) 0%, var(--ball-color-b) 100%);
+    box-shadow:
+      inset 3px 3px 8px rgba(255,255,255,0.32),
+      inset -4px -6px 10px rgba(0,0,0,0.35),
+      inset 0 1px 3px rgba(255,255,255,0.4),
+      0 4px 10px rgba(0,0,0,0.24);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="ball" class="ball ball-blue">
+  <div id="ballBody" class="ball-body"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Spin for rolling — proportional to horizontal distance
+  var spinDeg = distance * 6;
+  ballEl.style.setProperty("--spin", spinDeg + "deg");
+
+  // Bounce — absolute sine for realistic bounce envelope
+  var freq = 4;       // bounces per second
+  var amplitude = 20; // max bounce height in px
+  var bob = -Math.abs(Math.sin(time * freq)) * amplitude;
+  ballEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0)";
+
+  // Shadow shrinks when ball is higher
+  var shadowScale = 1 + bob / 60;  // closer to ground = larger shadow
+  ballEl.querySelector("::after") // handled via CSS, or manually:
+  // ballEl.style.setProperty("--shadow-scale", shadowScale);
+-->

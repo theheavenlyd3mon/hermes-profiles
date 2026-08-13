@@ -16,7 +16,7 @@ You ask → Senna parses intent → Routes to specialist → Results come back
 
 Senna handles simple queries directly. Domain work gets dispatched to the appropriate profile.
 
-## Skills (203 total)
+## Skills (82 total)
 
 Key orchestration skills:
 - **kanban-orchestrator** — Multi-agent task decomposition

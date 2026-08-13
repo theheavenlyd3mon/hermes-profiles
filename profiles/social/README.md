@@ -18,7 +18,7 @@ Brief → Research context → Draft content → Review gate → Schedule/post
 
 Platform-aware: X is punchy and opinionated, LinkedIn is measured and insightful. Storytelling over selling.
 
-## Skills (6 total)
+## Skills (9 total)
 
 Key skills:
 - **xurl** — X/Twitter via CLI: post, search, DM, media, v2 API

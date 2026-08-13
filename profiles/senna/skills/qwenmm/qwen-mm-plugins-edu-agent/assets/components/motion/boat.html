@@ -1,0 +1,238 @@
+<!--
+  K12 Asset: 小船
+  ID: boat
+  Suitable: 流水行船, 相对运动, 匀速运动, 参照物, 速度合成
+  CSS Vars: --bob (vertical offset for water motion), --paint-a (hull lighter), --paint-b (hull darker)
+  JS Hooks: bob = Math.sin(time*3)*2; roll = Math.sin(time*2.1)*1.5
+  Size: 100×50px at 1920×1080
+
+  Variants:
+    .boat-a { --paint-a: #67e8f9; --paint-b: #0e7490; }  (cyan, default)
+    .boat-b { --paint-a: #fca5a5; --paint-b: #991b1b; }  (red)
+    .boat-c { --paint-a: #6ee7b7; --paint-b: #065f46; }  (green)
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .boat {
+    position: absolute;
+    width: 100px;
+    height: 50px;
+    margin-left: -50px;
+    transform-origin: 50% 72%;
+    z-index: 12;
+    --paint-a: #67e8f9;
+    --paint-b: #0e7490;
+    --bob: 0px;
+    filter: drop-shadow(0 12px 22px rgba(0,0,0,0.32));
+  }
+
+  /* Water reflection — contained within element bounds */
+  .boat::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(96,165,250,0.18), rgba(14,116,144,0.1) 40%, transparent 70%);
+    filter: blur(2px);
+    z-index: -1;
+  }
+
+  /* Hull — boat-shaped: curved bottom, flared sides, flat deck */
+  .boat-hull {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 24px;
+    border-radius: 4px 8px 42% 42%;
+    background:
+      radial-gradient(ellipse at 82% 22%, rgba(234,234,234,0.2) 0 10px, transparent 18px),
+      radial-gradient(ellipse at 20% 20%, rgba(234,234,234,0.12) 0 8px, transparent 14px),
+      linear-gradient(180deg, rgba(234,234,234,0.36), transparent 28%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.14) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.06), transparent 20%, transparent 80%, rgba(0,0,0,0.06)),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b) 70%);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.28),
+      inset 0 -10px 16px rgba(2,6,23,0.24),
+      0 6px 14px rgba(14,116,144,0.22);
+  }
+
+  /* Waterline stripe */
+  .boat-hull::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 5px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.25) 20%, rgba(234,234,234,0.3) 50%, rgba(234,234,234,0.25) 80%, transparent);
+  }
+
+  /* Deck surface */
+  .boat-deck {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 24px;
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.2), rgba(203,213,225,0.4) 30%, rgba(203,213,225,0.4) 70%, rgba(148,163,184,0.2));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.18),
+      0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  /* Cabin — small rectangular structure on deck */
+  .boat-cabin {
+    position: absolute;
+    left: 28px;
+    bottom: 26px;
+    width: 30px;
+    height: 16px;
+    border-radius: 3px 3px 1px 1px;
+    background:
+      radial-gradient(ellipse at 40% 24%, rgba(234,234,234,0.22), transparent 40%),
+      linear-gradient(180deg, rgba(234,234,234,0.32), transparent 26%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.1) 100%),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b) 80%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.24),
+      inset 0 -6px 10px rgba(2,6,23,0.2),
+      0 3px 8px rgba(0,0,0,0.16);
+  }
+
+  /* Cabin window */
+  .boat-cabin::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    width: 8px;
+    height: 6px;
+    border-radius: 2px;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(234,234,234,0.4), transparent 50%),
+      linear-gradient(135deg, rgba(186,230,253,0.42), rgba(30,58,138,0.3) 50%, rgba(15,23,42,0.3));
+    border: 0.5px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.08);
+  }
+
+  /* Second cabin window */
+  .boat-cabin::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 4px;
+    width: 8px;
+    height: 6px;
+    border-radius: 2px;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(234,234,234,0.4), transparent 50%),
+      linear-gradient(135deg, rgba(186,230,253,0.42), rgba(30,58,138,0.3) 50%, rgba(15,23,42,0.3));
+    border: 0.5px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.08);
+  }
+
+  /* Smokestack / funnel — lowered to fit within container */
+  .boat-stack {
+    position: absolute;
+    left: 38px;
+    bottom: 36px;
+    width: 6px;
+    height: 10px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(90deg, rgba(100,116,139,0.6), rgba(180,195,210,0.7) 40%, rgba(148,163,184,0.6)),
+      linear-gradient(180deg, rgba(148,163,184,0.5), rgba(71,85,105,0.6));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.22),
+      0 2px 4px rgba(0,0,0,0.16);
+  }
+
+  /* Smokestack top ring */
+  .boat-stack::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 8px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(203,213,225,0.6), rgba(100,116,139,0.5));
+  }
+
+  /* Bow wave — wave splash at front, contained */
+  .boat-wave {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 14px;
+    height: 10px;
+    border-radius: 0 50% 50% 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(186,230,253,0.28), rgba(96,165,250,0.12) 50%, transparent 76%);
+    filter: blur(1px);
+  }
+
+  /* Stern wake ripple, contained */
+  .boat-wake {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 14px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(186,230,253,0.16), transparent 70%);
+    filter: blur(1.5px);
+  }
+
+  /* Color variants */
+  .boat-a { --paint-a: #67e8f9; --paint-b: #0e7490; }
+  .boat-b { --paint-a: #fca5a5; --paint-b: #991b1b; }
+  .boat-b .boat-hull {
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.28),
+      inset 0 -10px 16px rgba(2,6,23,0.24),
+      0 6px 14px rgba(153,27,27,0.24);
+  }
+  .boat-c { --paint-a: #6ee7b7; --paint-b: #065f46; }
+  .boat-c .boat-hull {
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.28),
+      inset 0 -10px 16px rgba(2,6,23,0.24),
+      0 6px 14px rgba(6,95,70,0.24);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="boat" class="boat boat-a">
+  <div class="boat-hull"></div>
+  <div class="boat-deck"></div>
+  <div class="boat-cabin"></div>
+  <div class="boat-stack"></div>
+  <div class="boat-wave"></div>
+  <div class="boat-wake"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Vertical bob — gentle sine for water motion
+  var bob = Math.sin(time * 3) * 2;
+  // Slight roll — rotational sway
+  var roll = Math.sin(time * 2.1) * 1.5;
+
+  boatEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0) rotate(" + roll + "deg)";
+
+  // Wave and wake opacity tied to speed
+  var moving = (speed > 0) ? 1 : 0;
+  waveEl.style.opacity = moving * 0.8;
+  wakeEl.style.opacity = moving * 0.6;
+-->

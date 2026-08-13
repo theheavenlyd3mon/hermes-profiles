@@ -1,0 +1,166 @@
+<!--
+  K12 Asset: 扬声器/音叉
+  ID: speaker
+  Suitable: 声波, 声音传播, 振动, 频率, 振幅, 共振
+  CSS Vars: --vibration (0-1 amplitude), --sound-waves (0-1 ring visibility)
+  JS Hooks: vibration = Math.sin(time*freq)*amplitude in renderAt()
+  Size: 36x36px at 1920x1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .speaker {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    margin-left: -18px;
+    margin-top: -18px;
+    transform-origin: 50% 50%;
+    --vibration: 0;
+    --sound-waves: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .speaker::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 44px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Outer frame — metallic housing */
+  .speaker-frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 20%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15)),
+      linear-gradient(135deg, #475569, #334155 40%, #1e293b 80%);
+    border: 1px solid rgba(71,85,105,0.5);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.12),
+      inset 0 -4px 8px rgba(0,0,0,0.25),
+      0 4px 10px rgba(0,0,0,0.3);
+  }
+
+  /* Cone surround — rubber ring */
+  .speaker-surround {
+    position: absolute;
+    left: 3px; top: 3px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 10px, rgba(30,41,59,0.6) 11px, rgba(51,65,85,0.8) 13px, transparent 14px),
+      radial-gradient(circle, transparent 0, #1e293b 0);
+    box-shadow:
+      inset 0 1px 3px rgba(0,0,0,0.3),
+      inset 0 -1px 2px rgba(255,255,255,0.05);
+  }
+
+  /* Paper cone — conical gradient */
+  .speaker-cone {
+    position: absolute;
+    left: 6px; top: 6px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 38%, rgba(234,234,234,0.12), transparent 40%),
+      radial-gradient(circle, #d4c8a8 0 2px, transparent 3px),
+      radial-gradient(circle, transparent 3px, rgba(180,166,130,0.3) 5px, transparent 7px),
+      radial-gradient(circle, #c4b896, #b0a07a 30%, #96885e 60%, #7a6e48 85%);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Central dome — dust cap */
+  .speaker-dome {
+    position: absolute;
+    left: 13px; top: 13px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 36%, rgba(234,234,234,0.25), transparent 50%),
+      radial-gradient(circle, #475569, #334155 40%, #1e293b);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -1px 3px rgba(0,0,0,0.3),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Sound wave rings — 3 concentric arcs expanding rightward */
+  .speaker-wave {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(96,165,250,0.6);
+    border-left-color: transparent;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    opacity: var(--sound-waves);
+    pointer-events: none;
+  }
+
+  .speaker-wave-1 {
+    left: 28px; top: 8px;
+    width: 20px; height: 20px;
+    transform: rotate(-45deg);
+    opacity: calc(var(--sound-waves) * 0.9);
+  }
+
+  .speaker-wave-2 {
+    left: 32px; top: 4px;
+    width: 28px; height: 28px;
+    transform: rotate(-45deg);
+    opacity: calc(var(--sound-waves) * 0.6);
+  }
+
+  .speaker-wave-3 {
+    left: 36px; top: 0px;
+    width: 36px; height: 36px;
+    transform: rotate(-45deg);
+    opacity: calc(var(--sound-waves) * 0.3);
+  }
+
+  /* Vibration glow ring */
+  .speaker-vib-glow {
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px 2px rgba(96,165,250,0.3);
+    opacity: var(--vibration);
+    pointer-events: none;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="speaker">
+  <div class="speaker-frame"></div>
+  <div class="speaker-surround"></div>
+  <div class="speaker-cone"></div>
+  <div class="speaker-dome"></div>
+  <div class="speaker-vib-glow"></div>
+  <div class="speaker-wave speaker-wave-1"></div>
+  <div class="speaker-wave speaker-wave-2"></div>
+  <div class="speaker-wave speaker-wave-3"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Vibrate the cone: oscillating translateX on the cone/dome
+  var vib = Math.sin(time * 40) * 1.5 * vibAmplitude;
+  speakerConeEl.style.transform = "translateX(" + vib + "px)";
+  speakerDomeEl.style.transform = "translateX(" + vib + "px)";
+  speakerEl.style.setProperty("--vibration", vibAmplitude);
+
+  // Sound waves: fade in/out with --sound-waves
+  speakerEl.style.setProperty("--sound-waves", waveVisibility);
+
+  // Animate wave expansion:
+  // var scale1 = 1 + 0.1 * Math.sin(time * 6);
+  // wave1El.style.transform = "rotate(-45deg) scale(" + scale1 + ")";
+-->

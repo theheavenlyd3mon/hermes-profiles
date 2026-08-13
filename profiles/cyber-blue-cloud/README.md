@@ -13,7 +13,7 @@ Findings → Classify (confused deputy / exposure / lateral) → Remediate → V
 
 Cloud-provider-aware. Prioritizes IAM boundaries over signatures. Hardens infrastructure rather than chasing alerts.
 
-## Skills
+## Skills (128 total)
 - Cloud-native defensive skills via Anthropic Cybersecurity Skills collection
 - Service-specific auditing: AWS S3/Azure AD/GCP IAM/Kubernetes RBAC
 - Runtime signals: GuardDuty/Sentinel/Defender, container drift, cryptomining, serverless injection

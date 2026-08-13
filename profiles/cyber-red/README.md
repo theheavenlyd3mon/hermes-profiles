@@ -18,7 +18,7 @@ Scope → Recon → Enumerate → Exploit → Document (CVSS + evidence) → Rep
 
 MITRE ATT&CK aligned. Reproducible PoCs. Severity-rated. Never tests without authorization.
 
-## Skills (161 total)
+## Skills (166 total)
 
 Key skills:
 - **Anthropic Cybersecurity Skills** — 161 offensive security skills covering:

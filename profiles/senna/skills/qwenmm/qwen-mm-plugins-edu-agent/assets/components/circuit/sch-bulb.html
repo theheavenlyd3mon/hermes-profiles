@@ -1,0 +1,35 @@
+<!--
+  K12 Asset: 灯泡原理图符号（Schematic Symbol）
+  ID: sch-bulb
+  Suitable: 串联电路, 并联电路, 电路图作图题
+  Size: circle r=28, with terminal stubs
+
+  Anatomy:
+    - Circle with X (cross) inside
+    - Label below (e.g., L1, L2)
+
+  Default orientation: horizontal wire passing through
+  Terminal endpoints: left at (-48, 0), right at (48, 0)
+  Circle center: (0, 0), radius: 28
+-->
+
+<!-- ===== SVG: Bulb (灯泡) ===== -->
+<g class="sch-bulb" transform="translate(0, 0)">
+  <!-- Left wire stub -->
+  <line x1="-48" y1="0" x2="-28" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Circle -->
+  <circle cx="0" cy="0" r="28"
+          fill="rgba(255,255,255,0.6)" stroke="#1a1f36" stroke-width="3"/>
+  <!-- X cross inside -->
+  <line x1="-18" y1="-18" x2="18" y2="18"
+        stroke="#1a1f36" stroke-width="3" stroke-linecap="round"/>
+  <line x1="18" y1="-18" x2="-18" y2="18"
+        stroke="#1a1f36" stroke-width="3" stroke-linecap="round"/>
+  <!-- Right wire stub -->
+  <line x1="28" y1="0" x2="48" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Label (replace text content with actual label) -->
+  <text x="0" y="48" text-anchor="middle" font-size="22" font-weight="600"
+        fill="#0891b2" font-family="'Noto Sans SC','PingFang SC',sans-serif">L1</text>
+</g>

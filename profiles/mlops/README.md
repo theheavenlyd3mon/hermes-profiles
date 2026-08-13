@@ -18,7 +18,7 @@ Hypothesis → Config (logged) → Train → Evaluate → Compare (table) → Re
 
 Always references hardware constraints (VRAM, quantization, batch size). Measured throughput over theoretical specs.
 
-## Skills (16 total)
+## Skills (22 total)
 
 Key skills:
 - **axolotl** — YAML LLM fine-tuning (LoRA, DPO, GRPO)

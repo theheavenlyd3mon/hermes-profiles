@@ -1,0 +1,258 @@
+<!--
+  K12 Asset: 弹簧测力计 (Spring Scale / Force Meter)
+  ID: spring-meter
+  Suitable: 力的测量, 弹力, 胡克定律, 摩擦力, 重力
+  CSS Vars: --stretch (0=rest, 1=max stretch, controls spring extension and pointer)
+  JS Hooks: set --stretch in renderAt() to show force reading
+  Size: 28×120px at 1920×1080
+
+  Variants:
+    (none — single canonical form)
+  Note: hook at bottom, ring at top for hanging
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .spring-meter {
+    position: absolute;
+    width: 28px;
+    height: 120px;
+    margin-left: -14px;
+    transform-origin: 50% 0%;
+    --stretch: 0;
+    filter: drop-shadow(0 10px 14px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .spring-meter::after {
+    content: "";
+    position: absolute;
+    left: -8px; right: -8px; bottom: -10px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.34), transparent 66%);
+  }
+
+  /* Top ring — hanging loop */
+  .sm-ring {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 12px; height: 10px;
+    margin-left: -6px;
+    border: 2.5px solid;
+    border-color: #94a3b8;
+    border-radius: 50% 50% 0 0;
+    border-bottom: none;
+    background: transparent;
+    box-shadow:
+      0 -1px 2px rgba(255,255,255,0.2),
+      inset 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  .sm-ring::before {
+    content: "";
+    position: absolute;
+    left: -1px; bottom: -1px;
+    width: calc(100% + 2px); height: 2px;
+    background: linear-gradient(90deg, #64748b, #cbd5e1, #64748b);
+  }
+
+  /* Tube body — transparent casing with scale markings */
+  .sm-tube {
+    position: absolute;
+    left: 4px; top: 10px;
+    width: 20px; height: 88px;
+    border-radius: 4px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.08) 0 1px, transparent 1px 5px, rgba(234,234,234,0.04) 5px 6px, transparent 6px),
+      linear-gradient(180deg, rgba(234,234,234,0.14), transparent 15%),
+      linear-gradient(180deg, transparent 80%, rgba(0,0,0,0.1)),
+      linear-gradient(90deg, rgba(148,163,184,0.12), rgba(200,220,240,0.08) 30%, rgba(200,220,240,0.1) 50%, rgba(200,220,240,0.08) 70%, rgba(148,163,184,0.12));
+    border: 1.5px solid rgba(200,220,240,0.28);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.1),
+      inset 0 -6px 10px rgba(15,23,42,0.12),
+      inset 2px 0 6px rgba(255,255,255,0.04),
+      0 3px 8px rgba(0,0,0,0.2);
+  }
+
+  /* Scale markings — repeating tick marks */
+  .sm-tube::before {
+    content: "";
+    position: absolute;
+    right: 2px; top: 8px;
+    width: 6px; height: 72px;
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(234,234,234,0.5) 0px, rgba(234,234,234,0.5) 1px,
+        transparent 1px, transparent 7.2px);
+  }
+
+  /* Major scale markings */
+  .sm-tube::after {
+    content: "";
+    position: absolute;
+    right: 2px; top: 8px;
+    width: 10px; height: 72px;
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(234,234,234,0.65) 0px, rgba(234,234,234,0.65) 1px,
+        transparent 1px, transparent 36px);
+  }
+
+  /* Spring — zigzag coil inside tube */
+  .sm-spring {
+    position: absolute;
+    left: 6px; top: 14px;
+    width: 16px;
+    height: calc(20px + var(--stretch) * 40px);
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0px,
+        transparent 1px,
+        rgba(203,213,225,0.7) 1.5px,
+        transparent 2px,
+        transparent 5px),
+      repeating-linear-gradient(180deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(148,163,184,0.3) 2.5px,
+        transparent 3px,
+        transparent 5px);
+    mask-image: repeating-linear-gradient(180deg,
+      transparent 0px,
+      black 1px,
+      black 3px,
+      transparent 4px,
+      transparent 5px);
+    -webkit-mask-image: repeating-linear-gradient(180deg,
+      transparent 0px,
+      black 1px,
+      black 3px,
+      transparent 4px,
+      transparent 5px);
+    transition: height 0.05s linear;
+  }
+
+  /* Zigzag pattern overlay for spring coils */
+  .sm-spring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        transparent 0px,
+        rgba(148,163,184,0.6) 0.5px,
+        rgba(203,213,225,0.8) 1px,
+        rgba(148,163,184,0.6) 1.5px,
+        transparent 2px,
+        transparent calc(2px + (20px + 40px * var(--stretch, 0)) / 12)
+      );
+  }
+
+  /* Pointer / indicator that moves with spring */
+  .sm-pointer {
+    position: absolute;
+    left: 1px;
+    top: calc(34px + var(--stretch) * 40px);
+    width: 26px; height: 3px;
+    background:
+      linear-gradient(90deg, #ef4444, #dc2626 40%, #b91c1c);
+    border-radius: 1px;
+    box-shadow:
+      0 0 3px rgba(239,68,68,0.4),
+      inset 0 1px rgba(255,255,255,0.2);
+    transition: top 0.05s linear;
+  }
+
+  .sm-pointer::before {
+    content: "";
+    position: absolute;
+    left: -3px; top: -2px;
+    width: 0; height: 0;
+    border-top: 3.5px solid transparent;
+    border-bottom: 3.5px solid transparent;
+    border-right: 4px solid #ef4444;
+  }
+
+  /* Metal cap at top of tube */
+  .sm-cap {
+    position: absolute;
+    left: 2px; top: 8px;
+    width: 24px; height: 6px;
+    border-radius: 3px 3px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 40%),
+      linear-gradient(90deg, #475569, #94a3b8 35%, #cbd5e1 50%, #94a3b8 65%, #475569);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  /* Bottom hook — curved metal for attaching weights */
+  .sm-hook {
+    position: absolute;
+    left: 50%; bottom: 0;
+    width: 10px; height: 16px;
+    margin-left: -5px;
+    border: 2.5px solid #94a3b8;
+    border-top: none;
+    border-radius: 0 0 50% 50%;
+    background: transparent;
+    box-shadow:
+      0 2px 3px rgba(0,0,0,0.2),
+      inset 0 -1px 2px rgba(255,255,255,0.15);
+  }
+
+  .sm-hook::before {
+    content: "";
+    position: absolute;
+    left: -1px; top: -1px;
+    width: calc(100% + 2px); height: 3px;
+    background:
+      linear-gradient(90deg, #64748b, #cbd5e1, #64748b);
+  }
+
+  /* Metal bottom plate */
+  .sm-bottom {
+    position: absolute;
+    left: 2px; bottom: 16px;
+    width: 24px; height: 6px;
+    border-radius: 0 0 3px 3px;
+    background:
+      linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #475569, #94a3b8 35%, #cbd5e1 50%, #94a3b8 65%, #475569);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.12),
+      0 2px 4px rgba(0,0,0,0.2);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="spring-meter">
+  <div class="sm-ring"></div>
+  <div class="sm-cap"></div>
+  <div class="sm-tube"></div>
+  <div class="sm-spring"></div>
+  <div class="sm-pointer"></div>
+  <div class="sm-bottom"></div>
+  <div class="sm-hook"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set stretch based on applied force (0 = no force, 1 = max force)
+  var stretchVal = appliedForce / maxForce;
+  stretchVal = Math.max(0, Math.min(1, stretchVal));
+  meterEl.style.setProperty("--stretch", stretchVal);
+
+  // Read current force for display
+  var currentForce = stretchVal * maxForce;
+  // Can update a label element: labelEl.textContent = currentForce.toFixed(1) + " N";
+
+  // Optional: slight oscillation when force just changed
+  if (justChanged) {
+    var wobble = stretchVal + Math.sin(time * 12) * 0.02 * Math.exp(-time * 3);
+    meterEl.style.setProperty("--stretch", Math.max(0, Math.min(1, wobble)));
+  }
+-->

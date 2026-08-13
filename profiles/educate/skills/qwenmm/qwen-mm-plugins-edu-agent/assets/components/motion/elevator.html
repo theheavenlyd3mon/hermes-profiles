@@ -1,0 +1,251 @@
+<!--
+  K12 Asset: 电梯/升降机
+  ID: elevator
+  Suitable: 超重失重, 牛顿第二定律, 力的平衡, 加速度, 弹力
+  CSS Vars: --door-open (0=closed, 1=fully open), --position-y (vertical offset px), --floor-num (displayed floor)
+  JS Hooks: door-open animates door width; position-y for vertical movement
+  Size: 60×100px at 1920×1080
+
+  Variants: (single style — industrial metal)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .elevator {
+    position: absolute;
+    width: 60px;
+    height: 100px;
+    margin-left: -30px;
+    transform-origin: 50% 50%;
+    z-index: 12;
+    --door-open: 0;
+    --position-y: 0px;
+    --floor-num: 1;
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .elevator::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 68px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.4), transparent 70%);
+    z-index: -1;
+  }
+
+  /* Cabin frame — outer metallic box */
+  .elevator-frame {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 60px;
+    height: 90px;
+    border-radius: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2) 0%, transparent 8%),
+      linear-gradient(180deg, transparent 90%, rgba(0,0,0,0.15) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.1), transparent 15%, transparent 85%, rgba(0,0,0,0.1)),
+      linear-gradient(180deg, rgba(148,163,184,0.9), rgba(100,116,139,0.95) 50%, rgba(71,85,105,0.95));
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.2),
+      inset 0 -6px 12px rgba(0,0,0,0.25),
+      inset 2px 0 4px rgba(255,255,255,0.08),
+      inset -2px 0 4px rgba(0,0,0,0.08),
+      0 6px 16px rgba(0,0,0,0.25);
+  }
+
+  /* Interior — visible behind doors */
+  .elevator-interior {
+    position: absolute;
+    left: 6px;
+    top: 20px;
+    width: 48px;
+    height: 72px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98)),
+      linear-gradient(90deg, rgba(51,65,85,0.3), transparent 30%, transparent 70%, rgba(51,65,85,0.3));
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+  }
+
+  /* Interior back wall panel */
+  .elevator-interior::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    width: 32px;
+    height: 58px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(51,65,85,0.4), rgba(30,41,59,0.6));
+    border: 0.5px solid rgba(100,116,139,0.3);
+  }
+
+  /* Interior light (top) */
+  .elevator-interior::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 2px;
+    width: 16px;
+    height: 3px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, rgba(250,250,210,0.6) 30%, rgba(250,250,210,0.7) 50%, rgba(250,250,210,0.6) 70%, transparent);
+    box-shadow: 0 2px 8px rgba(250,250,210,0.2);
+  }
+
+  /* Left door */
+  .elevator-door-l {
+    position: absolute;
+    left: 6px;
+    top: 20px;
+    width: 24px;
+    height: 72px;
+    border-radius: 1px;
+    background:
+      radial-gradient(ellipse at 70% 30%, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(90deg, rgba(148,163,184,0.7), rgba(203,213,225,0.8) 40%, rgba(148,163,184,0.75)),
+      linear-gradient(180deg, rgba(203,213,225,0.6), rgba(100,116,139,0.7));
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow:
+      inset 1px 1px 3px rgba(255,255,255,0.15),
+      inset -1px -2px 4px rgba(0,0,0,0.15),
+      1px 0 4px rgba(0,0,0,0.15);
+    transform-origin: 0% 50%;
+  }
+
+  /* Door handle indent left */
+  .elevator-door-l::after {
+    content: "";
+    position: absolute;
+    right: 2px;
+    top: 30px;
+    width: 2px;
+    height: 12px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, rgba(71,85,105,0.6), rgba(100,116,139,0.5));
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.3);
+  }
+
+  /* Right door */
+  .elevator-door-r {
+    position: absolute;
+    left: 30px;
+    top: 20px;
+    width: 24px;
+    height: 72px;
+    border-radius: 1px;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(90deg, rgba(148,163,184,0.75), rgba(203,213,225,0.8) 60%, rgba(148,163,184,0.7)),
+      linear-gradient(180deg, rgba(203,213,225,0.6), rgba(100,116,139,0.7));
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow:
+      inset 1px 1px 3px rgba(255,255,255,0.15),
+      inset -1px -2px 4px rgba(0,0,0,0.15),
+      -1px 0 4px rgba(0,0,0,0.15);
+    transform-origin: 100% 50%;
+  }
+
+  /* Door handle indent right */
+  .elevator-door-r::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 30px;
+    width: 2px;
+    height: 12px;
+    border-radius: 1px;
+    background: linear-gradient(180deg, rgba(71,85,105,0.6), rgba(100,116,139,0.5));
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.3);
+  }
+
+  /* Cable on top */
+  .elevator-cable {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    width: 4px;
+    height: 12px;
+    background:
+      linear-gradient(90deg, rgba(71,85,105,0.8), rgba(148,163,184,0.9) 40%, rgba(100,116,139,0.8));
+    border-radius: 2px;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.2);
+  }
+
+  /* Cable strands */
+  .elevator-cable::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(234,234,234,0.15) 0px,
+      rgba(234,234,234,0.15) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+  }
+
+  /* Floor indicator display */
+  .elevator-indicator {
+    position: absolute;
+    left: 20px;
+    top: 12px;
+    width: 20px;
+    height: 8px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0.9), rgba(30,41,59,0.95));
+    border: 0.5px solid rgba(100,116,139,0.5);
+    box-shadow:
+      inset 0 0 3px rgba(0,0,0,0.4),
+      0 0 4px rgba(34,197,94,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: 6px;
+    color: rgba(34,197,94,0.9);
+    text-shadow: 0 0 3px rgba(34,197,94,0.5);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="elevator" class="elevator">
+  <div class="elevator-cable"></div>
+  <div class="elevator-frame"></div>
+  <div class="elevator-interior"></div>
+  <div class="elevator-door-l"></div>
+  <div class="elevator-door-r"></div>
+  <div class="elevator-indicator">1</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Door opening: translate doors outward based on --door-open (0-1)
+  var doorOpen = parseFloat(getComputedStyle(elevatorEl).getPropertyValue("--door-open")) || 0;
+  var doorShift = doorOpen * 20; // max 20px shift
+  doorLEl.style.transform = "translateX(-" + doorShift + "px)";
+  doorREl.style.transform = "translateX(" + doorShift + "px)";
+
+  // Vertical position
+  var posY = parseFloat(getComputedStyle(elevatorEl).getPropertyValue("--position-y")) || 0;
+  elevatorEl.style.transform = "translate3d(" + xPx + "px, " + posY + "px, 0)";
+
+  // Slight vibration when moving
+  var moving = Math.abs(velocityY) > 0.1;
+  var vibrate = moving ? Math.sin(time * 30) * 0.3 : 0;
+  elevatorEl.style.transform = "translate3d(" + (xPx + vibrate) + "px, " + posY + "px, 0)";
+
+  // Floor indicator update
+  indicatorEl.textContent = Math.round(floorNum);
+-->

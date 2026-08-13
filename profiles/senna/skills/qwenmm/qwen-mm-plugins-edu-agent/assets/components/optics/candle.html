@@ -1,0 +1,195 @@
+<!--
+  K12 Asset: 蜡烛+火焰
+  ID: candle
+  Suitable: 凸透镜成像, 光的折射, 光的反射, 燃烧条件
+  CSS Vars: (none — JS drives all dynamics)
+  JS Hooks: flicker(time), sway(time) — sinusoidal flame animation
+  Size: 48×116px at 1920×1080
+  Quality: GOLD STANDARD — this is the benchmark all other components must match
+
+  Variants:
+    .candle         — upright candle (default, object side of lens)
+    .image-candle   — inverted candle (image side, initially opacity:0)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  /* ============ UPRIGHT CANDLE ============ */
+  .candle {
+    position: absolute;
+    width: 48px;
+    height: 116px;
+    margin-left: -24px;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 0 22px rgba(255, 185, 72, 0.26));
+  }
+
+  /* Ground glow/shadow */
+  .candle::before {
+    content: "";
+    position: absolute;
+    left: -26px;
+    bottom: -10px;
+    width: 100px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(255, 179, 72, 0.18), rgba(0, 0, 0, 0.2) 52%, transparent 72%);
+    filter: blur(3px);
+  }
+
+  /* Wick */
+  .candle-wick {
+    position: absolute;
+    left: 22px;
+    top: 42px;
+    width: 3px;
+    height: 14px;
+    border-radius: 999px;
+    background: #1a1a1a;
+  }
+
+  /* Flame — dual radial-gradient + dual drop-shadow glow */
+  .flame {
+    position: absolute;
+    left: 11px;
+    top: 0;
+    width: 26px;
+    height: 48px;
+    transform-origin: 50% 86%;
+    border-radius: 55% 55% 48% 48%;
+    background:
+      radial-gradient(circle at 50% 64%, #fff8bb 0 17%, transparent 18%),
+      radial-gradient(ellipse at 50% 52%, #ffd04a 0 31%, #ff7a1a 49%, #c32015 66%, transparent 68%);
+    filter:
+      drop-shadow(0 0 10px rgba(255, 208, 74, 0.9))
+      drop-shadow(0 0 28px rgba(255, 103, 31, 0.68));
+  }
+
+  /* Flame ambient glow halo */
+  .flame::before {
+    content: "";
+    position: absolute;
+    left: -18px;
+    top: 7px;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 176, 55, 0.22), transparent 66%);
+    z-index: -1;
+  }
+
+  /* Wax body — warm gradient + inset shadow for 3D curvature */
+  .candle-body {
+    position: absolute;
+    left: 11px;
+    top: 48px;
+    width: 26px;
+    height: 64px;
+    border-radius: 8px 8px 3px 3px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.72), rgba(255, 221, 88, 0.76) 42%, #f6bd25 100%),
+      linear-gradient(180deg, #ffe780, #f4a81f);
+    box-shadow:
+      inset -5px 0 9px rgba(134, 78, 11, 0.28),
+      0 0 18px rgba(255, 208, 74, 0.18);
+  }
+
+  /* Base/holder */
+  .candle-base {
+    position: absolute;
+    left: 0;
+    top: 110px;
+    width: 48px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #f59e0b, #a33c09);
+  }
+
+  /* ============ INVERTED IMAGE CANDLE ============ */
+  .image-candle {
+    position: absolute;
+    width: 48px;
+    height: 116px;
+    margin-left: -24px;
+    transform-origin: 50% 0%;
+    filter: drop-shadow(0 0 18px rgba(255, 208, 74, 0.26));
+    opacity: 0;
+    z-index: 7;
+  }
+
+  /* Inverted base (now at top) */
+  .image-candle::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -3px;
+    width: 48px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #c86a12, #7c2d12);
+    opacity: 0.82;
+  }
+
+  /* Inverted wick */
+  .image-candle::after {
+    content: "";
+    position: absolute;
+    left: 22px;
+    top: 60px;
+    width: 3px;
+    height: 14px;
+    border-radius: 999px;
+    background: #1a1a1a;
+  }
+
+  /* Inverted flame — clip-path for sharper inverted shape */
+  .image-candle .flame {
+    left: 11px;
+    top: 68px;
+    width: 26px;
+    height: 48px;
+    opacity: 0.92;
+    transform-origin: 50% 14%;
+    border-radius: 48% 48% 55% 55%;
+    clip-path: polygon(50% 100%, 76% 62%, 69% 20%, 50% 0, 31% 20%, 24% 62%);
+    background:
+      radial-gradient(circle at 50% 38%, #fff8bb 0 17%, transparent 18%),
+      radial-gradient(ellipse at 50% 44%, #ffd04a 0 31%, #ff7a1a 49%, #c32015 66%, transparent 68%);
+  }
+
+  /* Inverted wax body */
+  .image-candle .candle-body {
+    left: 11px;
+    top: 4px;
+    width: 26px;
+    height: 64px;
+    border-radius: 3px 3px 8px 8px;
+  }
+</style>
+
+<!-- ===== HTML: upright candle ===== -->
+<div id="candle" class="candle">
+  <div id="flame" class="flame"></div>
+  <div class="candle-wick"></div>
+  <div class="candle-body"></div>
+  <div class="candle-base"></div>
+</div>
+
+<!-- ===== HTML: inverted image candle (for lens problems) ===== -->
+<div id="imageCandle" class="image-candle">
+  <div id="imageFlame" class="flame"></div>
+  <div class="candle-body"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Flame flicker — sinusoidal scale variation
+  var flicker = 1 + Math.sin(time * 11.7) * 0.06 + Math.sin(time * 23.1) * 0.035;
+  // Flame sway — sinusoidal horizontal drift
+  var sway = Math.sin(time * 7.2) * 4 + Math.sin(time * 13.1) * 1.6;
+
+  // Upright flame
+  flame.style.transform = "translateX(" + sway + "px) scale(" + flicker + ") rotate(" + (sway * 0.8) + "deg)";
+
+  // Inverted image flame (dampened)
+  imageFlame.style.transform = "translateX(" + (sway * 0.16) + "px) scale(" + (0.9 + (flicker - 1) * 0.65) + ") rotate(" + (-sway * 0.16) + "deg)";
+-->

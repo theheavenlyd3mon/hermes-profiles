@@ -1,0 +1,195 @@
+<!--
+  K12 Asset: 温度计
+  ID: thermometer
+  Suitable: 温度测量, 热传递, 物态变化, 热力学, 热膨胀
+  CSS Vars: --level (0=empty/cold, 1=full/hot, controls mercury column height)
+  JS Hooks: set --level in renderAt() based on temperature range
+  Size: 20×110px at 1920×1080
+
+  Note: Bulb at bottom, scale markings along right side.
+  Mercury rises linearly with --level.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .thermometer {
+    position: absolute;
+    width: 20px;
+    height: 110px;
+    margin-left: -10px;
+    transform-origin: 50% 100%;
+    --level: 0.5;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .thermometer::after {
+    content: "";
+    position: absolute;
+    left: -8px; bottom: -8px;
+    width: 36px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.38), transparent 70%);
+  }
+
+  /* Glass tube — outer shell with blue tint */
+  .therm-tube {
+    position: absolute;
+    left: 6px; top: 4px;
+    width: 8px; height: 88px;
+    border-radius: 4px 4px 0 0;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.22) 0%, transparent 35%),
+      linear-gradient(180deg, rgba(200,220,255,0.12), rgba(180,210,250,0.08) 50%, rgba(200,220,255,0.1)),
+      radial-gradient(ellipse at 30% 20%, rgba(234,234,234,0.15), transparent 50%),
+      linear-gradient(90deg, rgba(140,180,230,0.14), rgba(120,160,220,0.1) 50%, rgba(100,140,200,0.12));
+    border: 1px solid rgba(180,210,240,0.3);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.12),
+      inset -1px 0 2px rgba(100,160,230,0.08),
+      inset 0 -2px 4px rgba(0,0,0,0.06),
+      0 0 4px rgba(140,180,230,0.1);
+    overflow: hidden;
+  }
+
+  /* Glass highlight stripe — vertical reflection */
+  .therm-tube::before {
+    content: "";
+    position: absolute;
+    left: 1px; top: 2px;
+    width: 1.5px; height: 84px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.35),
+      rgba(234,234,234,0.18) 40%,
+      rgba(234,234,234,0.08) 70%,
+      transparent);
+  }
+
+  /* Mercury column — red liquid rising from bottom */
+  .therm-mercury {
+    position: absolute;
+    left: 2px; bottom: 0;
+    width: 4px;
+    height: calc(var(--level) * 76px);
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.2) 0%, transparent 30%),
+      radial-gradient(ellipse at 40% 10%, rgba(255,120,120,0.6), transparent 40%),
+      linear-gradient(180deg, #ef4444, #dc2626 40%, #b91c1c 80%, #991b1b);
+    box-shadow:
+      inset 0 1px 2px rgba(255,180,180,0.3),
+      inset 0 -2px 3px rgba(127,29,29,0.3),
+      0 0 2px rgba(239,68,68,0.2);
+    transition: none;
+  }
+
+  /* Bulb — circular mercury reservoir at bottom */
+  .therm-bulb {
+    position: absolute;
+    left: 2px; bottom: 4px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(255,200,200,0.45), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(255,80,80,0.3), transparent 60%),
+      radial-gradient(circle at 55% 60%, rgba(180,0,0,0.2), transparent 50%),
+      linear-gradient(180deg, #ef4444, #dc2626 50%, #991b1b);
+    border: 1px solid rgba(200,220,240,0.25);
+    box-shadow:
+      inset 0 2px 4px rgba(255,180,180,0.25),
+      inset 0 -3px 5px rgba(127,29,29,0.3),
+      0 3px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Bulb glass overlay — transparent shell over mercury */
+  .therm-bulb::before {
+    content: "";
+    position: absolute;
+    left: -1px; top: -1px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.3), transparent 50%),
+      radial-gradient(circle at 65% 70%, rgba(0,0,0,0.08), transparent 40%);
+    pointer-events: none;
+  }
+
+  /* Scale markings — tick marks along tube */
+  .therm-scale {
+    position: absolute;
+    right: 0; top: 4px;
+    width: 4px; height: 80px;
+  }
+
+  .therm-tick {
+    position: absolute;
+    right: 0;
+    width: 3px; height: 0.8px;
+    background: rgba(200,220,240,0.4);
+  }
+  .therm-tick-major {
+    width: 4px; height: 1px;
+    background: rgba(200,220,240,0.6);
+  }
+  .therm-tick:nth-child(1)  { top: 0; }
+  .therm-tick:nth-child(2)  { top: 8px; }
+  .therm-tick:nth-child(3)  { top: 16px; }
+  .therm-tick:nth-child(4)  { top: 24px; }
+  .therm-tick:nth-child(5)  { top: 32px; }
+  .therm-tick:nth-child(6)  { top: 40px; }
+  .therm-tick:nth-child(7)  { top: 48px; }
+  .therm-tick:nth-child(8)  { top: 56px; }
+  .therm-tick:nth-child(9)  { top: 64px; }
+  .therm-tick:nth-child(10) { top: 72px; }
+  .therm-tick:nth-child(11) { top: 80px; }
+
+  /* Cap — small top cap on tube */
+  .therm-cap {
+    position: absolute;
+    left: 5px; top: 0;
+    width: 10px; height: 5px;
+    border-radius: 3px 3px 1px 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 40%),
+      linear-gradient(180deg, #94a3b8, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="thermometer">
+  <div class="therm-cap"></div>
+  <div class="therm-tube">
+    <div class="therm-mercury"></div>
+  </div>
+  <div class="therm-scale">
+    <div class="therm-tick therm-tick-major"></div>
+    <div class="therm-tick"></div>
+    <div class="therm-tick therm-tick-major"></div>
+    <div class="therm-tick"></div>
+    <div class="therm-tick therm-tick-major"></div>
+    <div class="therm-tick"></div>
+    <div class="therm-tick therm-tick-major"></div>
+    <div class="therm-tick"></div>
+    <div class="therm-tick therm-tick-major"></div>
+    <div class="therm-tick"></div>
+    <div class="therm-tick therm-tick-major"></div>
+  </div>
+  <div class="therm-bulb"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Map temperature to 0..1 level
+  var level = (temperature - minTemp) / (maxTemp - minTemp);
+  level = Math.max(0, Math.min(1, level));
+  thermoEl.style.setProperty("--level", level);
+
+  // Animated temperature change (smooth rise/fall):
+  // var t = Math.min(1, (time - changeStart) / changeDuration);
+  // var eased = t < 1 ? t * (2 - t) : 1; // easeOutQuad
+  // var level = startLevel + (endLevel - startLevel) * eased;
+  // thermoEl.style.setProperty("--level", level);
+-->

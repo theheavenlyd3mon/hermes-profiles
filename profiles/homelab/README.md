@@ -17,7 +17,7 @@ Cron polls devices → Anomalies detected? → Report. Otherwise: silence.
 
 Never modifies device state autonomously outside pre-approved cron. All changes logged.
 
-## Skills (2 total)
+## Skills (10 total)
 
 - **openhue** — Philips Hue lights, scenes, rooms via CLI
 - **smart-mirror** — Hermes-driven smart mirror / info display

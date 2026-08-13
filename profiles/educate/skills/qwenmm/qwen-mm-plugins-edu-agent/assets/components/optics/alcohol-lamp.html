@@ -1,0 +1,206 @@
+<!--
+  K12 Asset: 酒精灯
+  ID: alcohol-lamp
+  Suitable: 凸透镜成像, 加热实验, 蒸发与沸腾, 燃烧条件, 热传递
+  CSS Vars: --flame-on (0=extinguished, 1=lit)
+  JS Hooks: flicker(time), sway(time) — sinusoidal flame animation (same as candle)
+  Size: 120×225px at 1920×1080
+
+  Variants:
+    .lamp-lit       — flame visible (default)
+    .lamp-off       — flame hidden, cap on
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .alcohol-lamp {
+    position: absolute;
+    width: 120px;
+    height: 225px;
+    margin-left: -60px;
+    transform-origin: 50% 100%;
+    --flame-on: 1;
+    filter: drop-shadow(0 0 36px rgba(255, 185, 72, calc(var(--flame-on) * 0.22)));
+  }
+
+  /* Ground shadow */
+  .alcohol-lamp::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -18px;
+    width: 120px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.38), transparent 70%);
+    z-index: -1;
+  }
+
+  /* Glass bottle body — 6-layer gradient for transparent blue-tinted glass */
+  .lamp-bottle {
+    position: absolute;
+    left: 15px;
+    bottom: 0;
+    width: 90px;
+    height: 125px;
+    border-radius: 15px 15px 30px 30px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(234,234,234,0.32), transparent 36%),
+      radial-gradient(ellipse at 70% 80%, rgba(120,180,255,0.14), transparent 40%),
+      linear-gradient(180deg, rgba(200,225,255,0.18), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.08) 100%),
+      linear-gradient(90deg, rgba(180,210,240,0.12), rgba(140,190,240,0.22) 50%, rgba(180,210,240,0.12)),
+      linear-gradient(135deg, rgba(200,220,245,0.16), rgba(100,160,220,0.1));
+    border: 2px solid rgba(180,210,240,0.35);
+    box-shadow:
+      inset 4px 0 16px rgba(255,255,255,0.12),
+      inset -6px 0 16px rgba(100,160,220,0.1),
+      inset 0 -28px 36px rgba(15,23,42,0.08),
+      0 8px 24px rgba(0,0,0,0.18);
+  }
+
+  /* Alcohol liquid inside — visible at ~60% fill */
+  .lamp-liquid {
+    position: absolute;
+    left: 20px;
+    bottom: 5px;
+    width: 80px;
+    height: 75px;
+    border-radius: 10px 10px 25px 25px;
+    background:
+      radial-gradient(ellipse at 40% 10%, rgba(234,234,234,0.18), transparent 40%),
+      linear-gradient(180deg, rgba(180,210,245,0.25), rgba(140,180,230,0.35) 40%, rgba(100,150,210,0.42) 100%),
+      linear-gradient(90deg, rgba(120,170,230,0.28), rgba(160,200,240,0.38) 50%, rgba(120,170,230,0.28));
+    box-shadow:
+      inset 0 2px 6px rgba(255,255,255,0.1),
+      inset 0 -8px 12px rgba(80,130,190,0.12);
+  }
+
+  /* Liquid surface meniscus */
+  .lamp-liquid::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: -3px;
+    width: 75px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, rgba(160,200,240,0.3), rgba(220,235,255,0.5) 50%, rgba(160,200,240,0.3));
+  }
+
+  /* Metal collar / cap ring around wick tube */
+  .lamp-collar {
+    position: absolute;
+    left: 30px;
+    bottom: 120px;
+    width: 60px;
+    height: 20px;
+    border-radius: 7px 7px 5px 5px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), rgba(148,163,184,0.6) 30%, rgba(100,116,139,0.7) 60%, rgba(71,85,105,0.6)),
+      linear-gradient(90deg, rgba(100,116,139,0.6), rgba(180,195,210,0.7) 40%, rgba(200,210,220,0.6) 60%, rgba(100,116,139,0.6));
+    box-shadow:
+      inset 0 2px rgba(255,255,255,0.35),
+      inset 0 -4px 6px rgba(15,23,42,0.2),
+      0 4px 8px rgba(0,0,0,0.22);
+  }
+
+  /* Wick tube protruding from collar */
+  .lamp-wick-tube {
+    position: absolute;
+    left: 50px;
+    bottom: 135px;
+    width: 20px;
+    height: 35px;
+    border-radius: 5px 5px 0 0;
+    background:
+      linear-gradient(90deg, rgba(120,130,140,0.6), rgba(180,190,200,0.7) 40%, rgba(160,170,180,0.6)),
+      linear-gradient(180deg, rgba(148,163,184,0.5), rgba(100,116,139,0.6));
+    box-shadow:
+      inset 0 2px rgba(255,255,255,0.2),
+      inset 0 -6px 8px rgba(15,23,42,0.15);
+  }
+
+  /* Wick (dark cotton thread) */
+  .lamp-wick {
+    position: absolute;
+    left: 55px;
+    bottom: 165px;
+    width: 10px;
+    height: 20px;
+    border-radius: 999px;
+    background: #1a1a1a;
+  }
+
+  /* Flame — dual radial-gradient + dual drop-shadow glow (candle pattern) */
+  .lamp-flame {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    width: 65px;
+    height: 105px;
+    transform-origin: 50% 86%;
+    border-radius: 55% 55% 48% 48%;
+    background:
+      radial-gradient(circle at 50% 64%, #fff8bb 0 17%, transparent 18%),
+      radial-gradient(ellipse at 50% 52%, #ffd04a 0 31%, #ff7a1a 49%, #c32015 66%, transparent 68%);
+    filter:
+      drop-shadow(0 0 20px rgba(255, 208, 74, 0.9))
+      drop-shadow(0 0 56px rgba(255, 103, 31, 0.68));
+    opacity: var(--flame-on);
+    transition: opacity 0.3s;
+  }
+
+  /* Flame ambient glow halo */
+  .lamp-flame::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    width: 65px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 176, 55, 0.22), transparent 66%);
+    z-index: -1;
+  }
+
+  /* Bottle bottom rim */
+  .lamp-bottle::after {
+    content: "";
+    position: absolute;
+    left: -5px;
+    bottom: -5px;
+    width: 100px;
+    height: 10px;
+    border-radius: 0 0 35px 35px;
+    background: linear-gradient(180deg, rgba(180,210,240,0.15), rgba(120,170,220,0.08));
+  }
+
+  /* Variant: lamp off — flame hidden */
+  .lamp-off { --flame-on: 0; }
+  .lamp-off .lamp-flame { opacity: 0; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="alcoholLamp" class="alcohol-lamp">
+  <div id="lampFlame" class="lamp-flame"></div>
+  <div class="lamp-wick"></div>
+  <div class="lamp-wick-tube"></div>
+  <div class="lamp-collar"></div>
+  <div class="lamp-bottle">
+    <div class="lamp-liquid"></div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Flame flicker — sinusoidal scale variation (same as candle)
+  var flicker = 1 + Math.sin(time * 11.7) * 0.06 + Math.sin(time * 23.1) * 0.035;
+  // Flame sway — sinusoidal horizontal drift
+  var sway = Math.sin(time * 7.2) * 4 + Math.sin(time * 13.1) * 1.6;
+
+  // Apply flame animation (only when lit)
+  var flameOn = parseFloat(lampEl.style.getPropertyValue("--flame-on") || 1);
+  if (flameOn > 0) {
+    lampFlame.style.transform = "translateX(" + sway + "px) scale(" + flicker + ") rotate(" + (sway * 0.8) + "deg)";
+  }
+-->

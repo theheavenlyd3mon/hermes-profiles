@@ -1,0 +1,345 @@
+<!--
+  K12 Asset: 自行车
+  ID: bicycle
+  Suitable: 匀速运动, 追及相遇, 平均速度, 机械效率, 摩擦力, 杠杆原理
+  CSS Vars: --wheel-spin (rotation angle), --paint-a (frame lighter), --paint-b (frame darker)
+  JS Hooks: spinDeg = distance * 6; --wheel-spin drives both wheels
+  Size: 100×64px at 1920×1080
+
+  Variants:
+    .bike-a { --paint-a: #60a5fa; --paint-b: #1e3a8a; }  (blue, default)
+    .bike-b { --paint-a: #f87171; --paint-b: #991b1b; }  (red)
+    .bike-c { --paint-a: #6ee7b7; --paint-b: #065f46; }  (green)
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .bicycle {
+    position: absolute;
+    width: 100px;
+    height: 64px;
+    margin-left: -50px;
+    transform-origin: 50% 88%;
+    z-index: 12;
+    --paint-a: #60a5fa;
+    --paint-b: #1e3a8a;
+    --wheel-spin: 0deg;
+    filter: drop-shadow(0 16px 24px rgba(0,0,0,0.36));
+  }
+
+  /* Ground shadow */
+  .bicycle::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 0;
+    height: 16px;
+    border-radius: 999px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.42), transparent 68%);
+    z-index: -1;
+  }
+
+  /* ---- WHEELS ---- */
+  /* Alloy wheels — concentric gradient + spokes (reuse car pattern) */
+  .bike-wheel {
+    position: absolute;
+    bottom: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #e2e8f0 0 2px, #94a3b8 3px 3.5px, #1e293b 4px 5px, #334155 6px 10px, #0f172a 11px 14px);
+    border: 2px solid #0f172a;
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.18),
+      0 3px 6px rgba(0,0,0,0.48),
+      0 6px 12px rgba(0,0,0,0.22);
+    transform: rotate(var(--wheel-spin));
+  }
+
+  /* Spokes — crossed pattern */
+  .bike-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background:
+      linear-gradient(30deg, transparent 38%, rgba(234,234,234,0.32) 39% 61%, transparent 62%),
+      linear-gradient(-30deg, transparent 38%, rgba(234,234,234,0.32) 39% 61%, transparent 62%),
+      linear-gradient(90deg, transparent 40%, rgba(234,234,234,0.26) 41% 59%, transparent 60%),
+      linear-gradient(0deg, transparent 40%, rgba(234,234,234,0.26) 41% 59%, transparent 60%);
+  }
+
+  /* Hub cap */
+  .bike-wheel::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f8fafc, #94a3b8);
+    box-shadow: 0 0 3px rgba(255,255,255,0.3);
+  }
+
+  .bw-rear  { left: 6px; }
+  .bw-front { right: 6px; }
+
+  /* ---- FRAME ---- */
+  /* Junction points (frame-local): BB(20,30) SEAT(18,2) HEAD(54,4) REAR(2,32) FRONT(62,32) */
+  .bike-frame {
+    position: absolute;
+    left: 18px;
+    bottom: 14px;
+    width: 64px;
+    height: 32px;
+  }
+
+  /* Junction dots — cover tube endpoints at BB and HEAD */
+  .bike-frame::before {
+    content: "";
+    position: absolute;
+    left: 18px; top: 28px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--paint-b);
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+  .bike-frame::after {
+    content: "";
+    position: absolute;
+    left: 52px; top: 2px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--paint-b);
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+
+  /* Seat tube — BB(20,30) → SEAT(18,2) */
+  .bike-seat-tube {
+    position: absolute;
+    left: 20px; top: 28.5px;
+    width: 28px; height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18), transparent 40%),
+      linear-gradient(180deg, var(--paint-a), var(--paint-b));
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+    transform: rotate(-94deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* Top tube — SEAT(18,2) → HEAD(54,4) */
+  .bike-top-tube {
+    position: absolute;
+    left: 18px; top: 0.5px;
+    width: 36px; height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.16), transparent 30%, transparent 70%, rgba(234,234,234,0.08)),
+      linear-gradient(180deg, var(--paint-a), var(--paint-b));
+    box-shadow: inset 0 1px rgba(255,255,255,0.22);
+    transform: rotate(3deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* Down tube — HEAD(54,4) → BB(20,30) */
+  .bike-down-tube {
+    position: absolute;
+    left: 54px; top: 2.5px;
+    width: 43px; height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.14), transparent 40%),
+      linear-gradient(180deg, var(--paint-a), var(--paint-b));
+    box-shadow: inset 0 1px rgba(255,255,255,0.18);
+    transform: rotate(143deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* Chain stay — BB(20,30) → REAR(2,32) */
+  .bike-chain-stay {
+    position: absolute;
+    left: 20px; top: 28.75px;
+    width: 18px; height: 2.5px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.5), rgba(100,116,139,0.6) 50%, rgba(148,163,184,0.5));
+    box-shadow: inset 0 1px rgba(255,255,255,0.12);
+    transform: rotate(174deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* Seat stay — SEAT(18,2) → REAR(2,32) */
+  .bike-seat-stay {
+    position: absolute;
+    left: 18px; top: 1px;
+    width: 34px; height: 2px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.4), rgba(100,116,139,0.5));
+    transform: rotate(118deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* Fork — HEAD(54,4) → FRONT(62,32) */
+  .bike-fork {
+    position: absolute;
+    left: 54px; top: 2.5px;
+    width: 29px; height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.14), transparent 40%),
+      linear-gradient(180deg, rgba(148,163,184,0.6), rgba(100,116,139,0.7));
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+    transform: rotate(74deg);
+    transform-origin: 0% 50%;
+  }
+
+  /* ---- HANDLEBARS ---- */
+  .bike-handlebar {
+    position: absolute;
+    left: 68px;
+    top: 16px;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.5), rgba(203,213,225,0.7) 50%, rgba(148,163,184,0.5));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 1px 2px rgba(0,0,0,0.18);
+  }
+
+  /* Handlebar grip */
+  .bike-handlebar::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 4px;
+    height: 5px;
+    border-radius: 2px;
+    background: #1e293b;
+    box-shadow: inset 0 1px rgba(255,255,255,0.1);
+  }
+
+  /* ---- SEAT ---- */
+  .bike-seat {
+    position: absolute;
+    left: 30px;
+    top: 14px;
+    width: 14px;
+    height: 4px;
+    border-radius: 6px 3px 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 40%),
+      linear-gradient(135deg, #334155, #1e293b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 2px 4px rgba(0,0,0,0.22);
+  }
+
+  /* ---- PEDAL / CRANK ---- */
+  .bike-crank {
+    position: absolute;
+    left: 34px;
+    bottom: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #94a3b8 0 2px, rgba(100,116,139,0.5) 3px 4px, transparent 5px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Crank arm */
+  .bike-crank::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 3px;
+    width: 8px;
+    height: 2.5px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, rgba(148,163,184,0.6), rgba(203,213,225,0.5));
+    box-shadow: inset 0 1px rgba(255,255,255,0.12);
+  }
+
+  /* Pedal */
+  .bike-crank::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    top: 1px;
+    width: 5px;
+    height: 6px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(203,213,225,0.6), rgba(100,116,139,0.5));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* ---- CHAIN GUARD ---- */
+  .bike-chain-guard {
+    position: absolute;
+    left: 32px;
+    bottom: 10px;
+    width: 22px;
+    height: 6px;
+    border-radius: 0 0 4px 4px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 30%),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b));
+    border: 0.5px solid rgba(255,255,255,0.12);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.14),
+      0 1px 3px rgba(0,0,0,0.12);
+    opacity: 0.8;
+  }
+
+  /* Color variants */
+  .bike-a { --paint-a: #60a5fa; --paint-b: #1e3a8a; }
+  .bike-b { --paint-a: #f87171; --paint-b: #991b1b; }
+  .bike-c { --paint-a: #6ee7b7; --paint-b: #065f46; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="bicycle" class="bicycle bike-a">
+  <div class="bike-frame">
+    <div class="bike-seat-tube"></div>
+    <div class="bike-top-tube"></div>
+    <div class="bike-down-tube"></div>
+    <div class="bike-chain-stay"></div>
+    <div class="bike-seat-stay"></div>
+    <div class="bike-fork"></div>
+  </div>
+  <div class="bike-handlebar"></div>
+  <div class="bike-seat"></div>
+  <div class="bike-crank"></div>
+  <div class="bike-chain-guard"></div>
+  <div class="bike-wheel bw-rear"></div>
+  <div class="bike-wheel bw-front"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Wheel spin proportional to distance traveled
+  var spinDeg = distance * 6;
+  bicycleEl.style.setProperty("--wheel-spin", spinDeg + "deg");
+
+  // Subtle vertical bob when moving
+  var moving = (speed > 0) ? 1 : 0;
+  var bob = Math.sin(time * 8) * 0.5 * moving;
+  bicycleEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0)";
+
+  // Pedal crank rotation synced to wheel spin
+  crankEl.style.transform = "rotate(" + (spinDeg * 0.5) + "deg)";
+-->

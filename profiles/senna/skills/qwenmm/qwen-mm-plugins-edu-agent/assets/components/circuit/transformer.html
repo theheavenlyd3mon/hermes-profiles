@@ -1,0 +1,180 @@
+<!--
+  K12 Asset: 变压器
+  ID: transformer
+  Suitable: 变压器原理, 交流电, 电磁感应, 远距离输电
+  CSS Vars: --primary-glow (0-1), --secondary-glow (0-1)
+  JS Hooks: set --primary-glow and --secondary-glow in renderAt()
+  Size: 60×50px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .transformer {
+    position: absolute;
+    width: 60px;
+    height: 50px;
+    margin-left: -30px;
+    margin-top: -25px;
+    --primary-glow: 0;
+    --secondary-glow: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .transformer::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 68px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Iron E-core — dark metallic laminated steel */
+  .xfmr-core {
+    position: absolute;
+    left: 10px; top: 6px;
+    width: 40px; height: 38px;
+    border-radius: 3px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.08), transparent 30%),
+      repeating-linear-gradient(0deg,
+        rgba(55,65,81,0.9) 0px, rgba(55,65,81,0.9) 2px,
+        rgba(31,41,55,0.9) 2px, rgba(31,41,55,0.9) 4px),
+      linear-gradient(180deg, #374151, #1f2937 50%, #111827);
+    border: 1px solid rgba(75,85,99,0.4);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.06),
+      inset 0 -4px 6px rgba(0,0,0,0.3),
+      0 3px 8px rgba(0,0,0,0.2);
+  }
+
+  /* Core center leg */
+  .xfmr-core-center {
+    position: absolute;
+    left: 26px; top: 10px;
+    width: 8px; height: 30px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.05), transparent 40%),
+      linear-gradient(180deg, #4b5563, #374151 50%, #1f2937);
+    border: 0.5px solid rgba(75,85,99,0.3);
+  }
+
+  /* Primary coil — left side (copper) */
+  .xfmr-primary {
+    position: absolute;
+    left: 4px; top: 10px;
+    width: 14px; height: 30px;
+    border-radius: 3px;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(180,140,80,0.8) 0px, rgba(212,175,55,0.9) 1.5px,
+        rgba(160,120,60,0.7) 3px, rgba(140,100,40,0.6) 4px),
+      linear-gradient(90deg, rgba(234,234,234,0.1), transparent 40%),
+      linear-gradient(180deg, #8b6914, #6b4f10);
+    border: 0.5px solid rgba(139,105,20,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -3px 5px rgba(0,0,0,0.2);
+  }
+
+  /* Primary glow overlay */
+  .xfmr-primary::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 4px;
+    background: radial-gradient(ellipse,
+      rgba(251,191,36, calc(var(--primary-glow) * 0.4)),
+      transparent 70%);
+    box-shadow: 0 0 calc(var(--primary-glow) * 8px) rgba(251,191,36, calc(var(--primary-glow) * 0.3));
+    pointer-events: none;
+  }
+
+  /* Secondary coil — right side (copper) */
+  .xfmr-secondary {
+    position: absolute;
+    right: 4px; top: 10px;
+    width: 14px; height: 30px;
+    border-radius: 3px;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(180,140,80,0.8) 0px, rgba(212,175,55,0.9) 1.5px,
+        rgba(160,120,60,0.7) 3px, rgba(140,100,40,0.6) 4px),
+      linear-gradient(90deg, rgba(234,234,234,0.1), transparent 40%),
+      linear-gradient(180deg, #8b6914, #6b4f10);
+    border: 0.5px solid rgba(139,105,20,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -3px 5px rgba(0,0,0,0.2);
+  }
+
+  /* Secondary glow overlay */
+  .xfmr-secondary::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 4px;
+    background: radial-gradient(ellipse,
+      rgba(251,191,36, calc(var(--secondary-glow) * 0.4)),
+      transparent 70%);
+    box-shadow: 0 0 calc(var(--secondary-glow) * 8px) rgba(251,191,36, calc(var(--secondary-glow) * 0.3));
+    pointer-events: none;
+  }
+
+  /* Terminal posts — primary side */
+  .xfmr-term {
+    position: absolute;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.35), transparent 45%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .xfmr-term-p1 { left: 6px; top: 2px; }
+  .xfmr-term-p2 { left: 6px; bottom: 2px; }
+  .xfmr-term-s1 { right: 6px; top: 2px; }
+  .xfmr-term-s2 { right: 6px; bottom: 2px; }
+
+  /* Coil turn count labels */
+  .xfmr-turns {
+    position: absolute;
+    bottom: 0px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 600;
+    color: rgba(148,163,184,0.5);
+  }
+  .xfmr-turns-p { left: 6px; }
+  .xfmr-turns-s { right: 4px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="transformer">
+  <div class="xfmr-core"></div>
+  <div class="xfmr-core-center"></div>
+  <div class="xfmr-primary"></div>
+  <div class="xfmr-secondary"></div>
+  <div class="xfmr-term xfmr-term-p1"></div>
+  <div class="xfmr-term xfmr-term-p2"></div>
+  <div class="xfmr-term xfmr-term-s1"></div>
+  <div class="xfmr-term xfmr-term-s2"></div>
+  <div class="xfmr-turns xfmr-turns-p">n₁</div>
+  <div class="xfmr-turns xfmr-turns-s">n₂</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Primary coil glow — indicates input power
+  transformerEl.style.setProperty("--primary-glow", primaryActive ? 1 : 0);
+
+  // Secondary coil glow — indicates output power
+  transformerEl.style.setProperty("--secondary-glow", secondaryActive ? 1 : 0);
+
+  // AC pulsing effect:
+  // var pGlow = Math.abs(Math.sin(time * Math.PI * 2 * freq));
+  // transformerEl.style.setProperty("--primary-glow", pGlow);
+  // var sGlow = Math.abs(Math.sin(time * Math.PI * 2 * freq - 0.3));
+  // transformerEl.style.setProperty("--secondary-glow", sGlow);
+-->

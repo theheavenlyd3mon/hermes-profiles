@@ -18,7 +18,7 @@ Target → Assess attack surface → Audit → Severity-rate → Remediate → V
 
 Every finding gets a severity label (Critical/High/Medium/Low). Proof before claim. Actionable remediation always included.
 
-## Skills (6 total)
+## Skills (13 total)
 
 Key skills:
 - **supply-chain-hardening** — Layered defense against npm/PyPI attacks

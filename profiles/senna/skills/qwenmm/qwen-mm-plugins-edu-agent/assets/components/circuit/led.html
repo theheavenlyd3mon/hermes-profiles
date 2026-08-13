@@ -1,0 +1,173 @@
+<!--
+  K12 Asset: 发光二极管 (LED)
+  ID: led
+  Suitable: 二极管, 半导体, 单向导电, 光电效应
+  CSS Vars: --brightness (0-1), --led-color (default #ef4444 red)
+  JS Hooks: set --brightness and --led-color in renderAt()
+  Size: 20×30px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .led {
+    position: absolute;
+    width: 20px;
+    height: 30px;
+    margin-left: -10px;
+    margin-top: -15px;
+    --brightness: 0;
+    --led-color: #ef4444;
+    filter: drop-shadow(0 5px 8px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .led::after {
+    content: "";
+    position: absolute;
+    left: -2px; bottom: -5px;
+    width: 24px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.25), transparent 68%);
+  }
+
+  /* Transparent dome — hemispherical top */
+  .led-dome {
+    position: absolute;
+    left: 3px; top: 0;
+    width: 14px; height: 14px;
+    border-radius: 7px 7px 2px 2px;
+    background:
+      radial-gradient(circle at 40% 30%, rgba(234,234,234,0.35), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(234,234,234,0.08), transparent 70%),
+      linear-gradient(180deg,
+        rgba(200,200,200,0.15),
+        rgba(150,150,150,0.08) 60%,
+        rgba(100,100,100,0.05));
+    border: 1px solid rgba(200,200,200,0.2);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(0,0,0,0.1),
+      0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* LED glow — emitted light */
+  .led-dome::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(239,68,68, calc(var(--brightness) * 0.6)),
+      rgba(239,68,68, calc(var(--brightness) * 0.2)) 50%,
+      transparent 70%);
+    box-shadow:
+      0 0 calc(var(--brightness) * 10px) rgba(239,68,68, calc(var(--brightness) * 0.5)),
+      0 0 calc(var(--brightness) * 20px) rgba(239,68,68, calc(var(--brightness) * 0.2));
+    pointer-events: none;
+  }
+
+  /* Internal die/chip */
+  .led-chip {
+    position: absolute;
+    left: 7px; top: 8px;
+    width: 6px; height: 4px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg,
+        rgba(239,68,68, calc(0.3 + var(--brightness) * 0.7)),
+        rgba(185,28,28, calc(0.3 + var(--brightness) * 0.7)));
+    box-shadow:
+      0 0 calc(var(--brightness) * 4px) rgba(239,68,68, calc(var(--brightness) * 0.6));
+  }
+
+  /* Flat base — epoxy body */
+  .led-base {
+    position: absolute;
+    left: 4px; top: 13px;
+    width: 12px; height: 6px;
+    border-radius: 1px 1px 2px 2px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.08), transparent 30%),
+      linear-gradient(180deg, #64748b, #475569 50%, #334155),
+      linear-gradient(90deg, #475569, #334155);
+    border: 0.5px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.08),
+      inset 0 -2px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Anode lead (longer, left) */
+  .led-anode {
+    position: absolute;
+    left: 6px; top: 19px;
+    width: 1.5px; height: 11px;
+    background:
+      linear-gradient(180deg, #94a3b8, #64748b, #94a3b8);
+    border-radius: 0.5px;
+  }
+
+  /* Cathode lead (shorter, right) */
+  .led-cathode {
+    position: absolute;
+    right: 6px; top: 19px;
+    width: 1.5px; height: 8px;
+    background:
+      linear-gradient(180deg, #94a3b8, #64748b, #94a3b8);
+    border-radius: 0.5px;
+  }
+
+  /* Flat spot indicator on cathode side of dome */
+  .led-flat {
+    position: absolute;
+    right: 3px; top: 5px;
+    width: 1px; height: 6px;
+    background: rgba(100,116,139,0.3);
+  }
+
+  /* +/- labels */
+  .led-mark-plus {
+    position: absolute;
+    left: 0; top: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 6px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.5);
+  }
+  .led-mark-minus {
+    position: absolute;
+    right: 0; top: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.5);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="led">
+  <div class="led-dome"></div>
+  <div class="led-chip"></div>
+  <div class="led-base"></div>
+  <div class="led-anode"></div>
+  <div class="led-cathode"></div>
+  <div class="led-flat"></div>
+  <div class="led-mark-plus">+</div>
+  <div class="led-mark-minus">−</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Brightness: 0=off, 1=full brightness
+  ledEl.style.setProperty("--brightness", brightnessValue);
+
+  // Change LED color:
+  // ledEl.style.setProperty("--led-color", "#22c55e"); // green
+  // Note: also update the rgba values in dome::after and chip background
+
+  // Blinking effect:
+  // var blink = Math.sin(time * Math.PI * 2 * freq) > 0 ? 1 : 0;
+  // ledEl.style.setProperty("--brightness", blink);
+
+  // Smooth pulse:
+  // var pulse = 0.5 + 0.5 * Math.sin(time * 4);
+  // ledEl.style.setProperty("--brightness", pulse);
+-->

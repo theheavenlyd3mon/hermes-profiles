@@ -1,0 +1,156 @@
+<!--
+  K12 Asset: 木块
+  ID: wooden-block
+  Suitable: 摩擦力, 压强, 力的平衡, 牛顿定律, 弹力, 密度
+  CSS Vars: --paint-a (lighter wood), --paint-b (darker wood)
+  JS Hooks: translate for sliding motion; rotation for tipping
+  Size: 50×36px at 1920×1080
+
+  Variants:
+    .wood-a  { --paint-a: #d4a574; --paint-b: #8b6914; }  (pine, default)
+    .wood-b  { --paint-a: #c4956a; --paint-b: #6b4226; }  (walnut)
+    .wood-c  { --paint-a: #e8c9a0; --paint-b: #a07d50; }  (birch)
+  Flip: transform: scaleX(-1) for mirrored grain
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .wooden-block {
+    position: absolute;
+    width: 50px;
+    height: 36px;
+    margin-left: -25px;
+    transform-origin: 50% 100%;
+    --paint-a: #d4a574;
+    --paint-b: #8b6914;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .wooden-block::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+    z-index: -1;
+  }
+
+  /* Front face — main visible surface with wood grain */
+  .wb-front {
+    position: absolute;
+    left: 4px; top: 8px;
+    width: 40px; height: 28px;
+    border-radius: 2px;
+    background:
+      repeating-linear-gradient(92deg,
+        transparent 0px, transparent 6px,
+        rgba(139,105,20,0.08) 6px, rgba(139,105,20,0.08) 7px),
+      repeating-linear-gradient(88deg,
+        transparent 0px, transparent 11px,
+        rgba(120,80,10,0.06) 11px, rgba(120,80,10,0.06) 12px),
+      linear-gradient(180deg, rgba(234,234,234,0.22), transparent 20%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.1)),
+      linear-gradient(90deg, rgba(0,0,0,0.04), transparent 15%, transparent 85%, rgba(0,0,0,0.04)),
+      linear-gradient(135deg, var(--paint-a), color-mix(in srgb, var(--paint-a) 70%, var(--paint-b)) 50%, var(--paint-a) 80%);
+    border: 1px solid rgba(0,0,0,0.12);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -4px 8px rgba(0,0,0,0.1),
+      0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  /* Specular reflection on front face */
+  .wb-front::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 2px;
+    width: 18px; height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.18),
+      rgba(234,234,234,0.04));
+  }
+
+  /* Knot detail — natural wood character */
+  .wb-front::after {
+    content: "";
+    position: absolute;
+    right: 8px; top: 10px;
+    width: 6px; height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse,
+      rgba(100,60,10,0.2) 0 30%,
+      rgba(139,105,20,0.08) 50%,
+      transparent 70%);
+  }
+
+  /* Top face — isometric perspective */
+  .wb-top {
+    position: absolute;
+    left: 4px; top: 0;
+    width: 40px; height: 10px;
+    border-radius: 2px 2px 0 0;
+    background:
+      repeating-linear-gradient(85deg,
+        transparent 0px, transparent 8px,
+        rgba(120,80,10,0.05) 8px, rgba(120,80,10,0.05) 9px),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--paint-a) 85%, white),
+        var(--paint-a));
+    border: 1px solid rgba(0,0,0,0.1);
+    border-bottom: none;
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.3),
+      inset 0 -1px 2px rgba(0,0,0,0.06);
+    transform: perspective(80px) rotateX(8deg);
+    transform-origin: 50% 100%;
+  }
+
+  /* Right face — side showing depth */
+  .wb-right {
+    position: absolute;
+    right: 0; top: 8px;
+    width: 6px; height: 28px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 20%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg,
+        rgba(0,0,0,0.06),
+        color-mix(in srgb, var(--paint-b) 60%, var(--paint-a)) 40%,
+        var(--paint-b));
+    border: 1px solid rgba(0,0,0,0.12);
+    border-left: none;
+    box-shadow:
+      inset -1px 0 3px rgba(0,0,0,0.12),
+      inset 0 1px 2px rgba(255,255,255,0.08);
+  }
+
+  /* Color variants */
+  .wood-a { --paint-a: #d4a574; --paint-b: #8b6914; }
+  .wood-b { --paint-a: #c4956a; --paint-b: #6b4226; }
+  .wood-b .wb-front {
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -4px 8px rgba(0,0,0,0.12),
+      0 2px 6px rgba(107,66,38,0.2);
+  }
+  .wood-c { --paint-a: #e8c9a0; --paint-b: #a07d50; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="wooden-block" class="wooden-block wood-a">
+  <div class="wb-top"></div>
+  <div class="wb-front"></div>
+  <div class="wb-right"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Slide motion
+  blockEl.style.transform = "translate3d(" + xPx + "px, 0, 0)";
+
+  // Tip/rotate
+  // blockEl.style.transform = "rotate(" + angle + "deg)";
+-->

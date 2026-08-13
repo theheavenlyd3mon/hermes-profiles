@@ -1,0 +1,193 @@
+<!--
+  K12 Asset: 浮沉物块
+  ID: float-block
+  Suitable: 浮力, 阿基米德原理, 密度, 物体浮沉条件
+  CSS Vars:
+    --submersion (0=on surface, 1=fully submerged, controls vertical position)
+    --bob-offset (px, subtle vertical bob — driven by JS sine wave)
+  JS Hooks: set --submersion based on density ratio, --bob-offset for wave motion
+  Size: 36×28px block at 1920×1080
+
+  Note: Block intersects water surface. Above-water portion is dry, below is wet.
+  Use with a separate water-surface element for full scene.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .float-block {
+    position: absolute;
+    width: 36px;
+    height: 28px;
+    margin-left: -18px;
+    transform-origin: 50% 50%;
+    --submersion: 0.5;
+    --bob-offset: 0px;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+    transform: translateY(calc(var(--submersion) * 20px + var(--bob-offset)));
+  }
+
+  /* Ground shadow — projected onto water surface */
+  .float-block::after {
+    content: "";
+    position: absolute;
+    left: -4px; right: -4px; bottom: -10px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Block body — wood-like material with grain */
+  .fblk-body {
+    position: absolute;
+    left: 0; top: 0;
+    width: 36px; height: 28px;
+    border-radius: 3px;
+    background:
+      repeating-linear-gradient(95deg,
+        rgba(234,234,234,0.03) 0px, transparent 1px, transparent 6px, rgba(234,234,234,0.02) 7px),
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 20%),
+      linear-gradient(180deg, transparent 75%, rgba(0,0,0,0.12)),
+      radial-gradient(ellipse at 30% 20%, rgba(255,220,160,0.15), transparent 50%),
+      linear-gradient(180deg, #b8860b, #a0750a 30%, #8b6914 60%, #7a5c12 80%, #6b4f10);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow:
+      inset 0 2px 4px rgba(255,220,160,0.15),
+      inset 0 -6px 10px rgba(60,40,10,0.25),
+      inset 2px 0 4px rgba(255,255,255,0.05),
+      inset -2px 0 4px rgba(0,0,0,0.08),
+      0 3px 8px rgba(0,0,0,0.22);
+  }
+
+  /* Wood grain lines */
+  .fblk-body::before {
+    content: "";
+    position: absolute;
+    left: 3px; top: 4px;
+    width: 30px; height: 20px;
+    border-radius: 1px;
+    background:
+      repeating-linear-gradient(2deg,
+        rgba(90,60,20,0.12) 0px, transparent 0.5px, transparent 4px, rgba(90,60,20,0.08) 4.5px),
+      repeating-linear-gradient(-1deg,
+        transparent 0px, transparent 8px, rgba(120,80,30,0.06) 8.5px, transparent 9px);
+  }
+
+  /* Top face highlight — 3D depth illusion */
+  .fblk-body::after {
+    content: "";
+    position: absolute;
+    left: 1px; top: 1px;
+    width: 34px; height: 3px;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(90deg,
+      rgba(255,240,200,0.2),
+      rgba(255,240,200,0.35) 30%,
+      rgba(255,240,200,0.3) 70%,
+      rgba(255,240,200,0.15));
+  }
+
+  /* Water line intersection — wet/dry boundary effect */
+  .fblk-waterline {
+    position: absolute;
+    left: -2px; right: -2px;
+    top: calc((1 - var(--submersion)) * 28px);
+    height: 3px;
+    background:
+      linear-gradient(180deg,
+        rgba(96,165,250,0) 0%,
+        rgba(96,165,250,0.15) 40%,
+        rgba(96,165,250,0.25) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Water line shimmer */
+  .fblk-waterline::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(234,234,234,0.25) 20%,
+      rgba(234,234,234,0.35) 50%,
+      rgba(234,234,234,0.25) 80%,
+      transparent);
+  }
+
+  /* Submerged portion darkening — water tints the block */
+  .fblk-wet {
+    position: absolute;
+    left: 1px; right: 1px;
+    bottom: 1px;
+    height: calc(var(--submersion) * 26px);
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg,
+        rgba(30,64,120,0.08),
+        rgba(30,64,120,0.18) 50%,
+        rgba(20,50,100,0.22));
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Water ripple at block edges */
+  .fblk-ripple {
+    position: absolute;
+    left: -6px; right: -6px;
+    top: calc((1 - var(--submersion)) * 28px - 2px);
+    height: 5px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse, rgba(96,165,250,0.12), transparent 70%);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* Variant: metal block */
+  .fblk-metal .fblk-body {
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.15) 0%, transparent 20%, transparent 80%, rgba(234,234,234,0.08)),
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 20%),
+      linear-gradient(180deg, transparent 75%, rgba(0,0,0,0.15)),
+      radial-gradient(ellipse at 35% 25%, rgba(234,234,234,0.1), transparent 50%),
+      linear-gradient(180deg, #94a3b8, #64748b 40%, #475569 70%, #334155);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .fblk-metal .fblk-body::before {
+    background:
+      repeating-linear-gradient(85deg,
+        rgba(234,234,234,0.04) 0px, transparent 0.5px, transparent 5px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="float-block">
+  <div class="fblk-body"></div>
+  <div class="fblk-waterline"></div>
+  <div class="fblk-wet"></div>
+  <div class="fblk-ripple"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set submersion based on density ratio (0 = floating on top, 1 = fully sunk)
+  var submersion = objectDensity / liquidDensity;
+  submersion = Math.max(0, Math.min(1, submersion));
+  blockEl.style.setProperty("--submersion", submersion);
+
+  // Subtle bobbing motion on water surface (skip if fully submerged)
+  if (submersion < 1) {
+    var bob = Math.sin(time * 4) * 1.5;
+    blockEl.style.setProperty("--bob-offset", bob + "px");
+  } else {
+    blockEl.style.setProperty("--bob-offset", "0px");
+  }
+
+  // Sinking animation (smooth descent):
+  // var t = Math.min(1, (time - sinkStart) / sinkDuration);
+  // var eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+  // var sub = startSub + (endSub - startSub) * eased;
+  // blockEl.style.setProperty("--submersion", sub);
+
+  // To use metal variant, add class "fblk-metal" to .float-block container
+-->

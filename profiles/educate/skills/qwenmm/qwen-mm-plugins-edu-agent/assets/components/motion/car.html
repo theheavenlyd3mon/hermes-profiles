@@ -1,0 +1,188 @@
+<!--
+  K12 Asset: 小汽车
+  ID: car
+  Suitable: 追及相遇, 匀速运动, 平均速度, 相遇问题, 相对运动
+  CSS Vars: --paint-a (lighter body), --paint-b (darker body), --wheel-spin (rotation angle)
+  JS Hooks: bob via translateY(Math.sin(time*8)*0.6) when moving
+  Size: 160×84px at 1920×1080
+
+  Variants:
+    .car-a { --paint-a: #67e8f9; --paint-b: #1e40af; }  (blue, default)
+    .car-b { --paint-a: #6ee7b7; --paint-b: #065f46; }  (green)
+    .car-c { --paint-a: #fca5a5; --paint-b: #991b1b; }  (red)
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .car {
+    position: absolute;
+    width: 160px;
+    height: 84px;
+    margin-left: -80px;
+    transform-origin: 50% 80%;
+    z-index: 12;
+    --paint-a: #67e8f9;
+    --paint-b: #1e40af;
+    --wheel-spin: 0deg;
+    filter: drop-shadow(0 18px 28px rgba(0,0,0,0.38));
+  }
+
+  /* Ground shadow — contained within element bounds */
+  .car::after {
+    content: "";
+    position: absolute;
+    left: 8px; right: 4px; bottom: 0;
+    height: 12px;
+    border-radius: 999px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.38), transparent 70%);
+    z-index: -1;
+  }
+
+  /* Main body — 6-layer gradient */
+  .car-body {
+    position: absolute;
+    left: 3px; right: 3px; bottom: 12px;
+    height: 44px;
+    border-radius: 18px 28px 14px 12px;
+    background:
+      radial-gradient(circle at 95% 46%, rgba(254,240,138,0.95) 0 5px, transparent 7px),
+      radial-gradient(circle at 5% 54%, rgba(248,113,113,0.82) 0 4px, transparent 6px),
+      radial-gradient(ellipse at 72% 18%, rgba(234,234,234,0.22) 0 12px, transparent 22px),
+      linear-gradient(180deg, rgba(234,234,234,0.42), transparent 24%),
+      linear-gradient(180deg, transparent 58%, rgba(0,0,0,0.12) 100%),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b) 68%);
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.34),
+      inset 0 -16px 22px rgba(2,6,23,0.3),
+      0 8px 20px rgba(30,64,175,0.28);
+  }
+
+  /* Windshield / cabin glass */
+  .car-body::before {
+    content: "";
+    position: absolute;
+    left: 22px; top: -26px;
+    width: 66px; height: 34px;
+    border-radius: 22px 28px 6px 6px;
+    background:
+      radial-gradient(ellipse at 30% 24%, rgba(234,234,234,0.52), transparent 42%),
+      linear-gradient(115deg, rgba(186,230,253,0.48), rgba(30,58,138,0.32) 50%, rgba(15,23,42,0.38) 78%);
+    border: 1px solid rgba(255,255,255,0.24);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.12),
+      inset 0 -10px 14px rgba(15,23,42,0.26);
+  }
+
+  /* Chrome waistline trim */
+  .car-body::after {
+    content: "";
+    position: absolute;
+    left: 10px; top: 12px;
+    width: 108px; height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(234,234,234,0.15), rgba(234,234,234,0.5) 30%, rgba(234,234,234,0.55) 70%, rgba(234,234,234,0.2));
+    box-shadow: 0 1px 3px rgba(255,255,255,0.08);
+  }
+
+  /* Door panel line */
+  .car-skirt {
+    position: absolute;
+    left: 36px; bottom: 14px;
+    width: 1px; height: 28px;
+    background: #ffffff;
+  }
+
+  /* Front bumper chrome */
+  .car-bumper {
+    position: absolute;
+    right: 2px; bottom: 12px;
+    width: 5px; height: 26px;
+    border-radius: 0 4px 4px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.4), rgba(148,163,184,0.6) 50%, rgba(100,116,139,0.5));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.5),
+      1px 0 4px rgba(0,0,0,0.2);
+  }
+
+  /* Alloy wheels */
+  .car-wheel {
+    position: absolute;
+    bottom: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #e2e8f0 0 2px, #94a3b8 3px 4px, #1e293b 5px 6px, #334155 7px 10px, #0f172a 11px 14px);
+    border: 2px solid #0f172a;
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.18),
+      0 3px 6px rgba(0,0,0,0.5),
+      0 6px 12px rgba(0,0,0,0.25);
+    transform: rotate(var(--wheel-spin));
+  }
+
+  .car-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background:
+      linear-gradient(45deg, transparent 38%, rgba(234,234,234,0.38) 39% 61%, transparent 62%),
+      linear-gradient(-45deg, transparent 38%, rgba(234,234,234,0.38) 39% 61%, transparent 62%),
+      linear-gradient(90deg, transparent 40%, rgba(234,234,234,0.3) 41% 59%, transparent 60%),
+      linear-gradient(0deg, transparent 40%, rgba(234,234,234,0.3) 41% 59%, transparent 60%);
+  }
+
+  .car-wheel::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 6px; height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f8fafc, #94a3b8);
+    box-shadow: 0 0 3px rgba(255,255,255,0.3);
+  }
+
+  .cw-l { left: 18px; }
+  .cw-r { right: 18px; }
+
+  /* Color variants */
+  .car-a { --paint-a: #67e8f9; --paint-b: #1e40af; }
+  .car-b { --paint-a: #6ee7b7; --paint-b: #065f46; }
+  .car-b .car-body {
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.34),
+      inset 0 -16px 22px rgba(2,6,23,0.3),
+      0 8px 20px rgba(6,95,70,0.3);
+  }
+  .car-c { --paint-a: #fca5a5; --paint-b: #991b1b; }
+  .car-c .car-body {
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.34),
+      inset 0 -16px 22px rgba(2,6,23,0.3),
+      0 8px 20px rgba(153,27,27,0.3);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="car car-a">
+  <div class="car-body"></div>
+  <div class="car-skirt"></div>
+  <div class="car-bumper"></div>
+  <div class="car-wheel cw-l"></div>
+  <div class="car-wheel cw-r"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Wheel spin proportional to distance traveled
+  var spinDeg = distanceKm * 5;
+  carEl.style.setProperty("--wheel-spin", spinDeg + "deg");
+
+  // Subtle vertical bob only when moving
+  var moving = (speed > 0) ? 1 : 0;
+  var bob = Math.sin(time * 8) * 0.6 * moving;
+  carEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0)";
+-->

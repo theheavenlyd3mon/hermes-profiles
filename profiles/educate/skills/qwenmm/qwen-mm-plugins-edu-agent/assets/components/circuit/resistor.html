@@ -1,0 +1,146 @@
+<!--
+  K12 Asset: 电阻（碳膜电阻）
+  ID: resistor
+  Suitable: 欧姆定律, 串联电路, 并联电路, 电功率, 电阻
+  CSS Vars: --temperature (0=cool, 1=max heat glow)
+  JS Hooks: set --temperature based on current flow / power dissipation
+  Size: 48×16px at 1920×1080
+
+  Variants:
+    .resistor-h  — horizontal (default)
+    .resistor-v  — vertical (rotate 90deg)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .resistor {
+    position: absolute;
+    width: 48px;
+    height: 16px;
+    margin-left: -24px;
+    transform-origin: 50% 50%;
+    --temperature: 0;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .resistor::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: -6px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Wire lead — left */
+  .resistor-lead-l {
+    position: absolute;
+    left: 0; top: 6px;
+    width: 10px; height: 3px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 40%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.2)),
+      linear-gradient(90deg, #a0a0a0, #c0c0c0, #a0a0a0);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Wire lead — right */
+  .resistor-lead-r {
+    position: absolute;
+    right: 0; top: 6px;
+    width: 10px; height: 3px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 40%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.2)),
+      linear-gradient(90deg, #a0a0a0, #c0c0c0, #a0a0a0);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Main ceramic body — 5-layer gradient with rounded barrel shape */
+  .resistor-body {
+    position: absolute;
+    left: 8px; top: 1px;
+    width: 32px; height: 14px;
+    border-radius: 3px;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(234,234,234,0.15) 0 4px, transparent 12px),
+      linear-gradient(180deg, rgba(234,234,234,0.22), transparent 25%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.2)),
+      linear-gradient(90deg, #c4a882, #d4b896 15%, #dcc4a6 50%, #d4b896 85%, #c4a882),
+      linear-gradient(180deg, #d4b896, #b89870);
+    border: 0.5px solid rgba(160,128,90,0.5);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -3px 6px rgba(120,80,40,0.2),
+      0 0 calc(var(--temperature) * 12px) rgba(255,80,20, calc(var(--temperature) * 0.35)),
+      0 2px 5px rgba(0,0,0,0.25);
+  }
+
+  /* Color bands — 4 stripes (brown, black, red, gold = 1kΩ ±5%) */
+  .resistor-body::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 0; bottom: 0;
+    width: 24px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg,
+        transparent 0 2px,
+        #8b4513 2px 5px,
+        transparent 5px 8px,
+        #1a1a1a 8px 11px,
+        transparent 11px 14px,
+        #cc0000 14px 17px,
+        transparent 17px 20px,
+        #daa520 20px 23px,
+        transparent 23px);
+  }
+
+  /* Ceramic highlight line */
+  .resistor-body::after {
+    content: "";
+    position: absolute;
+    left: 3px; top: 3px;
+    width: 26px; height: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.25) 20%, rgba(234,234,234,0.3) 50%, rgba(234,234,234,0.25) 80%, transparent);
+  }
+
+  /* Heat glow overlay */
+  .resistor-glow {
+    position: absolute;
+    left: 6px; top: -2px;
+    width: 36px; height: 20px;
+    border-radius: 6px;
+    background: radial-gradient(ellipse,
+      rgba(255,60,10, calc(var(--temperature) * 0.2)),
+      rgba(255,120,40, calc(var(--temperature) * 0.08)) 50%,
+      transparent 80%);
+    pointer-events: none;
+  }
+
+  .resistor-v { transform: rotate(-90deg); }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="resistor">
+  <div class="resistor-lead-l"></div>
+  <div class="resistor-body"></div>
+  <div class="resistor-lead-r"></div>
+  <div class="resistor-glow"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Heat glow based on power dissipation (P = I²R)
+  var temp = Math.min(1, powerDissipation / maxPower);
+  // Add subtle pulsing to temperature glow
+  var tempPulse = temp * (0.85 + 0.15 * Math.sin(time * 3));
+  resistorEl.style.setProperty("--temperature", tempPulse);
+-->

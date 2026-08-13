@@ -18,7 +18,7 @@ Inbound → Categorize (urgent/actionable/fyi/spam) → Prioritize → Draft res
 
 Never auto-sends. All drafts marked DRAFT. Preserves the user's voice.
 
-## Skills (1 total)
+## Skills (3 total)
 
 - **himalaya** — IMAP/SMTP email from terminal
 

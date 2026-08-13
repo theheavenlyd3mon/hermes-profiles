@@ -1,0 +1,154 @@
+<!--
+  K12 Asset: 直尺
+  ID: ruler
+  Suitable: 长度测量, 刻度读数, 距离, 位移, 几何画图
+  CSS Vars: (static — mainly for composition layout)
+  JS Hooks: none (static component, position via transform)
+  Size: 200×16px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .ruler {
+    position: absolute;
+    width: 200px;
+    height: 16px;
+    margin-left: -100px;
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.28));
+  }
+
+  /* Ground shadow */
+  .ruler::after {
+    content: "";
+    position: absolute;
+    left: 10px; right: 10px; bottom: -6px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.25), transparent 70%);
+  }
+
+  /* Main body — semi-transparent with slight tint */
+  .rl-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 25%),
+      linear-gradient(180deg, transparent 75%, rgba(0,0,0,0.06)),
+      linear-gradient(180deg, rgba(248,250,252,0.88), rgba(241,245,249,0.85) 50%, rgba(226,232,240,0.82));
+    border: 1px solid rgba(148,163,184,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.5),
+      inset 0 -1px 3px rgba(0,0,0,0.06),
+      0 2px 6px rgba(0,0,0,0.12);
+  }
+
+  /* Metallic edge strip at top */
+  .rl-edge {
+    position: absolute;
+    left: 0; top: 0;
+    width: 200px; height: 2px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(90deg, #94a3b8, #cbd5e1 20%, #e2e8f0 50%, #cbd5e1 80%, #94a3b8);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.4);
+  }
+
+  /* Millimeter marks */
+  .rl-mm-marks {
+    position: absolute;
+    left: 10px; top: 2px;
+    width: 180px; height: 4px;
+    background:
+      repeating-linear-gradient(90deg,
+        #475569 0px, #475569 0.5px,
+        transparent 0.5px, transparent 9px
+      );
+  }
+
+  /* Half-centimeter marks (every 5mm — taller) */
+  .rl-5mm-marks {
+    position: absolute;
+    left: 19px; top: 2px;
+    width: 163px; height: 6px;
+    background:
+      repeating-linear-gradient(90deg,
+        #334155 0px, #334155 0.6px,
+        transparent 0.6px, transparent 18px
+      );
+  }
+
+  /* Centimeter marks (tallest) */
+  .rl-cm-marks {
+    position: absolute;
+    left: 10px; top: 2px;
+    width: 180px; height: 9px;
+    background:
+      repeating-linear-gradient(90deg,
+        #1e293b 0px, #1e293b 0.7px,
+        transparent 0.7px, transparent 18px
+      );
+  }
+
+  /* Number labels */
+  .rl-numbers {
+    position: absolute;
+    left: 10px; top: 0;
+    width: 180px; height: 16px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .rl-num {
+    position: relative;
+    top: 9px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 4.5px;
+    font-weight: 500;
+    color: #1e293b;
+    width: 0;
+    text-align: center;
+  }
+
+  /* Zero mark emphasis */
+  .rl-num:first-child {
+    font-weight: 700;
+    color: #0f172a;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="ruler">
+  <div class="rl-body"></div>
+  <div class="rl-edge"></div>
+  <div class="rl-mm-marks"></div>
+  <div class="rl-5mm-marks"></div>
+  <div class="rl-cm-marks"></div>
+  <div class="rl-numbers">
+    <span class="rl-num">0</span>
+    <span class="rl-num">1</span>
+    <span class="rl-num">2</span>
+    <span class="rl-num">3</span>
+    <span class="rl-num">4</span>
+    <span class="rl-num">5</span>
+    <span class="rl-num">6</span>
+    <span class="rl-num">7</span>
+    <span class="rl-num">8</span>
+    <span class="rl-num">9</span>
+    <span class="rl-num">10</span>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Static component — position with transform
+  // rulerEl.style.left = x + "px";
+  // rulerEl.style.top = y + "px";
+  // rulerEl.style.transform = "rotate(" + angle + "deg)";
+
+  // Optional: highlight a measurement reading
+  // var highlightX = measurementCm * 18; // 18px per cm
+  // highlightEl.style.left = (10 + highlightX) + "px";
+-->

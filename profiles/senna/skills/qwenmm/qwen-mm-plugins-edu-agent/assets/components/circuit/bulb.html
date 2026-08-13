@@ -1,0 +1,152 @@
+<!--
+  K12 Asset: 灯泡
+  ID: bulb
+  Suitable: 串联电路, 并联电路, 电功率, 欧姆定律
+  CSS Vars: --brightness (0=off, 1=full glow)
+  JS Hooks: set --brightness in renderAt() to control glow intensity
+  Size: 42×78px at 1920×1080
+
+  Variants:
+    .bulb-off  { --brightness: 0; }   (unlit)
+    .bulb-dim  { --brightness: 0.4; } (dim)
+    .bulb-on   { --brightness: 1; }   (full brightness, default)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .bulb {
+    position: absolute;
+    width: 42px;
+    height: 78px;
+    margin-left: -21px;
+    transform-origin: 50% 100%;
+    --brightness: 1;
+    filter: drop-shadow(0 12px 18px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .bulb::after {
+    content: "";
+    position: absolute;
+    left: -12px; bottom: -8px;
+    width: 66px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 70%);
+  }
+
+  /* Glass globe — 5-layer gradient for realistic glass + filament glow */
+  .bulb-glass {
+    position: absolute;
+    left: 3px; top: 0;
+    width: 36px; height: 40px;
+    border-radius: 50% 50% 42% 42%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.48), transparent 36%),
+      radial-gradient(circle at 50% 55%, rgba(255,248,187,calc(var(--brightness)*0.7)) 0 6px, transparent 12px),
+      radial-gradient(ellipse at 50% 50%, rgba(255,220,100,calc(var(--brightness)*0.25)), transparent 56%),
+      linear-gradient(180deg, rgba(234,234,234,0.18), transparent 40%),
+      linear-gradient(135deg, rgba(200,220,255,0.12), rgba(100,140,200,0.08));
+    border: 1.5px solid rgba(200,220,240,0.35);
+    box-shadow:
+      inset 0 2px 6px rgba(255,255,255,0.15),
+      inset 0 -8px 12px rgba(15,23,42,0.1),
+      0 0 calc(var(--brightness)*24px) rgba(255,208,74,calc(var(--brightness)*0.5)),
+      0 0 calc(var(--brightness)*48px) rgba(255,170,50,calc(var(--brightness)*0.2));
+  }
+
+  /* Filament — W-shape wire inside glass */
+  .bulb-filament {
+    position: absolute;
+    left: 14px; top: 20px;
+    width: 14px; height: 12px;
+    border-bottom: 2px solid rgba(255,200,80,calc(0.3 + var(--brightness)*0.7));
+    border-left: 1.5px solid rgba(255,200,80,calc(0.2 + var(--brightness)*0.5));
+    border-right: 1.5px solid rgba(255,200,80,calc(0.2 + var(--brightness)*0.5));
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .bulb-filament::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 0;
+    width: 8px; height: 8px;
+    border-top: 1.5px solid rgba(255,200,80,calc(0.2 + var(--brightness)*0.6));
+    border-radius: 50% 50% 0 0;
+  }
+
+  /* Glow halo — visible when lit */
+  .bulb-glow {
+    position: absolute;
+    left: -16px; top: -14px;
+    width: 74px; height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,208,74,calc(var(--brightness)*0.2)), transparent 62%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Neck — glass-to-metal transition */
+  .bulb-neck {
+    position: absolute;
+    left: 10px; top: 38px;
+    width: 22px; height: 8px;
+    background:
+      linear-gradient(180deg, rgba(200,220,240,0.2), rgba(148,163,184,0.35));
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Screw base — metallic with grooves */
+  .bulb-base {
+    position: absolute;
+    left: 8px; top: 44px;
+    width: 26px; height: 28px;
+    border-radius: 3px 3px 6px 6px;
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(234,234,234,0.2) 0px, rgba(148,163,184,0.5) 2px,
+        rgba(100,116,139,0.6) 3px, rgba(71,85,105,0.5) 5px,
+        rgba(148,163,184,0.4) 6px, rgba(234,234,234,0.15) 7px),
+      linear-gradient(90deg, rgba(71,85,105,0.7), rgba(148,163,184,0.8) 30%, rgba(203,213,225,0.7) 50%, rgba(148,163,184,0.8) 70%, rgba(71,85,105,0.7));
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.12),
+      inset 0 -4px 6px rgba(15,23,42,0.2),
+      0 4px 8px rgba(0,0,0,0.25);
+  }
+
+  /* Base bottom contact */
+  .bulb-base::after {
+    content: "";
+    position: absolute;
+    left: 8px; bottom: -4px;
+    width: 10px; height: 5px;
+    border-radius: 0 0 50% 50%;
+    background: linear-gradient(180deg, #64748b, #475569);
+  }
+
+  .bulb-off { --brightness: 0; }
+  .bulb-dim { --brightness: 0.4; }
+  .bulb-on  { --brightness: 1; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="bulb bulb-on">
+  <div class="bulb-glow"></div>
+  <div class="bulb-glass"></div>
+  <div class="bulb-filament"></div>
+  <div class="bulb-neck"></div>
+  <div class="bulb-base"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set brightness based on circuit state (0 = off, 1 = full)
+  var brightness = circuitClosed ? (voltage / ratedVoltage) : 0;
+  brightness = Math.max(0, Math.min(1, brightness));
+  bulbEl.style.setProperty("--brightness", brightness);
+
+  // Optional: subtle flicker when near rated voltage
+  if (brightness > 0.8) {
+    var flicker = brightness + Math.sin(time * 17.3) * 0.02;
+    bulbEl.style.setProperty("--brightness", flicker);
+  }
+-->

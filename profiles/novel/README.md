@@ -17,8 +17,7 @@ Concept → Plan (ledgers) → Draft scenes → Review (fresh context, never sel
 
 Non-negotiable: the reviewer pass runs in a fresh context. Chapters carry frontmatter; reviews are JSON; export is gated on every chapter done and no dangling foreshadow.
 
-## Skills
-
+## Skills (20 total)
 Key skills:
 - **narrative** — Full-novel craft and drafting pipeline
 - **narrative-revisor** — Separated 3-pass reviewer stage

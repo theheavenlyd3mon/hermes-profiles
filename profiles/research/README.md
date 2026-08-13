@@ -18,7 +18,7 @@ Question → Breadth scan (3-5 searches) → Depth on leads → Gap filling → 
 
 Every claim gets a confidence level (H/M/L). Contradictions are flagged, not hidden. Synthesis over summarization.
 
-## Skills (13 total)
+## Skills (22 total)
 
 Key skills:
 - **arxiv** — Academic paper search, BibTeX, citation graphs

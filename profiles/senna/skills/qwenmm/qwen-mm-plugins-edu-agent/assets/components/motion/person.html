@@ -1,0 +1,264 @@
+<!--
+  K12 Asset: 人物
+  ID: person
+  Suitable: 追及相遇, 行程问题, 参照物, 相对运动, 力的作用, 惯性
+  CSS Vars: --skin (skin tone), --shirt (shirt color), --pants (pants color)
+  JS Hooks: bob for walking; translate for position
+  Size: 24×56px at 1920×1080
+
+  Variants:
+    .person-a  — blue shirt (default)
+    .person-b  — red shirt
+    .person-c  — green shirt
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .person {
+    position: absolute;
+    width: 24px;
+    height: 56px;
+    margin-left: -12px;
+    transform-origin: 50% 100%;
+    --skin: #e8c4a0;
+    --skin-shadow: #c4956a;
+    --shirt: #3b82f6;
+    --shirt-dark: #1e40af;
+    --pants: #334155;
+    --pants-dark: #1e293b;
+    --shoe: #1e293b;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .person::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+    z-index: -1;
+  }
+
+  /* Head — slightly oval with hair */
+  .ps-head {
+    position: absolute;
+    left: 6px; top: 0;
+    width: 12px; height: 14px;
+    border-radius: 50% 50% 48% 48%;
+    background:
+      radial-gradient(ellipse at 40% 35%, rgba(234,234,234,0.25), transparent 50%),
+      radial-gradient(ellipse at 60% 70%, var(--skin-shadow), transparent 60%),
+      linear-gradient(180deg, var(--skin), var(--skin-shadow));
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 4px rgba(0,0,0,0.1),
+      0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* Hair */
+  .ps-head::before {
+    content: "";
+    position: absolute;
+    left: -0.5px; top: -1px;
+    width: 13px; height: 8px;
+    border-radius: 6px 6px 2px 2px;
+    background:
+      linear-gradient(180deg,
+        #2c1810,
+        #3d2317 60%,
+        rgba(61,35,23,0.6));
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+
+  /* Neck */
+  .ps-head::after {
+    content: "";
+    position: absolute;
+    left: 4px; bottom: -3px;
+    width: 4px; height: 4px;
+    background: var(--skin-shadow);
+    border-radius: 1px;
+  }
+
+  /* Torso — shirt with collar and shading */
+  .ps-torso {
+    position: absolute;
+    left: 4px; top: 15px;
+    width: 16px; height: 18px;
+    border-radius: 3px 3px 1px 1px;
+    background:
+      radial-gradient(ellipse at 40% 20%, rgba(234,234,234,0.18), transparent 40%),
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 20%),
+      linear-gradient(180deg, transparent 65%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, rgba(0,0,0,0.06), transparent 20%, transparent 80%, rgba(0,0,0,0.08)),
+      linear-gradient(180deg, var(--shirt), var(--shirt-dark));
+    border: 0.5px solid rgba(0,0,0,0.1);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -4px 8px rgba(0,0,0,0.15),
+      0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Collar V-neck detail */
+  .ps-torso::before {
+    content: "";
+    position: absolute;
+    left: 5px; top: 0;
+    width: 6px; height: 4px;
+    background:
+      linear-gradient(135deg, transparent 45%, var(--skin-shadow) 46% 54%, transparent 55%),
+      linear-gradient(225deg, transparent 45%, var(--skin-shadow) 46% 54%, transparent 55%);
+  }
+
+  /* Left arm */
+  .ps-arm-l {
+    position: absolute;
+    left: 1px; top: 16px;
+    width: 4px; height: 16px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.1), transparent 40%),
+      linear-gradient(180deg, var(--shirt), var(--shirt-dark));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.12),
+      0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Left hand */
+  .ps-arm-l::after {
+    content: "";
+    position: absolute;
+    left: 0.5px; bottom: -2px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--skin);
+    box-shadow: inset 0 -0.5px 1px rgba(0,0,0,0.1);
+  }
+
+  /* Right arm */
+  .ps-arm-r {
+    position: absolute;
+    right: 1px; top: 16px;
+    width: 4px; height: 16px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, transparent 60%, rgba(0,0,0,0.08)),
+      linear-gradient(180deg, var(--shirt), var(--shirt-dark));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.08),
+      0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  /* Right hand */
+  .ps-arm-r::after {
+    content: "";
+    position: absolute;
+    right: 0.5px; bottom: -2px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--skin-shadow);
+    box-shadow: inset 0 -0.5px 1px rgba(0,0,0,0.12);
+  }
+
+  /* Legs container */
+  .ps-legs {
+    position: absolute;
+    left: 5px; top: 33px;
+    width: 14px; height: 19px;
+  }
+
+  /* Left leg */
+  .ps-legs::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 6px; height: 19px;
+    border-radius: 2px 2px 1px 1px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.06), transparent 40%),
+      linear-gradient(180deg, var(--pants), var(--pants-dark));
+    box-shadow: inset 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* Right leg */
+  .ps-legs::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 0;
+    width: 6px; height: 19px;
+    border-radius: 2px 2px 1px 1px;
+    background:
+      linear-gradient(90deg, transparent 60%, rgba(0,0,0,0.06)),
+      linear-gradient(180deg, var(--pants), var(--pants-dark));
+    box-shadow: inset 0 1px rgba(255,255,255,0.04);
+  }
+
+  /* Shoes */
+  .ps-shoes {
+    position: absolute;
+    left: 4px; bottom: 0;
+    width: 16px; height: 4px;
+  }
+
+  /* Left shoe */
+  .ps-shoes::before {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 7px; height: 4px;
+    border-radius: 2px 4px 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 30%),
+      linear-gradient(135deg, #334155, var(--shoe));
+    box-shadow: inset 0 1px rgba(255,255,255,0.08);
+  }
+
+  /* Right shoe */
+  .ps-shoes::after {
+    content: "";
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 7px; height: 4px;
+    border-radius: 2px 4px 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.06), transparent 30%),
+      linear-gradient(135deg, #2d3a4a, var(--shoe));
+    box-shadow: inset 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* Color variants */
+  .person-a { --shirt: #3b82f6; --shirt-dark: #1e40af; }
+  .person-b { --shirt: #ef4444; --shirt-dark: #991b1b; }
+  .person-b .ps-torso {
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -4px 8px rgba(0,0,0,0.15),
+      0 1px 3px rgba(153,27,27,0.15);
+  }
+  .person-c { --shirt: #22c55e; --shirt-dark: #15803d; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="person" class="person person-a">
+  <div class="ps-head"></div>
+  <div class="ps-arm-l"></div>
+  <div class="ps-arm-r"></div>
+  <div class="ps-torso"></div>
+  <div class="ps-legs"></div>
+  <div class="ps-shoes"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Walking bob
+  var moving = (speed > 0) ? 1 : 0;
+  var bob = Math.sin(time * 10) * 0.8 * moving;
+  personEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0)";
+
+  // Arm swing when walking
+  var swing = Math.sin(time * 8) * 6 * moving;
+  armLEl.style.transform = "rotate(" + swing + "deg)";
+  armREl.style.transform = "rotate(" + (-swing) + "deg)";
+-->

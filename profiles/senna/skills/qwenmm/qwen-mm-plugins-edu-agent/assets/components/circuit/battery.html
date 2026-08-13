@@ -1,0 +1,149 @@
+<!--
+  K12 Asset: 电池（干电池）
+  ID: battery
+  Suitable: 串联电路, 并联电路, 欧姆定律, 电功率, 电压
+  CSS Vars: --voltage-glow (0=inactive, 1=active glow on terminals)
+  JS Hooks: set --voltage-glow when circuit is closed
+  Size: 72×32px (horizontal) at 1920×1080
+
+  Variants:
+    .battery-h  — horizontal (default)
+    .battery-v  — vertical (rotate 90deg)
+  Note: positive terminal on right, negative on left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .battery {
+    position: absolute;
+    width: 72px;
+    height: 32px;
+    margin-left: -36px;
+    transform-origin: 50% 50%;
+    --voltage-glow: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .battery::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 68%);
+  }
+
+  /* Main body — metallic cylinder with 5-layer gradient */
+  .battery-body {
+    position: absolute;
+    left: 8px; top: 2px;
+    width: 52px; height: 28px;
+    border-radius: 4px;
+    background:
+      radial-gradient(ellipse at 50% 15%, rgba(234,234,234,0.18) 0 8px, transparent 16px),
+      linear-gradient(180deg, rgba(234,234,234,0.28), transparent 22%),
+      linear-gradient(180deg, transparent 72%, rgba(0,0,0,0.18)),
+      linear-gradient(90deg, #1e293b 0 32%, #dc2626 32% 68%, #1e293b 68%),
+      linear-gradient(180deg, #334155, #1e293b);
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -8px 12px rgba(2,6,23,0.3),
+      0 4px 10px rgba(0,0,0,0.28);
+  }
+
+  /* Label band — center red stripe with + symbol */
+  .battery-body::before {
+    content: "";
+    position: absolute;
+    left: 16px; top: 6px;
+    width: 20px; height: 16px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, #ef4444, #b91c1c);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Highlight strip */
+  .battery-body::after {
+    content: "";
+    position: absolute;
+    left: 6px; top: 8px;
+    width: 40px; height: 1.5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.25) 30%, rgba(234,234,234,0.3) 70%, transparent);
+  }
+
+  /* Positive terminal (+) — raised nub on right */
+  .battery-pos {
+    position: absolute;
+    right: 0; top: 8px;
+    width: 10px; height: 16px;
+    border-radius: 0 4px 4px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), rgba(148,163,184,0.5) 40%, rgba(100,116,139,0.5)),
+      linear-gradient(90deg, #64748b, #94a3b8);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.35),
+      0 0 calc(var(--voltage-glow)*8px) rgba(250,204,21,calc(var(--voltage-glow)*0.4)),
+      2px 0 4px rgba(0,0,0,0.2);
+  }
+
+  /* + symbol */
+  .battery-pos::before {
+    content: "";
+    position: absolute;
+    left: 3px; top: 5px;
+    width: 4px; height: 1.5px;
+    background: #ffffff;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .battery-pos::after {
+    content: "";
+    position: absolute;
+    left: 4px; top: 3.5px;
+    width: 1.5px; height: 4px;
+    background: #ffffff;
+  }
+
+  /* Negative terminal (-) — flat cap on left */
+  .battery-neg {
+    position: absolute;
+    left: 0; top: 8px;
+    width: 8px; height: 16px;
+    border-radius: 3px 0 0 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.22), rgba(71,85,105,0.5)),
+      linear-gradient(90deg, #94a3b8, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.25),
+      0 0 calc(var(--voltage-glow)*6px) rgba(96,165,250,calc(var(--voltage-glow)*0.3)),
+      -1px 0 3px rgba(0,0,0,0.18);
+  }
+
+  /* - symbol */
+  .battery-neg::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 7px;
+    width: 4px; height: 1.5px;
+    background: #ffffff;
+  }
+
+  .battery-v { transform: rotate(-90deg); }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="battery">
+  <div class="battery-body"></div>
+  <div class="battery-pos"></div>
+  <div class="battery-neg"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Activate terminal glow when circuit is closed
+  var glow = circuitClosed ? 1 : 0;
+  batteryEl.style.setProperty("--voltage-glow", glow);
+-->

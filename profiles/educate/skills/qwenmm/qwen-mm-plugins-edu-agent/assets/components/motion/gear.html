@@ -1,0 +1,165 @@
+<!--
+  K12 Asset: 齿轮
+  ID: gear
+  Suitable: 简单机械, 传动比, 齿轮组, 机械能转换, 机械效率
+  CSS Vars: --spin (rotation angle in deg)
+  JS Hooks: set --spin in renderAt() for rotation
+  Size: 48x48px at 1920x1080
+
+  Notes:
+    Compatible with meshing — place two gears with overlapping teeth,
+    second gear spins at opposite direction: --spin: calc(-1 * parentAngle * ratio)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .gear {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+    margin-top: -24px;
+    transform-origin: 50% 50%;
+    --spin: 0deg;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .gear::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 56px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.34), transparent 68%);
+  }
+
+  /* Gear body — teeth via clip-path */
+  .gear-body {
+    position: absolute;
+    inset: 0;
+    transform: rotate(var(--spin));
+    transform-origin: 50% 50%;
+  }
+
+  /* Toothed outer ring */
+  .gear-teeth {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 36%, rgba(234,234,234,0.18), transparent 35%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 25%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.12)),
+      linear-gradient(135deg, #64748b, #94a3b8 30%, #cbd5e1 50%, #94a3b8 70%, #64748b);
+    border: 1.5px solid rgba(71,85,105,0.4);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.2),
+      inset 0 -4px 8px rgba(0,0,0,0.2),
+      0 4px 10px rgba(0,0,0,0.25);
+    /* 12 teeth via clip-path polygon */
+    clip-path: polygon(
+      50% 0%, 56% 2%, 58% 6%, 54% 8%,
+      80% 12%, 84% 16%, 84% 22%, 78% 22%,
+      94% 38%, 98% 44%, 96% 50%, 92% 48%,
+      98% 64%, 96% 70%, 92% 70%, 90% 64%,
+      84% 82%, 80% 88%, 74% 86%, 76% 80%,
+      60% 94%, 56% 98%, 50% 98%, 50% 92%,
+      38% 96%, 34% 98%, 32% 94%, 36% 90%,
+      20% 86%, 16% 84%, 18% 78%, 22% 78%,
+      6% 66%, 2% 62%, 4% 56%, 8% 58%,
+      2% 40%, 2% 34%, 6% 34%, 10% 38%,
+      16% 20%, 20% 16%, 24% 18%, 22% 24%,
+      38% 8%, 42% 4%, 46% 4%, 46% 8%
+    );
+  }
+
+  /* Inner ring — hub bore */
+  .gear-inner {
+    position: absolute;
+    left: 12px; top: 12px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 38%, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(135deg, #475569, #64748b 30%, #94a3b8 50%, #64748b 70%, #475569);
+    border: 1px solid rgba(71,85,105,0.5);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15),
+      inset 0 -2px 5px rgba(0,0,0,0.2);
+  }
+
+  /* Spokes — 4-arm cross */
+  .gear-inner::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background:
+      linear-gradient(0deg, transparent 35%, rgba(148,163,184,0.5) 45%, rgba(148,163,184,0.5) 55%, transparent 65%),
+      linear-gradient(90deg, transparent 35%, rgba(148,163,184,0.5) 45%, rgba(148,163,184,0.5) 55%, transparent 65%);
+  }
+
+  /* Center bore hole */
+  .gear-bore {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 8px; height: 8px;
+    margin-left: -4px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.3), transparent 50%),
+      radial-gradient(circle, #334155, #1e293b 50%, #0f172a);
+    border: 1px solid rgba(51,65,85,0.6);
+    box-shadow:
+      inset 0 1px 2px rgba(0,0,0,0.4),
+      0 1px 2px rgba(255,255,255,0.08);
+    z-index: 2;
+  }
+
+  /* Keyway notch in bore */
+  .gear-bore::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 0;
+    width: 2px; height: 3px;
+    margin-left: -1px;
+    background: rgba(0,0,0,0.5);
+  }
+
+  /* Brushed metal texture overlay */
+  .gear-texture {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(234,234,234,0.02) 0px,
+        transparent 1px,
+        transparent 2px
+      );
+    pointer-events: none;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="gear">
+  <div class="gear-body">
+    <div class="gear-teeth"></div>
+    <div class="gear-inner"></div>
+    <div class="gear-bore"></div>
+    <div class="gear-texture"></div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Rotate gear
+  var spinDeg = angularVelocity * time * 360;
+  gearEl.style.setProperty("--spin", spinDeg + "deg");
+
+  // Meshing two gears: second gear rotates opposite at tooth ratio
+  // var spin2 = -spinDeg * (teeth1 / teeth2);
+  // gear2El.style.setProperty("--spin", spin2 + "deg");
+-->

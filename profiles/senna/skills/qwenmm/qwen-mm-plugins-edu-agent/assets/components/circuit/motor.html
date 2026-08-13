@@ -1,0 +1,165 @@
+<!--
+  K12 Asset: 电动机
+  ID: motor
+  Suitable: 电磁力, 安培力, 能量转换, 直流电动机
+  CSS Vars: --shaft-spin (rotation in deg), --power-on (0 or 1)
+  JS Hooks: set --shaft-spin and --power-on in renderAt()
+  Size: 50×40px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .motor {
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    margin-left: -25px;
+    margin-top: -20px;
+    --shaft-spin: 0deg;
+    --power-on: 0;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .motor::after {
+    content: "";
+    position: absolute;
+    left: -3px; bottom: -7px;
+    width: 56px; height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Cylindrical metallic body */
+  .motor-body {
+    position: absolute;
+    left: 8px; top: 6px;
+    width: 34px; height: 28px;
+    border-radius: 14px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.18), transparent 35%),
+      linear-gradient(180deg, #64748b, #475569 35%, #334155 65%, #1e293b),
+      linear-gradient(0deg, rgba(30,41,59,0.8), transparent 50%);
+    border: 1px solid rgba(100,116,139,0.4);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.12),
+      inset 0 -5px 8px rgba(0,0,0,0.3),
+      0 4px 8px rgba(0,0,0,0.2);
+  }
+
+  /* Ventilation slots */
+  .motor-vents {
+    position: absolute;
+    left: 14px; top: 12px;
+    width: 22px; height: 16px;
+    border-radius: 10px;
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0px, transparent 2px,
+        rgba(15,23,42,0.5) 2px, rgba(15,23,42,0.5) 3px);
+    opacity: 0.6;
+  }
+
+  /* Shaft — protruding right */
+  .motor-shaft {
+    position: absolute;
+    right: 0; top: 16px;
+    width: 14px; height: 5px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, #94a3b8, #64748b 50%, #475569);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Shaft spin indicator — notch */
+  .motor-shaft::before {
+    content: "";
+    position: absolute;
+    right: 2px; top: 50%;
+    width: 5px; height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    border: 1px solid rgba(30,41,59,0.5);
+    background: radial-gradient(circle, #94a3b8, #475569);
+    transform: rotate(var(--shaft-spin));
+  }
+
+  /* Shaft notch line */
+  .motor-shaft::after {
+    content: "";
+    position: absolute;
+    right: 3.5px; top: 50%;
+    width: 2px; height: 0.8px;
+    margin-top: -0.4px;
+    background: rgba(15,23,42,0.7);
+    transform-origin: right center;
+    transform: rotate(var(--shaft-spin));
+  }
+
+  /* Terminal posts — left side */
+  .motor-term {
+    position: absolute;
+    left: 4px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.35), transparent 45%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .motor-term-t { top: 10px; }
+  .motor-term-b { bottom: 10px; }
+
+  /* Power indicator LED */
+  .motor-led {
+    position: absolute;
+    left: 20px; top: 7px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(74,222,128, calc(var(--power-on) * 0.9)),
+      rgba(34,197,94, calc(var(--power-on) * 0.6)));
+    box-shadow: 0 0 calc(var(--power-on) * 4px) rgba(74,222,128, calc(var(--power-on) * 0.5));
+  }
+
+  /* "M" label */
+  .motor-label {
+    position: absolute;
+    left: 50%; bottom: 2px;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.6);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="motor">
+  <div class="motor-body"></div>
+  <div class="motor-vents"></div>
+  <div class="motor-shaft"></div>
+  <div class="motor-term motor-term-t"></div>
+  <div class="motor-term motor-term-b"></div>
+  <div class="motor-led"></div>
+  <div class="motor-label">M</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Power on/off:
+  motorEl.style.setProperty("--power-on", isPowered ? 1 : 0);
+
+  // Shaft spin: continuous when powered
+  var rpm = 3; // rotations per second
+  var spinAngle = isPowered ? (time * rpm * 360) : 0;
+  motorEl.style.setProperty("--shaft-spin", spinAngle + "deg");
+
+  // Or with acceleration:
+  // var accel = Math.min(1, (time - startTime) / rampDuration);
+  // var spinAngle = accel * time * rpm * 360;
+  // motorEl.style.setProperty("--shaft-spin", spinAngle + "deg");
+-->

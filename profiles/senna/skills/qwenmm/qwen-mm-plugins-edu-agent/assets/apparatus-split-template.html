@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>{{TITLE}}</title>
+  <!-- Self-hosted offline fonts (NO Google Fonts / CDN). Copy skill assets into dist/: assets/fonts → dist/assets/fonts, assets/katex → dist/katex -->
+  <style>
+    @font-face { font-family:"Noto Sans SC"; src:url("./assets/fonts/NotoSansSC-Bold.woff2") format("woff2"); font-weight:400 700; font-display:swap; }
+    @font-face { font-family:"Noto Sans SC"; src:url("./assets/fonts/NotoSansSC-ExtraBold.woff2") format("woff2"); font-weight:800; font-display:swap; }
+    @font-face { font-family:"Noto Sans SC"; src:url("./assets/fonts/NotoSansSC-Black.woff2") format("woff2"); font-weight:900; font-display:swap; }
+    @font-face { font-family:"Inter"; src:url("./assets/fonts/Inter-Variable.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+    @font-face { font-family:"JetBrains Mono"; src:url("./assets/fonts/JetBrainsMono-Bold.woff2") format("woff2"); font-weight:700; font-display:swap; }
+  </style>
+  <!-- KaTeX: inline katex.min.css as <style id="katex-inline-css"> with url(./katex/fonts/ (see step-5); load JS locally -->
+  <script src="./katex/katex.min.js"></script>
+  <style>
+    :root {
+      /* Color tokens — DO NOT MODIFY */
+      --bg-primary: #05070b;
+      --bg-glass: rgba(10, 18, 32, 0.78);
+      --text-primary: #f8fafc;
+      --text-secondary: rgba(226, 232, 240, 0.72);
+      --accent-cyan: #60a5fa;
+      --success: #34d399;
+      --warning: #facc15;
+      --border-glow: rgba(255, 255, 255, 0.11);
+      --border-subtle: rgba(255, 255, 255, 0.09);
+
+      /* Font stacks — DO NOT MODIFY */
+      --font-title: "Noto Sans SC", Inter, sans-serif;
+      --font-body: "Noto Sans SC", Inter, sans-serif;
+      --font-number: Inter, "Noto Sans SC", sans-serif;
+      --font-label: "JetBrains Mono", monospace;
+
+      /* 3-tier sizes — DO NOT ADD INTERMEDIATE SIZES */
+      --size-lg: 54px;
+      --size-md: 30px;
+      --size-sm: 18px;
+      --weight-lg: 950;
+      --weight-md: 800;
+      --weight-sm: 760;
+
+      /* Motion CSS variables — DEFINE PER PROBLEM
+         Remove these examples and define your own based on the coordinate
+         system you derive in the <script> section below. */
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; color: var(--text-primary); font-family: "Noto Sans SC", Inter, sans-serif; }
+
+    /* === MANDATORY BACKGROUND — DO NOT MODIFY === */
+    #root {
+      position: relative;
+      width: 1920px; height: 1080px; overflow: hidden;
+      background:
+        radial-gradient(circle at 66% 44%, rgba(59, 130, 246, 0.13), transparent 34%),
+        radial-gradient(circle at 24% 58%, rgba(52, 211, 153, 0.1), transparent 30%),
+        linear-gradient(180deg, #070b12 0%, #030509 100%);
+    }
+    #root::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+      background-size: 96px 96px;
+      mask-image: radial-gradient(circle at 50% 50%, black, transparent 78%);
+      opacity: 0.42;
+      pointer-events: none;
+    }
+
+    /* === GLASS PANEL BASE === */
+    .glass-panel {
+      background: var(--bg-glass);
+
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+    }
+
+    /* === TITLE LINE === */
+    .title-line {
+      position: absolute; left: 100px; top: 70px; right: 100px;
+      display: flex; align-items: center; gap: 20px; z-index: 10;
+    }
+    .subject-badge {
+      width: 68px; height: 68px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 0 36px rgba(96, 165, 250, 0.16);
+      font-family: Inter, "Noto Sans SC", sans-serif;
+      font-size: var(--size-md); font-weight: var(--weight-lg);
+    }
+    h1 {
+      margin: 0;
+      font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-lg); line-height: 1.06;
+      font-weight: var(--weight-lg);
+    }
+
+    /* === WORLD PANEL (LEFT 1160px) ===
+       All coordinates inside this panel are PANEL-RELATIVE (0,0 = top-left of panel content).
+       Panel: 1160×780px, NO PADDING on the coordinate container.
+       SVG viewBox and DOM positions share the SAME coordinate space (zero offset).
+       NEVER use root-level coordinates for elements inside this panel.
+       See the coordinate derivation guide in the <script> section below.
+    */
+    .world-panel {
+      position: absolute; left: 100px; top: 176px;
+      width: 1160px; height: 780px;
+      padding: 0; z-index: 3;
+      overflow: hidden;
+    }
+    .world-panel-inner {
+      position: relative; width: 100%; height: 100%;
+    }
+    .world-panel-inner svg {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .world-title {
+      margin-top: 16px;
+      font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-md); font-weight: var(--weight-md);
+    }
+
+    /* === EXPLAIN PANEL (RIGHT 520px) === */
+    .explain-panel {
+      position: absolute; right: 100px; top: 176px;
+      width: 520px; height: 780px; padding: 38px; z-index: 5;
+      border-left: 5px solid var(--success);
+    }
+    .phase-title {
+      margin-top: 12px; font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-md); line-height: 1.18;
+      font-weight: var(--weight-md);
+    }
+    .phase-body {
+      margin-top: 18px; color: rgba(232,236,244,0.9);
+      font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-md); line-height: 1.48;
+      font-weight: var(--weight-md);
+    }
+
+    /* Formula rows */
+    .formula-list { margin-top: 28px; display: grid; gap: 14px; }
+    .formula-row {
+      display: grid; grid-template-columns: 46px 1fr; gap: 14px;
+      align-items: center; min-height: 76px; padding: 14px 16px;
+      border-radius: 13px; background: rgba(3,7,18,0.48);
+      border: 1px solid var(--border-subtle);
+      opacity: 0.38;
+    }
+    .formula-row.active {
+      opacity: 1; border-color: rgba(52,211,153,0.45);
+      box-shadow: 0 0 22px rgba(52,211,153,0.10);
+      background: rgba(52,211,153,0.06);
+    }
+    .step-badge {
+      width: 42px; height: 42px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, #60a5fa, #7dd3fc);
+      font-family: Inter, "Noto Sans SC", sans-serif;
+      font-size: var(--size-sm); font-weight: var(--weight-lg); color: #fff;
+    }
+    .formula-eq .katex { font-size: var(--size-md); }
+    .formula-note {
+      margin-top: 4px; font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-sm); line-height: 1.35; color: var(--text-secondary);
+    }
+
+    /* Answer grid */
+    .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 26px; }
+    .answer-box {
+      min-height: 140px; padding: 18px; border-radius: 8px;
+      background: linear-gradient(135deg, rgba(134,239,172,0.12), rgba(34,197,94,0.08));
+      border: 1px solid rgba(52,211,153,0.38);
+    }
+    .answer-box strong {
+      display: block; font-family: Inter, "Noto Sans SC", sans-serif;
+      color: #6ee7b7; font-size: var(--size-lg);
+      line-height: 1; font-weight: var(--weight-lg);
+    }
+    .answer-box span {
+      display: block; margin-top: 12px; font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: var(--size-sm); line-height: 1.35; font-weight: var(--weight-sm);
+    }
+
+    /* === CAPTION BAR — NO BACKGROUND BOX — DO NOT ADD background/border === */
+    .caption-bar {
+      position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+      z-index: 50; max-width: 1500px;
+      font-family: "Noto Sans SC", Inter, sans-serif;
+      font-size: 36px; font-weight: 600;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 0 30px rgba(0,0,0,0.7);
+      text-align: center; white-space: nowrap; opacity: 0;
+      pointer-events: none;
+    }
+
+    /* === KATEX === */
+    .katex, .katex * { color: #0f172a !important; }
+    .katex .cjk_fallback { font-family: "Noto Sans SC", sans-serif !important; }
+    .katex-mathml { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="main" data-start="0" data-duration="{{DURATION}}" data-width="1920" data-height="1080">
+    <audio id="narration" data-start="0" data-duration="{{DURATION}}" data-track-index="0" src="narration.wav" data-volume="1"></audio>
+
+    <!-- Title Line -->
+    <div class="title-line">
+      <div id="phaseBadge" class="subject-badge">1</div>
+      <h1>{{PROBLEM_TYPE}}</h1>
+    </div>
+
+    <!-- World Panel — CUSTOMIZE: add problem-specific elements here -->
+    <section class="world-panel glass-panel">
+      <!-- Zero-offset inner container: THIS is your coordinate space.
+           SVG viewBox="0 0 1160 780" fills this container exactly.
+           DOM .style.left/top and SVG path coords use THE SAME pixel values. -->
+      <div class="world-panel-inner">
+        <div id="worldTitle" class="world-title" style="position:absolute; left:20px; top:16px;">{{WORLD_INITIAL_TITLE}}</div>
+        <!-- All positioned elements (objects, markers, axis) go here -->
+        <!-- SVG overlay for rays/lines/paths goes here:
+             <svg viewBox="0 0 1160 780" aria-hidden="true">...</svg> -->
+      </div>
+    </section>
+
+    <!-- Explain Panel -->
+    <aside class="explain-panel glass-panel">
+      <div id="phaseTitle" class="phase-title">{{PHASE_1_TITLE}}</div>
+      <div id="phaseBody" class="phase-body">{{PHASE_1_BODY}}</div>
+      <div id="formulaList" class="formula-list">
+        <!-- STEP-BADGE: sequential numbers ONLY. Add/remove rows to match your problem's steps. -->
+        <!-- Update the for-loop in updatePhase() if you change the row count. -->
+        <div id="row1" class="formula-row active"><div class="step-badge">1</div><div><div id="eq1" class="formula-eq"></div><div id="note1" class="formula-note"></div></div></div>
+        <div id="row2" class="formula-row"><div class="step-badge">2</div><div><div id="eq2" class="formula-eq"></div><div id="note2" class="formula-note"></div></div></div>
+        <div id="row3" class="formula-row"><div class="step-badge">3</div><div><div id="eq3" class="formula-eq"></div><div id="note3" class="formula-note"></div></div></div>
+        <div id="row4" class="formula-row"><div class="step-badge">4</div><div><div id="eq4" class="formula-eq"></div><div id="note4" class="formula-note"></div></div></div>
+      </div>
+      <div id="answerGrid" class="answer-grid" style="opacity:0">
+        <!-- Add/remove answer-box divs to match your problem's answer count. -->
+        <div class="answer-box"><strong>{{ANSWER_1}}</strong><span>{{ANSWER_1_LABEL}}</span></div>
+        <div class="answer-box"><strong>{{ANSWER_2}}</strong><span>{{ANSWER_2_LABEL}}</span></div>
+      </div>
+    </aside>
+
+    <!-- Captions (track 2) — GENERATED FROM transcript.json -->
+    <!-- <div id="cap1" class="clip caption-bar" data-start="0.2" data-duration="3.0" data-track-index="2">{{CAPTION_TEXT}}</div> -->
+  </div>
+
+  <script>
+    var DURATION = {{DURATION}};
+
+    // =================================================================
+    // COORDINATE SYSTEM — ZERO-OFFSET ARCHITECTURE (DO NOT SKIP)
+    // =================================================================
+    // Panel: 1160×780px. NO padding on the coordinate container (.world-panel-inner).
+    // SVG viewBox = "0 0 1160 780" — same dimensions as the container.
+    // DOM positions and SVG coordinates use THE SAME values. No conversion needed.
+    //
+    // Step 1: List ALL physical values that will appear on the horizontal axis,
+    //   including extreme values during exploration/animation.
+    //   Include both the problem's given range AND the exploration sweep range.
+    //
+    // Step 2: Compute PX_PER_UNIT. Use the FULL range from Step 1.
+    //   var PANEL_W = 1160;
+    //   var PHYSICAL_RANGE = maxValue - minValue;
+    //   var PX_PER_UNIT = Math.floor(PANEL_W * 0.8 / PHYSICAL_RANGE);
+    //   DO NOT increase PX_PER_UNIT beyond this formula — it guarantees fit.
+    //
+    // Step 3: Compute ORIGIN_X — center the content in the panel.
+    //   ORIGIN_X = 580 - ((minPhysicalValue + maxPhysicalValue) / 2) * PX_PER_UNIT
+    //   This ensures (leftmost_px + rightmost_px) / 2 = 580 (panel center).
+    //   Use the WIDEST range (including exploration extremes) for min/max.
+    //
+    // Step 4: Choose AXIS_Y — main horizontal reference, panel-relative.
+    //   Typical: AXIS_Y = Math.round(780 * 0.6) ≈ 468
+    //
+    // Step 5: Write your unit-to-pixel converter:
+    //   function unitToX(value) { return ORIGIN_X + value * PX_PER_UNIT; }
+    //   This function is used for BOTH DOM .style.left AND SVG path coordinates.
+    //
+    // Step 6: MANDATORY BOUNDARY CHECK — compute pixel positions for ALL
+    //   extreme values and verify they fall within 30–1130px:
+    //   - leftmost element:  unitToX(minPhysicalValue) = ? → must be ≥ 30
+    //   - rightmost element: unitToX(maxPhysicalValue) = ? → must be ≤ 1130
+    //   If either is out of range, REDUCE PX_PER_UNIT or adjust ORIGIN_X.
+    //
+    // Step 7: SVG uses the SAME coordinates — no conversion needed!
+    //   <svg viewBox="0 0 1160 780"> placed with position:absolute;inset:0
+    //   SVG path coordinates = same unitToX() / AXIS_Y values as DOM elements.
+    //   NEVER write separate svgX()/svgY() functions — if you feel you need them,
+    //   your layout has an offset bug. Fix the layout, don't add converters.
+    // =================================================================
+
+    // --- YOUR COORDINATE CONSTANTS (replace with derived values) ---
+    // var PX_PER_UNIT = ...;  // from Step 2 formula — do NOT exceed this value
+    // var ORIGIN_X = ...;
+    // var AXIS_Y = ...;
+    // function unitToX(val) { return ORIGIN_X + val * PX_PER_UNIT; }
+    //
+    // BOUNDARY CHECK (Step 6 — fill in actual numbers):
+    // leftmost:  unitToX(___) = ___ px  (must be ≥ 30)
+    // rightmost: unitToX(___) = ___ px  (must be ≤ 1130)
+
+    // --- Phase definitions (CUSTOMIZE) ---
+    var phases = [
+      // { start: 0, end: 12.5, badge: "1", title: "...", body: "...", eq: ["...", "...", "...", ""], notes: ["", "", "", ""], active: 0 },
+    ];
+
+    // --- Captions (GENERATED FROM transcript.json) ---
+    var CAPTIONS = [
+      // ["cap1", startTime, endTime],
+    ];
+
+    // --- Utility (DO NOT MODIFY) ---
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function smoothstep(e0, e1, v) { var x = clamp((v - e0) / (e1 - e0), 0, 1); return x * x * (3 - 2 * x); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    // --- Phase lookup ---
+    function phaseFor(t) {
+      for (var i = 0; i < phases.length; i++) {
+        if (t >= phases[i].start && t < phases[i].end) return phases[i];
+      }
+      return phases[phases.length - 1];
+    }
+
+    // --- Render equation ---
+    function renderEq(id, tex) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = "";
+      if (tex && window.katex) katex.render(tex, el, { displayMode: true, throwOnError: false, output: "html" });
+    }
+
+    // --- Update explain panel ---
+    function updatePhase(time) {
+      var phase = phaseFor(time);
+      document.getElementById("phaseBadge").textContent = phase.badge;
+      document.getElementById("phaseTitle").textContent = phase.title;
+      document.getElementById("phaseBody").textContent = phase.body;
+
+      for (var i = 0; i < 4; i++) {
+        renderEq("eq" + (i + 1), phase.eq[i]);
+        var noteEl = document.getElementById("note" + (i + 1));
+        if (noteEl) noteEl.textContent = phase.notes[i] || "";
+      }
+      var rows = ["row1","row2","row3","row4"];
+      for (var j = 0; j < rows.length; j++) {
+        var el = document.getElementById(rows[j]);
+        if (phase.eq[j]) {
+          el.style.display = "grid";
+          el.style.opacity = "1";
+        } else {
+          el.style.display = "none";
+        }
+        if (j === phase.active && phase.eq[j]) {
+          el.style.borderColor = "rgba(52,211,153,0.45)";
+          el.style.boxShadow = "0 0 22px rgba(52,211,153,0.10)";
+          el.style.background = "rgba(52,211,153,0.06)";
+        } else { el.style.borderColor = ""; el.style.boxShadow = ""; el.style.background = ""; }
+      }
+
+      var isLast = (phase === phases[phases.length - 1]);
+      document.getElementById("formulaList").style.display = isLast ? "none" : "grid";
+      var answerOpacity = isLast ? smoothstep(phase.start, phase.start + 1.5, time) : 0;
+      document.getElementById("answerGrid").style.opacity = answerOpacity.toFixed(4);
+    }
+
+    // --- Update world motion (CUSTOMIZE PER PROBLEM) ---
+    // Use your coordinate constants (PX_PER_UNIT, ORIGIN_X, AXIS_Y, unitToX)
+    // to position elements. Set element.style.left / .style.top directly.
+    // For SVG paths, compute path "d" attributes using the same coordinate math.
+    function updateMotion(time) {
+    }
+
+    // --- Update captions ---
+    function updateCaptions(time) {
+      for (var i = 0; i < CAPTIONS.length; i++) {
+        var cap = document.getElementById(CAPTIONS[i][0]);
+        if (!cap) continue;
+        var start = CAPTIONS[i][1], end = CAPTIONS[i][2];
+        var opacity = smoothstep(start, start + 0.18, time) * (1 - smoothstep(end - 0.18, end, time));
+        cap.style.opacity = opacity.toFixed(4);
+      }
+    }
+
+    // --- Main render ---
+    function renderAt(rawTime) {
+      var time = clamp(Number(rawTime) || 0, 0, DURATION);
+      updatePhase(time);
+      updateMotion(time);
+      updateCaptions(time);
+    }
+
+    // --- Timeline shim (DO NOT MODIFY) ---
+    window.__timelines = window.__timelines || {};
+    window.__timelines.main = {
+      pause: function() { return this; },
+      play: function() { return this; },
+      seek: function(v) { renderAt(v); return this; },
+      time: function(v) { if (Number.isFinite(Number(v))) renderAt(Number(v)); return this; },
+      progress: function(v) { if (Number.isFinite(Number(v))) renderAt(Number(v) * DURATION); return this; },
+      duration: function() { return DURATION; }
+    };
+    window.__k12RenderAt = renderAt;
+    renderAt(0);
+  </script>
+</body>
+</html>

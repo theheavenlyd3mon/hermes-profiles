@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompt To Product UI Showcase</title>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --ink: #171717;
+        --muted: #76736b;
+        --card: rgba(255, 255, 255, 0.78);
+        --line: rgba(20, 20, 20, 0.1);
+        --dark: #201818;
+        --brown: #6f4f48;
+        --green: #bdf458;
+        --pink: #d84ee8;
+        --purple: #8c6fff;
+        --blue: #073cff;
+        --cream: #fffdf6;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 10%, rgba(216, 78, 232, 0.16), transparent 26rem),
+          radial-gradient(circle at 86% 4%, rgba(189, 244, 88, 0.22), transparent 28rem),
+          linear-gradient(180deg, #faf8f1 0%, #eee9df 100%);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .shell {
+        width: min(1500px, calc(100vw - 44px));
+        margin: 0 auto;
+        padding: 44px 0 72px;
+      }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 34px;
+        padding: 36px;
+        background: rgba(255, 255, 255, 0.62);
+        box-shadow: 0 28px 100px rgba(90, 72, 45, 0.18), inset 0 1px 0 rgba(255,255,255,.85);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        right: -120px;
+        top: -130px;
+        width: 360px;
+        height: 360px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(216, 78, 232, .28), rgba(189, 244, 88, .3));
+        filter: blur(14px);
+        opacity: .72;
+      }
+
+      .hero > * { position: relative; z-index: 1; }
+      h1 { margin: 0 0 12px; font-size: clamp(36px, 5vw, 76px); letter-spacing: -0.065em; }
+      .lead { max-width: 980px; margin: 0; color: var(--muted); line-height: 1.8; font-size: 18px; }
+
+      .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+      button {
+        border: 1px solid rgba(0,0,0,.12);
+        border-radius: 999px;
+        padding: 11px 18px;
+        background: rgba(255,255,255,.72);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(0,0,0,.06);
+      }
+      button:hover { transform: translateY(-1px); }
+      .primary { background: #111; color: #fff; }
+      .status { height: 24px; margin-top: 14px; color: #4a7d00; font-size: 14px; }
+
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 26px; }
+      .card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: rgba(255,255,255,.58);
+        box-shadow: 0 24px 74px rgba(64, 49, 32, .14);
+      }
+      .card-head { display: flex; justify-content: space-between; gap: 16px; padding: 22px 24px 14px; }
+      .kicker { color: #817b72; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; }
+      h2 { margin: 7px 0 0; font-size: 25px; letter-spacing: -0.03em; }
+      .badge { align-self: flex-start; border: 1px solid rgba(0,0,0,.12); border-radius: 999px; padding: 6px 10px; background: rgba(255,255,255,.65); font-size: 12px; color: #4f4b43; }
+
+      .stage {
+        position: relative;
+        height: 320px;
+        margin: 0 18px;
+        border-radius: 24px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        background: #f5f1e8;
+        isolation: isolate;
+      }
+      .stage.sand { background: linear-gradient(135deg, #e7c09a, #f6e1c6 45%, #8f5e3f); }
+      .stage.dark { background: #1f1717; color: #fff; }
+      .stage.blue { background: #073cff; color: #fff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .stage.phone { background: radial-gradient(circle at 50% 45%, rgba(180, 93, 74, .5), transparent 23rem), #24211f; color: #fff; }
+
+      .prompt {
+        position: relative;
+        width: min(470px, 86%);
+        min-height: 62px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.94);
+        box-shadow: 0 18px 70px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.9);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 15px 13px 15px 20px;
+        animation: promptFloat 3.8s ease-in-out infinite;
+      }
+      .typing-text { position: relative; display: inline-block; max-width: 355px; overflow: hidden; white-space: nowrap; font-size: 17px; animation: typingMask 3.8s steps(32) infinite; }
+      .typing-text::after { content:""; position:absolute; right:0; top:3px; width:2px; height:22px; background:#111; animation: caretBlink .6s steps(2) infinite; }
+      .light-flow { position:absolute; left:20px; right:60px; bottom:9px; height:3px; border-radius:999px; background:linear-gradient(90deg, transparent, #d84ee8, #8c6fff, #bdf458, transparent); transform-origin:left; animation: promptFlow 3.8s ease-in-out infinite; }
+      .send { position:relative; width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:#111; color:#fff; font-weight:800; overflow:hidden; }
+      .send::after { content:""; position:absolute; inset:7px; border-radius:999px; border:2px solid rgba(255,255,255,.85); transform:scale(.2); opacity:0; animation: sendRipple 3.8s ease-in-out infinite; }
+      .cursor {
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-left: 18px solid #111;
+        border-top: 12px solid transparent;
+        border-bottom: 12px solid transparent;
+        filter: drop-shadow(0 5px 10px rgba(0,0,0,.25));
+        z-index: 8;
+      }
+      .prompt .cursor { right: 22px; top: 50px; animation: clickSend 3.8s ease-in-out infinite; }
+      @keyframes typingMask { 0%, 12% { width: 0; } 52%, 84% { width: 355px; } 100% { width: 355px; } }
+      @keyframes caretBlink { 50% { opacity:0; } }
+      @keyframes promptFlow { 0%,14% { transform:scaleX(0); opacity:0; } 22% { opacity:1; } 54%,86% { transform:scaleX(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes promptFloat { 0%, 100% { transform: translateY(8px) scale(.98); opacity:.72; } 18%, 78% { transform: translateY(0) scale(1); opacity:1; } }
+      @keyframes clickSend { 0%, 52% { transform: translate(-68px, 28px) rotate(-10deg); opacity:0; } 62%, 78% { transform: translate(0, -21px) rotate(0deg); opacity:1; } 100% { transform: translate(0, -21px); opacity:0; } }
+      @keyframes sendRipple { 0%,58% { transform:scale(.2); opacity:0; } 66% { opacity:1; } 82% { transform:scale(1.8); opacity:0; } 100% { opacity:0; } }
+
+      .ui-board {
+        position: relative;
+        width: 520px;
+        height: 245px;
+        border-radius: 22px;
+        background: rgba(255,255,255,.88);
+        box-shadow: 0 28px 80px rgba(0,0,0,.18);
+        padding: 18px;
+        animation: boardIn 3.8s ease-in-out infinite;
+      }
+      .ui-board::before { content: "Trip Planner"; font-weight: 750; font-size: 28px; }
+      .map { position:absolute; right:18px; top:18px; width:250px; height:160px; border-radius:18px; background: linear-gradient(135deg, #b9d8c1, #7ba36d, #e7edf0); overflow:hidden; animation: layerIn 3.8s ease-in-out infinite; }
+      .map::after { content:""; position:absolute; inset:34px 28px; border:2px dashed #fff; border-radius:60% 40% 60% 30%; }
+      .poi { position:absolute; width:18px; height:18px; border-radius:999px; background:#eaff70; box-shadow:0 0 0 6px rgba(234,255,112,.28); animation: poiPop 3.8s ease-in-out infinite; }
+      .poi.a { right:178px; top:74px; }
+      .poi.b { right:82px; top:112px; animation-delay:.12s; }
+      .trip-meta { position:absolute; left:22px; top:78px; display:grid; gap:8px; width:190px; }
+      .trip-meta span { height:14px; border-radius:999px; background:rgba(0,0,0,.08); transform-origin:left; animation: metaFill 3.8s ease-in-out infinite; }
+      .trip-meta span:nth-child(2) { width:72%; animation-delay:.08s; }
+      .trip-meta span:nth-child(3) { width:54%; animation-delay:.16s; }
+      .mini-panel { position:absolute; left:20px; bottom:20px; width:210px; height:82px; border-radius:16px; background:#eaff70; padding:14px; font-weight:700; animation: popPanel 3.8s ease-in-out infinite; }
+      @keyframes boardIn { 0%,18% { transform: scale(.72) translateY(28px); opacity:0; filter: blur(10px); } 38%,84% { transform: scale(1); opacity:1; filter: blur(0); } 100% { opacity:0; } }
+      @keyframes layerIn { 0%,30% { transform:translateY(18px) scale(.92); opacity:0; } 44%,86% { transform:translateY(0) scale(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes metaFill { 0%,34% { transform:scaleX(0); opacity:0; } 48%,86% { transform:scaleX(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes poiPop { 0%,42% { transform:scale(.2); opacity:0; } 54%,88% { transform:scale(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes popPanel { 0%,46% { transform: scale(.8); opacity:0; } 58%,86% { transform: scale(1); opacity:1; } 100% { opacity:0; } }
+
+      .collage { position: relative; width: 560px; height: 260px; perspective: 900px; }
+      .showcase-panel { position:absolute; border-radius:22px; background:rgba(255,255,255,.9); box-shadow:0 30px 90px rgba(66,46,28,.22); border:1px solid rgba(255,255,255,.85); overflow:hidden; animation: showcaseIn 4.2s ease-in-out infinite; }
+      .hero-panel { left:22px; top:28px; width:245px; height:184px; padding:20px; background:linear-gradient(145deg,#fffaf1,#e5eed9); }
+      .hero-panel::before { content:"Travel OS"; display:block; font-family:Georgia,serif; font-size:34px; letter-spacing:-.04em; margin-bottom:18px; }
+      .hero-panel::after { content:""; display:block; width:170px; height:76px; border-radius:18px; background:linear-gradient(135deg,#9bcf9f,#d7eac8); box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
+      .side-panel { right:32px; top:22px; width:228px; height:122px; padding:18px; background:#211a1a; color:#fff; animation-delay:.1s; }
+      .side-panel::before { content:"Revenue"; color:#cabfba; font-size:15px; }
+      .side-panel::after { content:"268.5K"; display:block; margin-top:12px; color:#f06cff; font-size:38px; font-weight:850; letter-spacing:-.05em; }
+      .depth-panel { right:76px; bottom:18px; width:210px; height:92px; padding:16px; background:#eaff70; animation-delay:.2s; }
+      .depth-panel::before { content:"AI Insight"; font-size:15px; font-weight:700; }
+      .depth-panel::after { content:"$24.2K"; display:block; margin-top:8px; font-size:28px; font-weight:850; }
+      .shadow-floor { position:absolute; left:56px; right:56px; bottom:7px; height:26px; border-radius:999px; background:radial-gradient(ellipse, rgba(0,0,0,.22), transparent 70%); filter:blur(6px); }
+      @keyframes showcaseIn { 0%,16% { transform:translateY(34px) rotateX(18deg) scale(.86); opacity:0; } 36%,82% { transform:translateY(0) rotateX(0) scale(1); opacity:1; } 100% { transform:translateY(-8px) scale(.96); opacity:0; } }
+
+      .dashboard { position: relative; width: 540px; height: 260px; border-radius: 24px; background:#241919; padding:20px; box-shadow:0 25px 80px rgba(0,0,0,.28); }
+      .dash-title { color:#f6ece9; font-size:20px; font-weight:750; margin-bottom:18px; }
+      .progress-card { position:relative; height:152px; border-radius:20px; background:rgba(255,255,255,.06); padding:18px; overflow:hidden; }
+      .progress-row { display:grid; grid-template-columns:84px 1fr 52px; align-items:center; gap:14px; margin:13px 0; color:#d9ceca; font-size:13px; }
+      .bar { height:12px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; }
+      .bar span { display:block; height:100%; border-radius:inherit; transform-origin:left; animation: barFill 3.8s ease-in-out infinite; }
+      .b1 span { width:82%; background:linear-gradient(90deg,#eaff70,#f6c65b); }
+      .b2 span { width:64%; background:linear-gradient(90deg,#d84ee8,#8c6fff); animation-delay:.08s; }
+      .b3 span { width:48%; background:linear-gradient(90deg,#7ddf8a,#eaff70); animation-delay:.16s; }
+      .dash-chip { position:absolute; right:18px; top:16px; border-radius:16px; padding:12px 14px; background:#eaff70; color:#1b1a14; font-size:24px; font-weight:850; animation: chipGlow 3.8s ease-in-out infinite; }
+      @keyframes barFill { 0%,28% { transform:scaleX(0); opacity:.2; } 56%,88% { transform:scaleX(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes chipGlow { 0%,34% { transform:scale(.84); opacity:0; } 52%,88% { transform:scale(1); opacity:1; } 100% { opacity:0; } }
+
+      .slider-scene { position: relative; width: 560px; height: 250px; }
+      .style-ui { position:absolute; left:0; top:0; width:250px; height:250px; border-radius:20px; background:#8bdc96; overflow:hidden; animation: themeMorph 4s ease-in-out infinite; box-shadow:0 22px 70px rgba(0,0,0,.16); }
+      .style-ui::before { content:"Learn."; position:absolute; left:-40px; top:65px; font-family: Georgia, serif; font-size:88px; font-weight:800; }
+      .style-ui::after { content:"Title"; position:absolute; right:18px; top:18px; padding:4px 8px; border-radius:7px; background:#8c6fff; color:#fff; font-size:12px; animation: labelMorph 4s ease-in-out infinite; }
+      .slider { position:absolute; right:22px; top:118px; width:250px; height:14px; border-radius:999px; background:linear-gradient(90deg,#ff4b4b,#fff76b,#42f19e,#31a6ff,#d84ee8); box-shadow:0 16px 42px rgba(0,0,0,.14); }
+      .slider::after { content:"theme morph"; position:absolute; left:0; top:28px; color:#7b746a; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+      .knob { position:absolute; top:-9px; left:64px; width:10px; height:32px; border-radius:999px; background:#fff; box-shadow:0 8px 18px rgba(0,0,0,.25); animation: knobMove 4s ease-in-out infinite; }
+      .slider .cursor { left:64px; top:20px; animation: cursorDrag 4s ease-in-out infinite; }
+      @keyframes knobMove { 0%,30% { transform: translateX(0); } 62%,84% { transform: translateX(128px); } 100% { transform: translateX(0); } }
+      @keyframes cursorDrag { 0%,26% { transform: translate(0,18px); opacity:0; } 42%,82% { transform: translate(128px,18px); opacity:1; } 100% { opacity:0; } }
+      @keyframes themeMorph { 0%,34% { background:#8bdc96; color:#245b2f; } 56%,86% { background:#073cff; color:#fff; } 100% { background:#8bdc96; color:#245b2f; } }
+      @keyframes labelMorph { 0%,34% { background:#8c6fff; } 56%,86% { background:#111; } 100% { background:#8c6fff; } }
+
+      .pixel { position:relative; width:540px; height:260px; border:2px solid rgba(255,255,255,.82); padding:24px; opacity:.86; box-shadow:inset 0 0 0 6px rgba(255,255,255,.08); }
+      .pixel-title { font-size:74px; font-weight:900; letter-spacing:-.08em; animation: pixelBlink 2s steps(2) infinite; }
+      .pixel-card { position:absolute; right:24px; bottom:24px; width:170px; height:110px; border:2px solid #fff; background:#fff; color:#073cff; padding:12px; box-shadow:8px 8px 0 rgba(255,255,255,.28); }
+      .pixel-num { position:absolute; left:40px; bottom:36px; font-size:42px; }
+      @keyframes pixelBlink { 0%,100% { opacity:1; } 50% { opacity:.72; } }
+
+      .mobile-scene { position:relative; width:520px; height:300px; display:grid; place-items:center; }
+      .phone-mock { position:relative; width:190px; height:286px; border-radius:34px; background:linear-gradient(180deg,#fff9f5,#e9d9d2 42%,#7f514c); box-shadow:0 30px 90px rgba(0,0,0,.48), inset 0 0 0 1px rgba(255,255,255,.55); display:grid; place-items:center; animation: phoneIn 4s ease-in-out infinite; overflow:hidden; }
+      .phone-mock::before { content:""; position:absolute; top:14px; width:54px; height:6px; border-radius:999px; background:rgba(30,20,20,.2); }
+      .phone-title { position:relative; color:#7d4547; text-align:center; font-size:25px; line-height:1.08; z-index:2; }
+      .app-card { position:absolute; border-radius:18px; padding:12px; background:rgba(255,255,255,.72); color:#4d3836; box-shadow:0 16px 50px rgba(0,0,0,.22); animation: appCardIn 4s ease-in-out infinite; }
+      .app-left { left:22px; top:48px; width:148px; }
+      .app-right { right:18px; bottom:46px; width:156px; animation-delay:.12s; }
+      .loader { position:absolute; width:96px; height:96px; border-radius:999px; border:2px dotted rgba(255,255,255,.86); animation: rotate 4s linear infinite; }
+      @keyframes phoneIn { 0%,18% { transform:translateY(40px) scale(.86); opacity:0; } 38%,90% { transform:translateY(0) scale(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes appCardIn { 0%,42% { transform:translateY(22px) scale(.9); opacity:0; } 58%,88% { transform:translateY(0) scale(1); opacity:1; } 100% { opacity:0; } }
+      @keyframes rotate { to { transform: rotate(360deg); } }
+
+      .feedback { padding:18px 20px 22px; }
+      label { display:block; margin-bottom:8px; color:#68625a; font-size:14px; }
+      textarea { width:100%; min-height:82px; resize:vertical; border:1px solid rgba(0,0,0,.12); border-radius:16px; padding:12px 14px; background:rgba(255,255,255,.72); color:#111; font:14px/1.6 inherit; outline:none; }
+      textarea:focus { border-color:#111; }
+      .hint { margin-top:8px; color:#7c766d; font-size:13px; line-height:1.6; }
+      .card.replay * { animation-name:none !important; }
+      @media (max-width: 980px) { .grid { grid-template-columns:1fr; } .shell { width:min(100vw - 28px,760px); } }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1>Prompt To Product UI Showcase</h1>
+        <p class="lead">把参考视频沉淀成“prompt 驱动产品 UI 生成”的可视化资产。每个卡片是一个可单独复用的设计能力，下面可以填写反馈并复制为 JSON。</p>
+        <div class="toolbar">
+          <button class="primary" id="copyAll">复制全部反馈 JSON</button>
+          <button id="clearAll">清空反馈</button>
+          <button id="replayAll">全部重播</button>
+        </div>
+        <div class="status" id="status"></div>
+      </section>
+
+      <section class="grid">
+        <article class="card" data-id="prompt-composer" data-title="Prompt Composer">
+          <div class="card-head"><div><div class="kicker">Atom 01</div><h2>Prompt Composer</h2></div><span class="badge">core motif</span></div>
+          <div class="stage"><div class="prompt"><span class="typing-text">Build a trip planning app...</span><div class="light-flow"></div><div class="send">↑</div><div class="cursor"></div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：光流和点击命中不错；还想让输入更像真实打字。"></textarea><div class="hint">已加强：打字遮罩、光流跟随、发送按钮点击涟漪和更准确的箭头命中。</div></div>
+        </article>
+
+        <article class="card" data-id="ui-materialization" data-title="UI Materialization">
+          <div class="card-head"><div><div class="kicker">Atom 02</div><h2>UI Materialization</h2></div><span class="badge">generate UI</span></div>
+          <div class="stage sand"><div class="ui-board"><div class="trip-meta"><span></span><span></span><span></span></div><div class="map"><i class="poi a"></i><i class="poi b"></i></div><div class="mini-panel">Scenery Trip<br />To Japan</div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：逐层生成感不错；地图和标签还可以继续更真实。"></textarea><div class="hint">已加强：标题、信息条、地图、POI 和底部结果卡按层次依次出现。</div></div>
+        </article>
+
+        <article class="card" data-id="floating-product-collage" data-title="Floating Product Collage">
+          <div class="card-head"><div><div class="kicker">Atom 03</div><h2>Floating Product Collage</h2></div><span class="badge">overview</span></div>
+          <div class="stage"><div class="collage"><div class="shadow-floor"></div><div class="showcase-panel hero-panel"></div><div class="showcase-panel side-panel"></div><div class="showcase-panel depth-panel"></div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：现在更有立体产品陈列感；如果还不够，可以继续加真实 UI 细节。"></textarea><div class="hint">已重做：取消普通重叠卡片，改成立体产品陈列、主次层级和地面阴影。</div></div>
+        </article>
+
+        <article class="card" data-id="data-dashboard-bloom" data-title="Data Dashboard Bloom">
+          <div class="card-head"><div><div class="kicker">Atom 04</div><h2>Data Dashboard Bloom</h2></div><span class="badge">dashboard</span></div>
+          <div class="stage dark"><div class="dashboard"><div class="dash-title">Monthly Progress</div><div class="dash-chip">82%</div><div class="progress-card"><div class="progress-row"><span>Revenue</span><div class="bar b1"><span></span></div><b>82%</b></div><div class="progress-row"><span>Profit</span><div class="bar b2"><span></span></div><b>64%</b></div><div class="progress-row"><span>Quota</span><div class="bar b3"><span></span></div><b>48%</b></div></div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：进度条方向更好；希望保留这个作为数据类核心样式。"></textarea><div class="hint">已重做：弱化普通指标卡，改为进度条/完成度为主的 dashboard bloom。</div></div>
+        </article>
+
+        <article class="card" data-id="style-morph-slider" data-title="Style Morph Slider">
+          <div class="card-head"><div><div class="kicker">Atom 05</div><h2>Style Morph Slider</h2></div><span class="badge">high value</span></div>
+          <div class="stage"><div class="slider-scene"><div class="style-ui"></div><div class="slider"><div class="knob"></div><div class="cursor"></div></div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：这个换肤滑杆很有用，可以重点做。"></textarea><div class="hint">已加强：滑杆拖动后，界面主题、标题标签和色彩对比都会同步变化。</div></div>
+        </article>
+
+        <article class="card" data-id="retro-pixel-ui-mode" data-title="Retro Pixel UI Mode">
+          <div class="card-head"><div><div class="kicker">Atom 06</div><h2>Retro Pixel UI Mode</h2></div><span class="badge">optional accent</span></div>
+          <div class="stage blue"><div class="pixel"><div class="pixel-title">L!T</div><div class="pixel-num">1231</div><div class="pixel-card">Home<br />Garden<br />Basics</div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：像素风只当点缀，不作为主模板。"></textarea><div class="hint">已弱化定位：只作为短暂风格点缀，不能当核心审美。</div></div>
+        </article>
+
+        <article class="card" data-id="mobile-app-focus-reveal" data-title="Mobile App Focus Reveal">
+          <div class="card-head"><div><div class="kicker">Atom 07</div><h2>Mobile App Focus Reveal</h2></div><span class="badge">ending</span></div>
+          <div class="stage phone"><div class="mobile-scene"><div class="app-card app-left">Breathing<br />Session</div><div class="loader"></div><div class="phone-mock"><div class="phone-title">Finding<br />Your Calm</div></div><div class="app-card app-right">2:35<br />soft focus</div></div></div>
+          <div class="feedback"><button data-replay>重播这个能力</button><label>你的反馈</label><textarea placeholder="例如：移动端现在更完整；如果还普通，可以继续换成真实 App 画面。"></textarea><div class="hint">已重做：增加手机周围的 App 信息卡、层次阴影和最终 hold 的产品展示感。</div></div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const storageKey = "promptToProductUiShowcase.feedback.v1";
+      const cards = Array.from(document.querySelectorAll(".card"));
+      const status = document.querySelector("#status");
+
+      function flash(message) {
+        status.textContent = message;
+        clearTimeout(flash.timer);
+        flash.timer = setTimeout(() => { status.textContent = ""; }, 2400);
+      }
+
+      function save() {
+        const data = {};
+        cards.forEach((card) => { data[card.dataset.id] = card.querySelector("textarea").value; });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      }
+
+      function load() {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        cards.forEach((card) => { card.querySelector("textarea").value = saved[card.dataset.id] || ""; });
+      }
+
+      function replay(card) {
+        card.classList.add("replay");
+        void card.offsetWidth;
+        card.classList.remove("replay");
+      }
+
+      cards.forEach((card) => {
+        card.querySelector("textarea").addEventListener("input", () => { save(); flash("已自动保存到本浏览器"); });
+        card.querySelector("[data-replay]").addEventListener("click", () => replay(card));
+      });
+
+      document.querySelector("#replayAll").addEventListener("click", () => cards.forEach(replay));
+      document.querySelector("#clearAll").addEventListener("click", () => {
+        cards.forEach((card) => { card.querySelector("textarea").value = ""; });
+        save();
+        flash("已清空反馈");
+      });
+      document.querySelector("#copyAll").addEventListener("click", async () => {
+        const payload = {};
+        cards.forEach((card) => {
+          payload[card.dataset.id] = { title: card.dataset.title, feedback: card.querySelector("textarea").value.trim() };
+        });
+        await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+        flash("已复制全部反馈 JSON");
+      });
+      load();
+    </script>
+  </body>
+</html>

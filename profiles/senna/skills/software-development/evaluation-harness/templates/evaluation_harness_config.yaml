@@ -1,5 +1,0 @@
-# Evaluation Harness Configuration
-
-metrics_dir: sessions/
-report_path: reports/summary.json
-jsonl_file: metrics.jsonl

@@ -19,7 +19,7 @@ Change → Design (reversible) → Document (runbook) → Execute → Verify →
 
 Every change has a rollback plan. Configs are version-controlled. Health reports are structured with metrics.
 
-## Skills (18 total)
+## Skills (34 total)
 
 Key skills:
 - **docker-management** — Container, image, volume, network management

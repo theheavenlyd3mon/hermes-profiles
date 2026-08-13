@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>video-edit · 资产库</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+  :root { --bg:#0b0b0f; --card:#17171d; --ink:#e8e8ec; --sub:#9a9aa5; --accent:#ffd76a; --dim:#55555f; --keep:#4ade80; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang SC",sans-serif; }
+  header { position:sticky; top:0; z-index:60; background:rgba(11,11,15,.96); backdrop-filter:blur(8px);
+    border-bottom:1px solid #24242c; padding:18px 32px 0; }
+  h1 { font-size:19px; }
+  h1 small { color:var(--sub); font-size:12px; font-weight:normal; margin-left:10px; }
+  nav { display:flex; gap:4px; margin-top:14px; }
+  nav button { background:none; border:none; border-bottom:2px solid transparent; color:var(--sub);
+    font-size:14px; font-family:inherit; padding:8px 16px; cursor:pointer; }
+  nav button.on { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+  nav button b { font-weight:normal; font-size:11px; opacity:.7; margin-left:5px; }
+  main { padding:20px 32px 80px; }
+  .bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .bar input { background:#101016; border:1px solid #2c2c36; border-radius:8px; color:var(--ink);
+    font-size:13px; padding:8px 12px; width:260px; font-family:inherit; }
+  .bar button { background:#26262e; color:var(--accent); border:1px solid #33333d; border-radius:8px;
+    padding:8px 14px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .bar span.info { color:var(--sub); font-size:12px; }
+  p.src { color:var(--dim); font-size:11px; margin:2px 0 14px; }
+  p.src code { color:var(--sub); }
+  h2.grp { margin:24px 0 12px; font-size:14px; color:var(--accent); border-left:3px solid var(--accent); padding-left:9px; }
+  h2.grp small { color:var(--sub); font-weight:normal; font-size:11px; margin-left:6px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:18px; }
+  .grid.sm { grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
+  .card { background:var(--card); border-radius:12px; overflow:hidden; }
+  .stage { position:relative; aspect-ratio:16/9; overflow:hidden; background:#1E1B16; }
+  .stage.light { background:#F4EFE6; }
+  .fx { position:absolute; inset:0; pointer-events:none; }
+  .meta { padding:11px 14px 13px; }
+  .meta h3 { font-size:14px; }
+  .meta h3 .en { color:var(--sub); font-size:11px; font-weight:normal; margin-left:6px; }
+  .meta p { color:var(--sub); font-size:11.5px; line-height:1.55; margin-top:6px; }
+  .ctrl { display:flex; align-items:center; gap:8px; margin-top:9px; }
+  .ctrl button { background:none; border:1px solid #33333d; color:var(--sub); font-size:11px;
+    border-radius:7px; padding:3px 9px; cursor:pointer; font-family:inherit; }
+  .ctrl input[type=range] { flex:1; accent-color:var(--accent); }
+  .rej .card { opacity:.6; } .rej .card h3::after { content:" ✗"; color:#ff4d6d; }
+  .lic { font-size:10px; border-radius:6px; padding:1px 7px; display:inline-block; margin-top:7px; }
+  .lic.ofl { background:#123822; color:#4ade80; } .lic.res { background:#3a2f12; color:#ffd76a; }
+  .tag { display:inline-block; background:#26262e; color:var(--sub); border-radius:6px; padding:1px 7px; font-size:10px; margin:7px 4px 0 0; }
+  .fspec { min-height:52px; line-height:1.3; }
+  .fspec .lat { font-size:23px; } .fspec .zh { font-size:17px; margin-top:2px; }
+  .fspec.pending { color:var(--dim); font-size:11px; padding-top:8px; }
+  table.pair { width:100%; border-collapse:collapse; font-size:12px; }
+  table.pair th, table.pair td { text-align:left; padding:7px 10px; border-bottom:1px solid #24242c; }
+  table.pair th { color:var(--sub); font-weight:600; font-size:11px; }
+  table.pair td:first-child { color:var(--accent); }
+  .lkcard .swatch { height:96px; display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:800; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>video-edit · 资产库 <small>Agent 按名引用的全部资产 · taste contract 里写这些名字（plan_gate 校验）</small></h1>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+
+<script src="demos-motion.js"></script>
+<script src="demos-transitions.js"></script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const REJECTED_RECIPES = ['Path draw-on 路径描画','Typewriter-explode 打字爆散','Cinematic blur-up 巨题',
+  'Double-tap like burst 点赞爆裂','Floating hearts 刷心流','Sticker pop & wiggle 贴纸摇摆',
+  'Scribble circle 手绘圈重点','Sparkle twinkles 星星闪烁','Bokeh drift 光斑漂移',
+  'Film light leak 胶片光漏','Logo morph collapse 形变收束'];
+
+const LOOKS = [
+  ['paper-collage','纸艺拼贴','editorial、有触感、俏皮','开场、B-roll、贴纸 PiP、概念拍','segmentation + HyperFrames / 生图+i2v','#efe7d8','#1f1f26'],
+  ['freeze-punch-intro','冻结猛推','高能量、个人化','角色 / 主体介绍','HyperFrames on footage','#d94f2b','#fff'],
+  ['film-reel-carousel','胶片走带','怀旧、结构化','多素材开场、recap','HyperFrames','#2b2b31','#ffd76a'],
+  ['brush-calligraphy','笔刷书法','艺术、文化感','标题时刻、文化内容','生图资产 + HyperFrames','#f3efe6','#23201c'],
+  ['gallery-ripple','画廊涟漪','规模感 + 视线','20+ 同质素材（广度×深度）','HyperFrames','#1d3346','#7fb3d3'],
+  ['big-number-stage','大数字舞台','大胆、宣言式','数据时刻、章节标题、钩子','HyperFrames','#111','#ffd76a'],
+  ['neon-ui-tech','极简霓虹','premium、克制、未来感','暗场科技/产品宣传（designed frames）','HyperFrames (SVG draw + GSAP)','#07070c','#7f8cff'],
+  ['prompt-to-product-ui','Prompt→UI','干净、产品感、亮场','AI/SaaS prompt→UI 演示（designed frames）','HyperFrames','#f7f5f2','#4a3fb5'],
+];
+
+const B='📦 BUNDLED';
+const FONTS = {
+  'Latin · Display / 标题': [
+    ['Bebas Neue','Bebas+Neue','ofl','高瘦 condensed，海报能量','Google Fonts'],
+    ['Anton','Anton','ofl','重磅冲击，shorts/大字幕',B],
+    ['Montserrat','Montserrat:wght@700','ofl','几何、百搭、安全默认',B],
+    ['Oswald','Oswald','ofl','窄身权威，新闻/体育',B],
+    ['Archivo Black','Archivo+Black','ofl','蛮力字重，数据 callout','Google Fonts'],
+    ['Space Grotesk','Space+Grotesk','ofl','科技感，产品/AI 宣传',B],
+    ['Clash Display',null,'res','现代 premium，品牌片','Fontshare · ITF FFL'],
+    ['Playfair Display','Playfair+Display','ofl','优雅衬线，奢华/旅行',B],
+    ['DM Serif Display','DM+Serif+Display','ofl','编辑部衬线，引言','Google Fonts'],
+    ['Bangers','Bangers','ofl','漫画波普，趣味标题',B],
+    ['Bodoni Moda','Bodoni+Moda','ofl','高级时装衬线，时尚/美妆',B],
+    ['Chakra Petch','Chakra+Petch','ofl','科幻科技，未来感 HUD',B],
+    ['Cinzel','Cinzel','ofl','古典罗马大写，史诗/文化',B],
+    ['Orbitron','Orbitron','ofl','太空时代，科幻 HUD / 霓虹',B],
+    ['Permanent Marker','Permanent+Marker','ofl','涂鸦随性，街头标注',B],
+    ['Teko','Teko','ofl','窄粗体育，比分/数据大屏',B],
+  ],
+  'Latin · Body / 字幕': [
+    ['Inter','Inter','ofl','中性 UI，小字号可读性极佳',B],
+    ['Manrope','Manrope','ofl','圆润中性，友好产品',B],
+    ['IBM Plex Sans','IBM+Plex+Sans','ofl','企业感但温和',B],
+    ['Nunito','Nunito','ofl','圆角柔和，教育/儿童正文',B],
+    ['Sora','Sora','ofl','现代几何干净，UI/SaaS 标题',B],
+    ['Rajdhani','Rajdhani','ofl','科技窄身，数据/运动正文',B],
+  ],
+  'Mono · 代码 / 终端 / HUD': [
+    ['JetBrains Mono','JetBrains+Mono','ofl','代码浮层，build-log 美学',B],
+    ['Space Mono','Space+Mono','ofl','复古终端，sci-fi HUD','Google Fonts'],
+    ['IBM Plex Mono','IBM+Plex+Mono','ofl','干净数据读出','Google Fonts'],
+  ],
+  'Script / 手写': [
+    ['Caveat','Caveat','ofl','随性批注',B],
+    ['Pacifico','Pacifico','ofl','俏皮复古','Google Fonts'],
+    ['Great Vibes','Great+Vibes','ofl','正式优雅，婚礼','Google Fonts'],
+  ],
+  '中文（均免费商用）': [
+    ['思源黑体 Noto Sans SC','Noto+Sans+SC','ofl','万金油正文黑体，多字重','Google Fonts / Adobe',1],
+    ['思源宋体 Noto Serif SC','Noto+Serif+SC','ofl','高级感宋体，人文/纪录片','Google Fonts / Adobe',1],
+    ['得意黑 Smiley Sans',null,'ofl','窄斜标题黑，运动/潮流爆款','📦 BUNDLED zh/',1],
+    ['霞鹜文楷 LXGW WenKai',null,'ofl','温暖手写楷体，vlog/生活','📦 BUNDLED zh/',1],
+    ['站酷快乐体 ZCOOL KuaiLe',null,'ofl','圆润可爱，儿童/趣味','📦 BUNDLED zh/',1],
+    ['马善政毛笔楷书 Ma Shan Zheng',null,'ofl','毛笔标题，美食/传统','📦 BUNDLED zh/',1],
+    ['阿里巴巴普惠体',null,'res','品牌感黑体，电商/产品','alibabafont.com',1],
+    ['MiSans',null,'res','现代 UI 黑体，科技感','hyperos.mi.com/font',1],
+    ['OPPO Sans',null,'res','圆润友好','coloros.com',1],
+    ['钉钉进步体',null,'res','略斜有冲劲，职场/效率','钉钉官网（核验）',1],
+    ['优设标题黑',null,'res','短视频标题利器，粗壮倾斜','uisdc.com（核验）',1],
+  ],
+  'Cute · Latin': [
+    ['Fredoka','Fredoka','ofl','圆润友好有质感','可爱但专业：字幕/产品卡'],
+    ['Baloo 2','Baloo+2','ofl','蓬松活力童趣','儿童标题、贴纸、俏皮 lower-third'],
+    ['Comic Neue','Comic+Neue','ofl','干净版漫画手写','对话字幕、趣味解说'],
+    ['DynaPuff','DynaPuff','ofl','软贴纸/手账感','手作标题卡、可爱浮层'],
+    ['Chewy','Chewy','ofl','Q 弹卡通标题','宠物、笑点、儿童钩子'],
+    ['Bubblegum Sans','Bubblegum+Sans','ofl','泡泡糖圆调','温暖短视频标题'],
+    ['Patrick Hand','Patrick+Hand','ofl','课堂手写笔记','批注箭头、笔记本解说'],
+    ['Nunito','Nunito','ofl','圆角 UI sans 极易读','display 太吵时的正文'],
+    ['Quicksand','Quicksand','ofl','软几何、温柔','安静可爱品牌、极简 vlog 浮层'],
+  ],
+  'Cute · 中文': [
+    ['小赖字体 Xiaolai SC',null,'ofl','可爱手写、学生笔记感','手账字幕、童趣标题卡',1],
+    ['芫荽 Iansui','Iansui','ofl','圆手写、日系治愈','治愈视频、软旁白字幕',1],
+    ['阿里妈妈方圆体',null,'res','圆润商业品牌调','可爱产品视频、品牌字幕',1],
+  ],
+};
+const CUTE_PAIR = [
+  ['Cozy family vlog','Fredoka + Nunito','霞鹜文楷 + 思源黑体','温暖易读不幼稚'],
+  ['Kids education','Baloo 2 + Comic Neue','小赖字体 + 思源黑体','大标题 + 友好解说'],
+  ['Pet / funny short','Chewy + Fredoka','得意黑 + 思源黑体','钩子字要猛，正文要简'],
+  ['Scrapbook sticker','DynaPuff + Patrick Hand','芫荽 / 小赖字体','配涂鸦、箭头、胶带标签'],
+  ['Cute product brand','Fredoka + Quicksand','阿里妈妈方圆体 + 思源黑体','圆润商业质感'],
+];
+const GENRE_PAIR = [
+  ['Tech / AI / 产品宣传','Space Grotesk + Inter','MiSans / 思源黑体'],
+  ['短视频爆款（抖音/Shorts）','Anton + Inter','得意黑 / 优设标题黑 + 思源黑体'],
+  ['奢华 / 旅行','Playfair Display + Montserrat','思源宋体'],
+  ['温暖 vlog / 家庭','Caveat + Manrope','霞鹜文楷'],
+  ['终端 / dev','JetBrains Mono（全角色）','思源黑体（辅助）'],
+  ['新闻 / 纪录片','Oswald + IBM Plex Sans','思源黑体 + 思源宋体（引言）'],
+  ['科幻 / 游戏 / 霓虹','Orbitron + Chakra Petch + Inter','思源黑体'],
+  ['时尚 / 美妆','Bodoni Moda + Montserrat','思源宋体'],
+  ['美食 / 手工 / 文化','Cinzel + Cormorant Garamond','马善政 + 思源黑体'],
+  ['体育 / 数据 / 大屏','Teko + Rajdhani + Inter','得意黑 + 思源黑体'],
+  ['儿童 / 教育 / 可爱','Fredoka + Baloo 2 + Nunito','站酷快乐体 + 霞鹜文楷'],
+  ['史诗 / 人文 / 历史','Cinzel + EB Garamond','思源宋体 + 马善政'],
+];
+
+/* ---------- 通用：live 演示卡渲染 ---------- */
+function mountDemos(container, defs, extraMeta) {
+  const html = defs.map(d => `<div class="card" data-k="${esc(d.name + (d.en||'') + d.meta)}" id="c-${d.id}">
+    <div class="stage${d.light ? ' light' : ''}"><div class="fx">${d.html}</div></div>
+    <div class="meta"><h3>${esc(d.name)}${d.en ? `<span class="en">${esc(d.en)}</span>` : ''}</h3>
+      <p>${esc(d.meta)}</p>
+      <div class="ctrl"><button class="rp">▶ 重播</button>
+        <input type="range" min="0" max="1000" value="0" title="拖动 = seek，验证确定性"></div>
+    </div></div>`).join('');
+  container.insertAdjacentHTML('beforeend', `<div class="grid">${html}</div>`);
+  defs.forEach(d => {
+    const card = document.getElementById('c-' + d.id);
+    const st = document.createElement('style');
+    st.textContent = d.css.replaceAll('%%', '#c-' + d.id);
+    document.head.appendChild(st);
+    const fx = card.querySelector('.fx');
+    const tl = gsap.timeline({ paused: true });
+    try { d.build(fx, tl); } catch (e) {
+      card.querySelector('h3').innerHTML += ' <span style="color:#ff4d6d">BUILD FAIL</span>';
+      console.error(d.id, e); }
+    const sl = card.querySelector('input[type=range]');
+    tl.eventCallback('onUpdate', () => sl.value = tl.progress() * 1000);
+    sl.addEventListener('input', () => { tl.pause(); tl.progress(sl.value / 1000); });
+    card.querySelector('.rp').onclick = () => tl.restart();
+    new IntersectionObserver((es, ob) => { if (es[0].isIntersecting) { tl.play(); ob.disconnect(); } },
+      { threshold: 0.35 }).observe(card);
+  });
+}
+function searchBar(placeholder, extra = '') {
+  return `<div class="bar"><input class="q" placeholder="${placeholder}">${extra}</div>`;
+}
+function bindSearch(scope) {
+  const q = scope.querySelector('.q');
+  if (q) q.addEventListener('input', e => {
+    const v = e.target.value.trim().toLowerCase();
+    scope.querySelectorAll('.card').forEach(c =>
+      c.style.display = (c.dataset.k || '').toLowerCase().includes(v) ? '' : 'none');
+  });
+}
+
+/* ---------- Tab 1：动效配方 ---------- */
+function tabMotion(m) {
+  m.innerHTML = searchBar('按名称/参数/用途过滤…') +
+    `<p class="src">源：<code>craft/motion-recipes.md</code> · 代码：<code>craft/snippets/</code> ·
+     28 approved（下方 live 播放，拖滑杆验证 seek 确定性）+ 11 rejected 黑名单</p>`;
+  const groups = [...new Set(window.MOTION_DEMOS.map(d => d.g))];
+  groups.forEach(g => {
+    const defs = window.MOTION_DEMOS.filter(d => d.g === g);
+    m.insertAdjacentHTML('beforeend', `<h2 class="grp">${esc(g)}<small>${defs.length} 个</small></h2>`);
+    mountDemos(m, defs);
+  });
+  m.insertAdjacentHTML('beforeend', `<h2 class="grp">Rejected 黑名单<small>实审毙掉 · 仅用户点名（防复活）</small></h2>
+    <div class="grid sm rej">${REJECTED_RECIPES.map(n =>
+      `<div class="card" data-k="${esc(n)}"><div class="meta"><h3>${esc(n)}</h3></div></div>`).join('')}</div>`);
+  bindSearch(m);
+}
+
+/* ---------- Tab 2：转场 ---------- */
+function tabTransitions(m) {
+  m.innerHTML = searchBar('按名称/register 过滤…') +
+    `<p class="src">源：<code>craft/transitions.md</code> · A/B 双镜 live 演示 ·
+     硬规则：硬切是脊柱 · 一片一个家族 · motivated 优于 decorative · [no-zoom-drift] 必须落回 1.0</p>`;
+  const keep = window.TRANSITION_DEMOS.filter(d => d.keep);
+  const bench = window.TRANSITION_DEMOS.filter(d => !d.keep);
+  m.insertAdjacentHTML('beforeend', `<h2 class="grp">保留菜单<small>${keep.length} 个 · 默认从这里提案</small></h2>`);
+  mountDemos(m, keep);
+  m.insertAdjacentHTML('beforeend', `<h2 class="grp">冷板凳<small>${bench.length} 个 · 实审弃用，仅用户点名</small></h2>`);
+  const holder = document.createElement('div'); holder.className = 'rej';
+  m.appendChild(holder); mountDemos(holder, bench);
+  bindSearch(m);
+}
+
+/* ---------- Tab 3：Looks ---------- */
+function tabLooks(m) {
+  m.innerHTML = searchBar('按名称/mood/适用过滤…') +
+    `<p class="src">源：<code>looks/</code> · 8 张 · 三方向 gate 的弹药 · 用户可直接点名 · 一片一个 look ·
+     色板为该 look 的场域基调（非完整实现，实现见各卡）</p><div class="grid sm">` +
+    LOOKS.map(([f, cn, mood, best, route, bg, fg]) =>
+      `<div class="card lkcard" data-k="${esc(f + cn + mood + best)}">
+        <div class="swatch" style="background:${bg};color:${fg}">${esc(cn)}</div>
+        <div class="meta"><h3>${esc(f)}<span class="en">${esc(cn)}</span></h3>
+        <p><b style="color:#c9b98a">${esc(mood)}</b><br>适用：${esc(best)}<br>
+        <span style="color:#55555f;font-size:10px">looks/${esc(f)}.md · ${esc(route)}</span></p></div></div>`).join('') + `</div>`;
+  bindSearch(m);
+}
+
+/* ---------- Tab 4：字体 ---------- */
+function tabFonts(m) {
+  m.innerHTML = searchBar('按字体名/性格过滤…', `<button id="gf">加载字体实时预览</button>
+    <span class="info">绿标=OFL 开源 · 黄标=官方免商（有限制）</span>`) +
+    `<p class="src">源：<code>craft/fonts.md</code> · 51 字体（📦=已 bundled 无需下载）+ 12 场景配对 + 5 cute 配对 · 全部免费商用 ·
+     渲染时必须用本地字体文件，禁 CDN（确定性渲染）</p>`;
+  for (const [g, items] of Object.entries(FONTS)) {
+    m.insertAdjacentHTML('beforeend', `<h2 class="grp">${esc(g)}<small>${items.length} 个</small></h2>
+      <div class="grid sm">${items.map(([n, gf, lic, per, get, zh]) =>
+        `<div class="card" data-k="${esc(n + per + get)}" ${gf ? `data-gf="${esc(gf)}" data-zh="${zh ? 1 : 0}"` : ''}>
+          <div class="meta"><h3>${esc(n)}</h3>
+          <div class="fspec pending">${gf ? '点上方「加载字体实时预览」' : '非 Google Fonts — 需本地文件'}</div>
+          <p>${esc(per)}</p>
+          <span class="lic ${lic}">${lic === 'ofl' ? 'OFL 开源' : '官方免商·有限制'}</span>
+          <span class="tag">${esc(get)}</span></div></div>`).join('')}</div>`);
+  }
+  m.insertAdjacentHTML('beforeend', `<h2 class="grp">Cute 配对配方</h2>
+    <table class="pair"><tr><th>风格</th><th>Latin</th><th>中文</th><th>备注</th></tr>
+    ${CUTE_PAIR.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>
+    <h2 class="grp">场景配对（标题 + 正文/字幕）</h2>
+    <table class="pair"><tr><th>片型</th><th>Latin 配对</th><th>中文搭配</th></tr>
+    ${GENRE_PAIR.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>
+    <p class="src" style="margin-top:10px">配对法则：每片 ≤2 个字族（+1 mono 可豁免）· 对比字重与字宽，别用两个相似 sans · 全片字幕统一一个家族</p>`);
+  document.getElementById('gf').onclick = function () {
+    const els = [...m.querySelectorAll('[data-gf]')];
+    const fams = [...new Set(els.map(e => e.dataset.gf))];
+    for (let i = 0; i < fams.length; i += 8) {
+      const l = document.createElement('link'); l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?' + fams.slice(i, i + 8).map(f => 'family=' + f).join('&') + '&display=swap';
+      document.head.appendChild(l);
+    }
+    els.forEach(el => {
+      const fam = el.dataset.gf.split(':')[0].replaceAll('+', ' ');
+      const zh = el.dataset.zh === '1';
+      el.querySelector('.fspec').outerHTML = `<div class="fspec" style="font-family:'${fam}'">
+        <div class="lat">Aa Qq — quick fox</div>
+        ${zh ? '<div class="zh">山谷里的一餐 视频剪辑</div>'
+             : '<div class="zh" style="font-size:14px;color:#9a9aa5">0123456789 · ¥18</div>'}</div>`;
+    });
+    this.textContent = '已加载（网络慢时稍等）'; this.disabled = true;
+  };
+  bindSearch(m);
+}
+
+/* ---------- Tab 引擎 ---------- */
+const TABS = [
+  ['动效配方', window.MOTION_DEMOS.length + '+11', tabMotion],
+  ['转场', window.TRANSITION_DEMOS.length, tabTransitions],
+  ['Looks 风格卡', LOOKS.length, tabLooks],
+  ['字体库', Object.values(FONTS).flat().length, tabFonts],
+];
+const nav = document.getElementById('nav'), main = document.getElementById('main');
+TABS.forEach(([label, count], i) => {
+  const b = document.createElement('button');
+  b.innerHTML = `${label}<b>${count}</b>`;
+  b.onclick = () => {
+    [...nav.children].forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    main.innerHTML = ''; window.scrollTo(0, 0);
+    gsap.globalTimeline.clear();          // 切页时停掉上一页的 timeline
+    TABS[i][2](main);
+    location.hash = 'tab' + i;
+  };
+  nav.appendChild(b);
+});
+const start = Math.max(0, Math.min(TABS.length - 1, parseInt((location.hash.match(/tab(\d)/) || [])[1] ?? 0)));
+nav.children[start].click();
+</script>
+</body>
+</html>

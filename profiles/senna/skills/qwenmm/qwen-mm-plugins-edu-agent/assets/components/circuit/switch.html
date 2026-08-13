@@ -1,0 +1,126 @@
+<!--
+  K12 Asset: 开关（刀闸开关）
+  ID: switch
+  Suitable: 串联电路, 并联电路, 动态电路, 电功率
+  CSS Vars: --switch-angle (0deg=open, 45deg=closed)
+  JS Hooks: set --switch-angle in renderAt() for open/close animation
+  Size: 56×36px at 1920×1080
+
+  States:
+    Open:   --switch-angle: 0deg   (lever raised, circuit broken)
+    Closed: --switch-angle: 45deg  (lever down, circuit connected)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .switch {
+    position: absolute;
+    width: 56px;
+    height: 36px;
+    margin-left: -28px;
+    transform-origin: 50% 100%;
+    --switch-angle: 0deg;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.28));
+  }
+
+  /* Base plate — insulating material */
+  .switch-base {
+    position: absolute;
+    left: 4px; right: 4px; bottom: 0;
+    height: 12px;
+    border-radius: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, #78716c, #57534e 50%, #44403c);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      0 3px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Left terminal post — pivot point */
+  .switch-pivot {
+    position: absolute;
+    left: 8px; bottom: 8px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.4), transparent 50%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow:
+      0 0 4px rgba(251,191,36,0.3),
+      0 2px 4px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  /* Right terminal post — contact point */
+  .switch-contact {
+    position: absolute;
+    right: 8px; bottom: 8px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.4), transparent 50%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow:
+      0 0 4px rgba(251,191,36,0.3),
+      0 2px 4px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  /* Lever arm — metal blade that rotates */
+  .switch-lever {
+    position: absolute;
+    left: 12px; bottom: 12px;
+    width: 36px; height: 4px;
+    transform-origin: 1px 50%;
+    transform: rotate(calc(-1 * var(--switch-angle)));
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.35), transparent 30%),
+      linear-gradient(90deg, #94a3b8, #cbd5e1 40%, #94a3b8);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.3),
+      0 2px 4px rgba(0,0,0,0.2);
+    z-index: 3;
+  }
+
+  /* Lever handle — insulated grip */
+  .switch-lever::after {
+    content: "";
+    position: absolute;
+    right: -2px; top: -3px;
+    width: 8px; height: 10px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 25%),
+      linear-gradient(90deg, #78716c, #a8a29e 50%, #78716c);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 3px rgba(0,0,0,0.15);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="switch">
+  <div class="switch-base"></div>
+  <div class="switch-pivot"></div>
+  <div class="switch-contact"></div>
+  <div class="switch-lever"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Toggle open/closed: 0deg = open, 45deg = closed
+  var angle = circuitClosed ? 45 : 0;
+  switchEl.style.setProperty("--switch-angle", angle + "deg");
+
+  // Animated toggle (smooth transition over 0.3s):
+  // var targetAngle = circuitClosed ? 45 : 0;
+  // var t = Math.min(1, (time - toggleTime) / 0.3);
+  // var eased = t < 1 ? 1 - Math.pow(1 - t, 3) : 1;
+  // var angle = prevAngle + (targetAngle - prevAngle) * eased;
+  // switchEl.style.setProperty("--switch-angle", angle + "deg");
+-->

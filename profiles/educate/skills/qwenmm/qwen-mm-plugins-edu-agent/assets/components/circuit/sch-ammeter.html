@@ -1,0 +1,38 @@
+<!--
+  K12 Asset: 电流表原理图符号（Schematic Symbol）
+  ID: sch-ammeter
+  Suitable: 串联电路, 并联电路, 欧姆定律, 电路图作图题
+  Size: circle r=30, with terminal stubs extending 20px each side
+
+  CRITICAL PHYSICS RULES:
+    1. 电流表必须串联在被测电路中 (ammeter MUST be wired in SERIES)
+    2. 电流从 + 接线柱流入，从 - 接线柱流出
+       Current enters through + terminal, exits through - terminal
+    3. + 接线柱靠近电源正极一侧
+       + terminal faces toward the battery's positive terminal
+
+  Default orientation: horizontal, + terminal on LEFT (current enters from left)
+  Terminal endpoints: left at (-50, 0), right at (50, 0)
+  Circle center: (0, 0), radius: 30
+-->
+
+<!-- ===== SVG: Ammeter (电流表 A) ===== -->
+<g class="sch-ammeter" transform="translate(0, 0)">
+  <!-- Left wire stub (+ terminal side, current enters here) -->
+  <line x1="-50" y1="0" x2="-30" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Circle -->
+  <circle cx="0" cy="0" r="30"
+          fill="rgba(220,38,38,0.06)" stroke="#dc2626" stroke-width="3"/>
+  <!-- Label "A" -->
+  <text x="0" y="9" text-anchor="middle" font-size="32" font-weight="700"
+        fill="#dc2626" font-family="'Noto Sans SC','PingFang SC',sans-serif">A</text>
+  <!-- Right wire stub (- terminal side, current exits here) -->
+  <line x1="30" y1="0" x2="50" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Terminal labels -->
+  <text x="-38" y="-10" text-anchor="middle" font-size="18" font-weight="600"
+        fill="#dc2626" font-family="'Noto Sans SC','PingFang SC',sans-serif">+</text>
+  <text x="38" y="-10" text-anchor="middle" font-size="18" font-weight="600"
+        fill="#2563eb" font-family="'Noto Sans SC','PingFang SC',sans-serif">-</text>
+</g>

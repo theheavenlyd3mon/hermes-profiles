@@ -1,0 +1,332 @@
+<!--
+  K12 Asset: 直升机
+  ID: helicopter
+  Suitable: 力与运动, 升力, 牛顿第三定律, 合力, 匀速运动, 加速运动
+  CSS Vars: --rotor-spin (rotation angle in deg), --paint-a (lighter), --paint-b (darker)
+  JS Hooks: set --rotor-spin in renderAt() for rotor animation
+  Size: 80x48px at 1920x1080
+
+  Variants:
+    .heli-a { --paint-a: #60a5fa; --paint-b: #1e40af; }  (blue, default)
+    .heli-b { --paint-a: #fca5a5; --paint-b: #991b1b; }  (red)
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .helicopter {
+    position: absolute;
+    width: 80px;
+    height: 48px;
+    margin-left: -40px;
+    margin-top: -24px;
+    transform-origin: 50% 50%;
+    --rotor-spin: 0deg;
+    --paint-a: #60a5fa;
+    --paint-b: #1e40af;
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,0.38));
+  }
+
+  /* Ground shadow */
+  .helicopter::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 88px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.36), transparent 68%);
+  }
+
+  /* Main fuselage — streamlined body */
+  .heli-body {
+    position: absolute;
+    left: 8px; top: 14px;
+    width: 52px; height: 22px;
+    border-radius: 16px 22px 10px 8px;
+    background:
+      radial-gradient(ellipse at 70% 20%, rgba(234,234,234,0.2) 0 10px, transparent 18px),
+      linear-gradient(180deg, rgba(234,234,234,0.35), transparent 25%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.15)),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b) 65%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.25),
+      inset 0 -8px 14px rgba(0,0,0,0.25),
+      0 4px 12px rgba(30,64,175,0.2);
+  }
+
+  /* Nose / cockpit windshield */
+  .heli-body::before {
+    content: "";
+    position: absolute;
+    right: 0; top: 2px;
+    width: 20px; height: 16px;
+    border-radius: 4px 14px 8px 4px;
+    background:
+      radial-gradient(ellipse at 40% 30%, rgba(234,234,234,0.45), transparent 50%),
+      linear-gradient(135deg, rgba(186,230,253,0.45), rgba(30,58,138,0.3) 50%, rgba(15,23,42,0.35));
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15),
+      inset 0 -4px 8px rgba(15,23,42,0.2);
+  }
+
+  /* Chrome belly stripe */
+  .heli-body::after {
+    content: "";
+    position: absolute;
+    left: 6px; top: 11px;
+    width: 38px; height: 1.5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(234,234,234,0.1), rgba(234,234,234,0.4) 30%, rgba(234,234,234,0.45) 70%, rgba(234,234,234,0.15));
+  }
+
+  /* Tail boom */
+  .heli-tail {
+    position: absolute;
+    left: 0; top: 18px;
+    width: 16px; height: 8px;
+    border-radius: 4px 0 0 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b) 60%);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-right: none;
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -3px 5px rgba(0,0,0,0.15);
+  }
+
+  /* Tail fin — vertical stabilizer */
+  .heli-tail::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 8px; height: 10px;
+    border-radius: 3px 1px 0 0;
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-bottom: none;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+
+  /* Tail rotor — small spinning disc */
+  .heli-tail-rotor {
+    position: absolute;
+    left: 0; top: 12px;
+    width: 4px; height: 14px;
+    margin-top: -7px;
+    transform-origin: 50% 50%;
+    transform: rotate(var(--rotor-spin));
+  }
+
+  .heli-tail-rotor::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 4px; height: 6px;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(180deg, rgba(200,200,200,0.7), rgba(100,100,100,0.4));
+  }
+
+  .heli-tail-rotor::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 4px; height: 6px;
+    border-radius: 0 0 2px 2px;
+    background: linear-gradient(0deg, rgba(200,200,200,0.7), rgba(100,100,100,0.4));
+  }
+
+  /* Tail rotor hub — aligned to rotor spin center (2, 12) */
+  .heli-tail-hub {
+    position: absolute;
+    left: 0.5px; top: 10.5px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e2e8f0, #94a3b8);
+    z-index: 2;
+  }
+
+  /* Main rotor mast */
+  .heli-mast {
+    position: absolute;
+    left: 38px; top: 8px;
+    width: 3px; height: 8px;
+    margin-left: -1.5px;
+    background:
+      linear-gradient(90deg, #64748b, #94a3b8, #64748b);
+    box-shadow: 0 0 2px rgba(0,0,0,0.2);
+    z-index: 3;
+  }
+
+  /* Mast cap */
+  .heli-mast::before {
+    content: "";
+    position: absolute;
+    left: -1px; top: 0;
+    width: 5px; height: 3px;
+    border-radius: 2px;
+    background: radial-gradient(circle, #cbd5e1, #94a3b8);
+    box-shadow: inset 0 1px rgba(255,255,255,0.3);
+  }
+
+  /* Main rotor blades — spinning */
+  .heli-rotor {
+    position: absolute;
+    left: 38px; top: 5px;
+    width: 72px; height: 4px;
+    margin-left: -36px;
+    transform-origin: 50% 50%;
+    transform: rotate(var(--rotor-spin));
+    z-index: 4;
+  }
+
+  .heli-rotor::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 34px; height: 4px;
+    border-radius: 2px 0 0 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #94a3b8, #cbd5e1 30%, #94a3b8 80%, #64748b);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .heli-rotor::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 0;
+    width: 34px; height: 4px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #64748b, #94a3b8 20%, #cbd5e1 70%, #94a3b8);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Rotor motion blur — shows at high speed */
+  .heli-rotor-blur {
+    position: absolute;
+    left: 38px; top: 5px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(148,163,184,0.12), rgba(148,163,184,0.06) 40%, transparent 70%);
+    width: 74px; height: 74px;
+    margin-left: -37px; margin-top: -35px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* Landing skids */
+  .heli-skid {
+    position: absolute;
+    bottom: 0;
+    height: 3px;
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent),
+      linear-gradient(90deg, #64748b, #94a3b8 30%, #cbd5e1 50%, #94a3b8 70%, #64748b);
+    border: 0.5px solid rgba(71,85,105,0.4);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .heli-skid-l {
+    left: 16px;
+    width: 32px;
+  }
+
+  .heli-skid-r {
+    left: 32px;
+    width: 32px;
+  }
+
+  /* Skid struts — connecting body to skids */
+  .heli-strut {
+    position: absolute;
+    width: 1.5px;
+    bottom: 3px;
+    background: linear-gradient(180deg, #94a3b8, #64748b);
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  .heli-strut-1 { left: 22px; height: 10px; }
+  .heli-strut-2 { left: 42px; height: 10px; }
+  .heli-strut-3 { left: 52px; height: 10px; }
+
+  /* Side window */
+  .heli-window {
+    position: absolute;
+    left: 36px; top: 17px;
+    width: 8px; height: 6px;
+    border-radius: 2px;
+    background:
+      radial-gradient(ellipse at 35% 30%, rgba(234,234,234,0.4), transparent 60%),
+      linear-gradient(135deg, rgba(186,230,253,0.4), rgba(30,58,138,0.25));
+    border: 0.5px solid rgba(255,255,255,0.2);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+
+  /* Color variants */
+  .heli-a {
+    --paint-a: #60a5fa;
+    --paint-b: #1e40af;
+  }
+
+  .heli-b {
+    --paint-a: #fca5a5;
+    --paint-b: #991b1b;
+  }
+  .heli-b .heli-body {
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.25),
+      inset 0 -8px 14px rgba(0,0,0,0.25),
+      0 4px 12px rgba(153,27,27,0.2);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="helicopter heli-a">
+  <div class="heli-body"></div>
+  <div class="heli-tail"></div>
+  <div class="heli-tail-rotor"></div>
+  <div class="heli-tail-hub"></div>
+  <div class="heli-window"></div>
+  <div class="heli-strut heli-strut-1"></div>
+  <div class="heli-strut heli-strut-2"></div>
+  <div class="heli-strut heli-strut-3"></div>
+  <div class="heli-skid heli-skid-l"></div>
+  <div class="heli-skid heli-skid-r"></div>
+  <div class="heli-mast"></div>
+  <div class="heli-rotor"></div>
+  <div class="heli-rotor-blur"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Spin main rotor
+  var rotorDeg = time * 360 * rpm;
+  helicopterEl.style.setProperty("--rotor-spin", rotorDeg + "deg");
+
+  // Tail rotor spins faster (typically ~4x main rotor)
+  tailRotorEl.style.transform = "rotate(" + (rotorDeg * 4.2) + "deg)";
+
+  // Motion blur at high RPM
+  var speed01 = Math.min(1, rpm / maxRpm);
+  rotorBlurEl.style.opacity = speed01 > 0.3 ? (speed01 - 0.3) * 1.4 : 0;
+
+  // Subtle hover bob
+  var bob = Math.sin(time * 3) * 1.5;
+  helicopterEl.style.transform = "translateY(" + bob + "px)";
+-->

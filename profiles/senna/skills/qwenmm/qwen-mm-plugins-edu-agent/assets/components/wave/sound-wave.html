@@ -1,0 +1,196 @@
+<!--
+  K12 Asset: 声波（横波图）
+  ID: sound-wave
+  Suitable: 横波, 声波, 频率, 振幅, 周期, 波速, 共振
+  CSS Vars: --phase (0-6.28), --amplitude (px, max height from axis), --frequency (waves per width)
+  JS Hooks: phase increments for wave propagation; amplitude/frequency for wave shape
+  Size: 200×60px at 1920×1080
+
+  Variants: (single style — glowing cyan sine wave)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .sound-wave {
+    position: absolute;
+    width: 200px;
+    height: 60px;
+    margin-left: -100px;
+    transform-origin: 50% 50%;
+    z-index: 12;
+    --phase: 0;
+    --amplitude: 20;
+    --frequency: 3;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+  }
+
+  /* Background panel — dark display */
+  .sound-wave-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 60px;
+    border-radius: 4px;
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(15,23,42,0.95), rgba(2,6,23,0.98));
+    border: 1px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 2px 4px rgba(0,0,0,0.3),
+      inset 0 -2px 4px rgba(0,0,0,0.2),
+      0 4px 10px rgba(0,0,0,0.2);
+  }
+
+  /* Grid lines — subtle reference */
+  .sound-wave-bg::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background:
+      repeating-linear-gradient(90deg, rgba(100,116,139,0.08) 0px, rgba(100,116,139,0.08) 1px, transparent 1px, transparent 25px),
+      repeating-linear-gradient(180deg, rgba(100,116,139,0.08) 0px, rgba(100,116,139,0.08) 1px, transparent 1px, transparent 15px);
+    border-radius: 4px;
+  }
+
+  /* Center axis line */
+  .sound-wave-axis {
+    position: absolute;
+    left: 10px;
+    top: 29px;
+    width: 180px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(100,116,139,0.4) 10%, rgba(100,116,139,0.4) 90%, transparent);
+    border-radius: 1px;
+  }
+
+  /* Amplitude markers — top */
+  .sound-wave-axis::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -20px;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(100,116,139,0.2) 10%, rgba(100,116,139,0.2) 90%, transparent);
+  }
+
+  /* Amplitude markers — bottom */
+  .sound-wave-axis::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20px;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(100,116,139,0.2) 10%, rgba(100,116,139,0.2) 90%, transparent);
+  }
+
+  /* SVG container for the sine wave path */
+  .sound-wave-path {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    width: 180px;
+    height: 60px;
+  }
+
+  .sound-wave-path svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .sound-wave-path svg path {
+    fill: none;
+    stroke: rgba(56,189,248,0.9);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(56,189,248,0.5)) drop-shadow(0 0 8px rgba(56,189,248,0.2));
+  }
+
+  /* Glow layer — duplicate path with blur */
+  .sound-wave-glow svg path {
+    fill: none;
+    stroke: rgba(56,189,248,0.3);
+    stroke-width: 6;
+    stroke-linecap: round;
+    filter: blur(3px);
+  }
+
+  .sound-wave-glow {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    width: 180px;
+    height: 60px;
+  }
+
+  .sound-wave-glow svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* Amplitude label marker dots */
+  .sound-wave-marker-top {
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(251,191,36,0.7);
+    box-shadow: 0 0 4px rgba(251,191,36,0.4);
+  }
+
+  .sound-wave-marker-bot {
+    position: absolute;
+    left: 6px;
+    bottom: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(251,191,36,0.7);
+    box-shadow: 0 0 4px rgba(251,191,36,0.4);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="soundWave" class="sound-wave">
+  <div class="sound-wave-bg"></div>
+  <div class="sound-wave-axis"></div>
+  <div class="sound-wave-marker-top"></div>
+  <div class="sound-wave-marker-bot"></div>
+  <div class="sound-wave-glow">
+    <svg viewBox="0 0 180 60"><path d=""></path></svg>
+  </div>
+  <div class="sound-wave-path">
+    <svg viewBox="0 0 180 60"><path d=""></path></svg>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Generate SVG sine path from CSS vars
+  var phase = parseFloat(getComputedStyle(soundWaveEl).getPropertyValue("--phase")) || 0;
+  var amp = parseFloat(getComputedStyle(soundWaveEl).getPropertyValue("--amplitude")) || 20;
+  var freq = parseFloat(getComputedStyle(soundWaveEl).getPropertyValue("--frequency")) || 3;
+
+  var pathD = "";
+  var cx = 30; // center Y in SVG viewBox
+  for (var i = 0; i <= 180; i += 2) {
+    var x = i;
+    var y = cx - amp * Math.sin((i / 180) * freq * 2 * Math.PI + phase);
+    pathD += (i === 0 ? "M" : "L") + x + " " + y;
+  }
+
+  // Apply to both path and glow
+  soundWaveEl.querySelector(".sound-wave-path path").setAttribute("d", pathD);
+  soundWaveEl.querySelector(".sound-wave-glow path").setAttribute("d", pathD);
+
+  // Glow intensity pulse
+  var glowPulse = 0.8 + Math.sin(time * 3) * 0.2;
+  soundWaveEl.querySelector(".sound-wave-glow").style.opacity = glowPulse;
+-->

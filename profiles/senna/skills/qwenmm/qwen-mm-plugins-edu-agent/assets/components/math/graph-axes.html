@@ -1,0 +1,205 @@
+<!--
+  K12 Asset: 坐标轴
+  ID: graph-axes
+  Suitable: 函数图像, 坐标系, 线性方程, 二次函数, 数据图表
+  CSS Vars: --grid-opacity (0-1), --axis-color (default #e2e8f0)
+  JS Hooks: set --grid-opacity to show/hide grid lines
+  Size: 200×200px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .graph-axes {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    margin-left: -100px;
+    transform-origin: 50% 50%;
+    --grid-opacity: 0.3;
+    --axis-color: rgba(226,232,240,1);
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+  }
+
+  /* Background panel — subtle dark surface */
+  .ga-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.03), transparent 20%),
+      linear-gradient(180deg, transparent 80%, rgba(0,0,0,0.05)),
+      linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.92) 50%, rgba(15,23,42,0.95));
+    border: 1px solid rgba(71,85,105,0.3);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.05),
+      inset 0 -2px 4px rgba(0,0,0,0.1),
+      0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* Grid lines — horizontal */
+  .ga-grid-h {
+    position: absolute;
+    left: 20px; top: 20px;
+    width: 160px; height: 160px;
+    opacity: var(--grid-opacity);
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0px, transparent 19.5px,
+        rgba(71,85,105,0.4) 19.5px, rgba(71,85,105,0.4) 20px
+      );
+  }
+
+  /* Grid lines — vertical */
+  .ga-grid-v {
+    position: absolute;
+    left: 20px; top: 20px;
+    width: 160px; height: 160px;
+    opacity: var(--grid-opacity);
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0px, transparent 19.5px,
+        rgba(71,85,105,0.4) 19.5px, rgba(71,85,105,0.4) 20px
+      );
+  }
+
+  /* X-axis line */
+  .ga-x-axis {
+    position: absolute;
+    left: 18px; top: 100px;
+    width: 168px; height: 1.5px;
+    background: var(--axis-color);
+    box-shadow: 0 0 3px rgba(226,232,240,0.3);
+  }
+
+  /* X-axis arrowhead */
+  .ga-x-axis::after {
+    content: "";
+    position: absolute;
+    right: -1px; top: -4px;
+    width: 0; height: 0;
+    border-top: 4.5px solid transparent;
+    border-bottom: 4.5px solid transparent;
+    border-left: 8px solid var(--axis-color);
+  }
+
+  /* Y-axis line */
+  .ga-y-axis {
+    position: absolute;
+    left: 100px; top: 14px;
+    width: 1.5px; height: 168px;
+    background: var(--axis-color);
+    box-shadow: 0 0 3px rgba(226,232,240,0.3);
+  }
+
+  /* Y-axis arrowhead */
+  .ga-y-axis::after {
+    content: "";
+    position: absolute;
+    left: -4px; top: -1px;
+    width: 0; height: 0;
+    border-left: 4.5px solid transparent;
+    border-right: 4.5px solid transparent;
+    border-bottom: 8px solid var(--axis-color);
+  }
+
+  /* Tick marks on X-axis */
+  .ga-x-ticks {
+    position: absolute;
+    left: 20px; top: 98px;
+    width: 160px; height: 5px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(226,232,240,0.8) 0px, rgba(226,232,240,0.8) 1px,
+        transparent 1px, transparent 20px
+      );
+  }
+
+  /* Tick marks on Y-axis */
+  .ga-y-ticks {
+    position: absolute;
+    left: 98px; top: 20px;
+    width: 5px; height: 160px;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(226,232,240,0.8) 0px, rgba(226,232,240,0.8) 1px,
+        transparent 1px, transparent 20px
+      );
+  }
+
+  /* Labels */
+  .ga-label {
+    position: absolute;
+    font-family: "Times New Roman", serif;
+    font-size: 10px;
+    font-style: italic;
+    color: rgba(226,232,240,0.9);
+    pointer-events: none;
+  }
+
+  .ga-label-o { left: 90px; top: 102px; font-style: normal; }
+  .ga-label-x { right: 12px; top: 102px; }
+  .ga-label-y { left: 104px; top: 10px; }
+
+  /* Number labels along axes */
+  .ga-num {
+    position: absolute;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 6px;
+    color: rgba(148,163,184,0.8);
+    pointer-events: none;
+  }
+
+  /* X-axis numbers */
+  .ga-nx1 { left: 117px; top: 103px; }
+  .ga-nx2 { left: 137px; top: 103px; }
+  .ga-nx3 { left: 157px; top: 103px; }
+  .ga-nx-1 { left: 75px; top: 103px; }
+  .ga-nx-2 { left: 55px; top: 103px; }
+  .ga-nx-3 { left: 35px; top: 103px; }
+
+  /* Y-axis numbers */
+  .ga-ny1 { left: 90px; top: 78px; }
+  .ga-ny2 { left: 90px; top: 58px; }
+  .ga-ny3 { left: 90px; top: 38px; }
+  .ga-ny-1 { left: 87px; top: 118px; }
+  .ga-ny-2 { left: 87px; top: 138px; }
+  .ga-ny-3 { left: 87px; top: 158px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="graph-axes">
+  <div class="ga-bg"></div>
+  <div class="ga-grid-h"></div>
+  <div class="ga-grid-v"></div>
+  <div class="ga-x-ticks"></div>
+  <div class="ga-y-ticks"></div>
+  <div class="ga-x-axis"></div>
+  <div class="ga-y-axis"></div>
+  <span class="ga-label ga-label-o">O</span>
+  <span class="ga-label ga-label-x">x</span>
+  <span class="ga-label ga-label-y">y</span>
+  <span class="ga-num ga-nx1">1</span>
+  <span class="ga-num ga-nx2">2</span>
+  <span class="ga-num ga-nx3">3</span>
+  <span class="ga-num ga-nx-1">-1</span>
+  <span class="ga-num ga-nx-2">-2</span>
+  <span class="ga-num ga-nx-3">-3</span>
+  <span class="ga-num ga-ny1">1</span>
+  <span class="ga-num ga-ny2">2</span>
+  <span class="ga-num ga-ny3">3</span>
+  <span class="ga-num ga-ny-1">-1</span>
+  <span class="ga-num ga-ny-2">-2</span>
+  <span class="ga-num ga-ny-3">-3</span>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Show/hide grid
+  // graphEl.style.setProperty("--grid-opacity", showGrid ? "0.3" : "0");
+
+  // Animate grid appearing
+  // var gridOp = Math.min(0.3, time * 0.5);
+  // graphEl.style.setProperty("--grid-opacity", gridOp);
+
+  // Change axis color
+  // graphEl.style.setProperty("--axis-color", "rgba(96,165,250,1)");
+-->

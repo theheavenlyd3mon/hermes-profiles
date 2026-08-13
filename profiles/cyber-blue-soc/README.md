@@ -13,7 +13,7 @@ Alert → Triage → Enrich → Decide (escalate/contain/monitor) → Document
 
 Signal-aware. Prefers detections that hold under noise. Reduces alert fatigue without lowering risk acceptance.
 
-## Skills
+## Skills (376 total)
 - SOC workflows via Anthropic Cybersecurity Skills collection
 - Detection engineering references
 - Sigma-style rule concepts and TI enrichment

@@ -1,0 +1,183 @@
+<!--
+  K12 Asset: 集气瓶
+  ID: gas-bottle
+  Suitable: 气体收集, 气体性质, 燃烧实验, 氧气制备, 二氧化碳收集
+  CSS Vars:
+    --fill (0=empty, 1=full, controls gas opacity inside bottle)
+    --gas-color (default: rgba(180,220,255,0.15))
+  JS Hooks: set --fill for gas density, --gas-color for gas type
+  Size: 44×64px at 1920×1080
+
+  Note: Straight cylindrical glass bottle with ground-glass plate on top.
+  Gas fills as translucent colored interior.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .gas-bottle {
+    position: absolute;
+    width: 44px;
+    height: 64px;
+    margin-left: -22px;
+    transform-origin: 50% 100%;
+    --fill: 0.4;
+    --gas-color: rgba(180,220,255,0.15);
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .gas-bottle::after {
+    content: "";
+    position: absolute;
+    left: -2px; right: -2px; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 68%);
+  }
+
+  /* Glass body — straight cylinder */
+  .gb-body {
+    position: absolute;
+    left: 4px; top: 8px;
+    width: 36px; height: 52px;
+    border-radius: 3px 3px 4px 4px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 22%, transparent 78%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06) 50%, rgba(160,200,240,0.08)),
+      radial-gradient(ellipse at 22% 25%, rgba(234,234,234,0.12), transparent 45%),
+      linear-gradient(90deg, rgba(140,180,230,0.1), rgba(120,160,220,0.06) 50%, rgba(140,180,230,0.08));
+    border: 1.2px solid rgba(180,210,240,0.28);
+    border-top: none;
+    box-shadow:
+      inset 0 -4px 8px rgba(0,0,0,0.05),
+      inset 1px 0 3px rgba(255,255,255,0.06),
+      inset -1px 0 3px rgba(255,255,255,0.04),
+      0 0 6px rgba(140,180,230,0.08);
+    overflow: hidden;
+  }
+
+  /* Glass highlight — vertical reflection stripe */
+  .gb-body::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 2px; height: 46px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.12) 50%,
+      transparent 85%);
+  }
+
+  /* Glass bottom thickness */
+  .gb-body::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 4px;
+    background:
+      linear-gradient(180deg, rgba(180,210,240,0.15), rgba(140,180,220,0.1));
+    border-radius: 0 0 3px 3px;
+  }
+
+  /* Gas filling — translucent colored interior */
+  .gb-gas {
+    position: absolute;
+    left: 1px; right: 1px;
+    top: 1px; bottom: 3px;
+    border-radius: 2px 2px 3px 3px;
+    opacity: var(--fill);
+    background:
+      radial-gradient(ellipse at 50% 40%, var(--gas-color), transparent 70%),
+      radial-gradient(ellipse at 30% 70%, var(--gas-color), transparent 60%),
+      radial-gradient(ellipse at 70% 55%, var(--gas-color), transparent 55%),
+      linear-gradient(180deg, var(--gas-color), var(--gas-color));
+    box-shadow:
+      inset 0 0 12px rgba(255,255,255,0.03);
+  }
+
+  /* Gas swirl effect — subtle internal movement */
+  .gb-gas::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234,234,234,0.06), transparent 60%);
+  }
+
+  /* Mouth rim — top edge of bottle */
+  .gb-mouth {
+    position: absolute;
+    left: 3px; top: 5px;
+    width: 38px; height: 4px;
+    border-radius: 1.5px;
+    background:
+      linear-gradient(180deg, rgba(200,220,240,0.25), rgba(160,190,230,0.15));
+    border: 0.8px solid rgba(180,210,240,0.22);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  /* Ground-glass plate — frosted disc sitting on top */
+  .gb-plate {
+    position: absolute;
+    left: 0; top: 0;
+    width: 44px; height: 6px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 40%),
+      linear-gradient(180deg, rgba(220,230,240,0.35), rgba(190,205,220,0.25) 50%, rgba(170,190,210,0.3));
+    border: 0.8px solid rgba(200,215,230,0.3);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -1px 2px rgba(0,0,0,0.06),
+      0 2px 4px rgba(0,0,0,0.12);
+  }
+
+  /* Frosted texture on plate */
+  .gb-plate::before {
+    content: "";
+    position: absolute;
+    left: 3px; top: 1px; right: 3px; bottom: 1px;
+    border-radius: 1px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(234,234,234,0.06) 0px, rgba(234,234,234,0.06) 1px,
+        transparent 1px, transparent 3px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="gas-bottle">
+  <div class="gb-body">
+    <div class="gb-gas"></div>
+  </div>
+  <div class="gb-mouth"></div>
+  <div class="gb-plate"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set gas density (0 = empty, 1 = full/opaque)
+  var fill = Math.max(0, Math.min(1, gasDensity));
+  bottleEl.style.setProperty("--fill", fill);
+
+  // Animate gas swirl (subtle movement of internal highlight)
+  var gasEl = bottleEl.querySelector(".gb-gas");
+  if (gasEl && gasEl.firstElementChild) {
+    var swX = 4 + Math.sin(time * 0.8) * 6;
+    var swY = 4 + Math.cos(time * 0.6) * 8;
+    gasEl.firstElementChild.style.left = swX + "px";
+    gasEl.firstElementChild.style.top = swY + "px";
+  }
+
+  // Set gas color for different gases:
+  // O2 (colorless): "rgba(180,220,255,0.12)"
+  // Cl2 (yellow-green): "rgba(180,220,80,0.25)"
+  // NO2 (brown): "rgba(180,100,40,0.3)"
+  // bottleEl.style.setProperty("--gas-color", "rgba(180,220,80,0.25)");
+
+  // Smooth gas collection animation:
+  // var t = Math.min(1, (time - collectStart) / collectDuration);
+  // var eased = t * t * (3 - 2 * t);
+  // bottleEl.style.setProperty("--fill", eased);
+-->

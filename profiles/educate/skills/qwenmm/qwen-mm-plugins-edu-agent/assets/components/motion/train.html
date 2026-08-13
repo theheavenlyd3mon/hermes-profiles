@@ -1,0 +1,254 @@
+<!--
+  K12 Asset: 火车（机车头）
+  ID: train
+  Suitable: 火车过桥, 追及相遇, 匀速运动, 隧道问题
+  CSS Vars: --paint-a (lighter body), --paint-b (darker body), --wheel-spin (rotation angle)
+  JS Hooks: bob via translateY(Math.sin(time*6)*0.4) when moving; rod piston via Math.sin(spin)
+  Size: 240×76px at 1920×1080
+
+  Variants:
+    .train-a { --paint-a: #60a5fa; --paint-b: #1e3a8a; }  (blue, default)
+    .train-b { --paint-a: #f87171; --paint-b: #7f1d1d; }  (red)
+  Flip: transform: scaleX(-1) to face left
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .train {
+    position: absolute;
+    width: 240px;
+    height: 76px;
+    margin-left: -120px;
+    transform-origin: 50% 84%;
+    z-index: 12;
+    --paint-a: #60a5fa;
+    --paint-b: #1e3a8a;
+    --wheel-spin: 0deg;
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4));
+  }
+
+  /* Ground shadow */
+  .train::after {
+    content: "";
+    position: absolute;
+    left: 10px; right: 6px; bottom: 0;
+    height: 20px;
+    border-radius: 999px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.46), transparent 70%);
+    z-index: -1;
+  }
+
+  /* Main body — 7-layer gradient */
+  .train-body {
+    position: absolute;
+    left: 3px; right: 3px; bottom: 10px;
+    height: 50px;
+    border-radius: 6px 16px 10px 6px;
+    background:
+      radial-gradient(circle at 97% 42%, rgba(254,240,138,0.92) 0 6px, transparent 8px),
+      radial-gradient(circle at 3% 52%, rgba(248,113,113,0.78) 0 4px, transparent 6px),
+      radial-gradient(ellipse at 80% 14%, rgba(234,234,234,0.18) 0 16px, transparent 28px),
+      radial-gradient(ellipse at 30% 16%, rgba(234,234,234,0.12) 0 20px, transparent 32px),
+      linear-gradient(180deg, rgba(234,234,234,0.44), transparent 22%),
+      linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.16) 100%),
+      linear-gradient(135deg, var(--paint-a) 0%, var(--paint-b) 72%);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.36),
+      inset 0 -18px 26px rgba(2,6,23,0.32),
+      0 10px 24px rgba(30,58,138,0.3);
+  }
+
+  /* Flush windshield band */
+  .train-body::before {
+    content: "";
+    position: absolute;
+    left: 6px; top: -16px;
+    width: 62px; height: 22px;
+    border-radius: 8px 10px 0 0;
+    background:
+      radial-gradient(ellipse at 28% 30%, rgba(234,234,234,0.44), transparent 40%),
+      linear-gradient(120deg, rgba(186,230,253,0.42), rgba(30,58,138,0.36) 48%, rgba(15,23,42,0.44) 76%);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-bottom: none;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.1),
+      inset 0 -6px 10px rgba(15,23,42,0.22);
+  }
+
+  /* Chrome waistline */
+  .train-body::after {
+    content: "";
+    position: absolute;
+    left: 8px; top: 14px;
+    width: 190px; height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+      rgba(234,234,234,0.12),
+      rgba(234,234,234,0.48) 20%,
+      rgba(234,234,234,0.55) 50%,
+      rgba(234,234,234,0.48) 80%,
+      rgba(234,234,234,0.12));
+    box-shadow: 0 1px 3px rgba(255,255,255,0.06);
+  }
+
+  /* Metallic nose cone */
+  .train-nose {
+    position: absolute;
+    right: 0; bottom: 10px;
+    width: 14px; height: 50px;
+    border-radius: 0 16px 10px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.32), rgba(148,163,184,0.48) 40%, rgba(71,85,105,0.56) 80%),
+      linear-gradient(135deg, var(--paint-a), var(--paint-b));
+    border: 1px solid rgba(255,255,255,0.18);
+    border-left: none;
+    box-shadow:
+      inset -2px 0 6px rgba(255,255,255,0.12),
+      inset 0 -12px 16px rgba(2,6,23,0.24);
+  }
+
+  /* Headlamp */
+  .train-headlamp {
+    position: absolute;
+    right: 10px; top: 20px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #fffde8 0 28%, #fbbf24 29% 52%, rgba(251,191,36,0.4) 53% 72%, transparent 73%);
+    box-shadow:
+      0 0 6px rgba(251,191,36,0.9),
+      0 0 16px rgba(251,191,36,0.5),
+      0 0 32px rgba(251,191,36,0.2);
+  }
+
+  .train-headlamp::before {
+    content: "";
+    position: absolute;
+    left: 8px; top: -8px;
+    width: 36px; height: 28px;
+    border-radius: 0 50% 50% 0;
+    background: linear-gradient(90deg, rgba(251,191,36,0.12), transparent 80%);
+    filter: blur(3px);
+  }
+
+  /* Running board */
+  .train-board {
+    position: absolute;
+    left: 12px; right: 18px; bottom: 8px;
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.3), rgba(203,213,225,0.5) 50%, rgba(148,163,184,0.3));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  /* Panel line */
+  .train-panel {
+    position: absolute;
+    left: 72px; bottom: 12px;
+    width: 1px; height: 36px;
+    background: #ffffff;
+  }
+
+  /* Drive wheels */
+  .train-wheel {
+    position: absolute;
+    bottom: 0;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #e2e8f0 0 2px, #94a3b8 3px 4px, #1e293b 5px 6px, #475569 7px 9px, #0f172a 10px 12px);
+    border: 2px solid #0f172a;
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      0 3px 6px rgba(0,0,0,0.48),
+      0 6px 12px rgba(0,0,0,0.22);
+    transform: rotate(var(--wheel-spin));
+  }
+
+  .train-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background:
+      linear-gradient(60deg, transparent 36%, rgba(234,234,234,0.35) 37% 63%, transparent 64%),
+      linear-gradient(-60deg, transparent 36%, rgba(234,234,234,0.35) 37% 63%, transparent 64%),
+      linear-gradient(0deg, transparent 38%, rgba(234,234,234,0.28) 39% 61%, transparent 62%);
+  }
+
+  .train-wheel::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 5px; height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f1f5f9, #94a3b8);
+    box-shadow: 0 0 2px rgba(255,255,255,0.3);
+  }
+
+  .tw-1 { left: 12px; }
+  .tw-2 { left: 44px; }
+  .tw-3 { left: 76px; }
+  .tw-4 { right: 68px; }
+  .tw-5 { right: 36px; }
+  .tw-6 { right: 12px; }
+
+  /* Connecting rod */
+  .train-rod {
+    position: absolute;
+    left: 22px; bottom: 12px;
+    width: 168px; height: 3px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, rgba(148,163,184,0.4), rgba(203,213,225,0.7) 30%, rgba(203,213,225,0.7) 70%, rgba(148,163,184,0.4));
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.18),
+      0 2px 4px rgba(0,0,0,0.22);
+  }
+
+  /* Color variants */
+  .train-a { --paint-a: #60a5fa; --paint-b: #1e3a8a; }
+  .train-b { --paint-a: #f87171; --paint-b: #7f1d1d; }
+  .train-b .train-body {
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.36),
+      inset 0 -18px 26px rgba(2,6,23,0.32),
+      0 10px 24px rgba(127,29,29,0.3);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="train train-a">
+  <div class="train-body"></div>
+  <div class="train-nose"></div>
+  <div class="train-headlamp"></div>
+  <div class="train-board"></div>
+  <div class="train-panel"></div>
+  <div class="train-rod"></div>
+  <div class="train-wheel tw-1"></div>
+  <div class="train-wheel tw-2"></div>
+  <div class="train-wheel tw-3"></div>
+  <div class="train-wheel tw-4"></div>
+  <div class="train-wheel tw-5"></div>
+  <div class="train-wheel tw-6"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Wheel spin proportional to distance traveled
+  var spinDeg = distanceKm * 4;
+  trainEl.style.setProperty("--wheel-spin", spinDeg + "deg");
+
+  // Subtle vertical bob only when moving
+  var moving = (speed > 0) ? 1 : 0;
+  var bob = Math.sin(time * 6) * 0.4 * moving;
+  trainEl.style.transform = "translate3d(" + xPx + "px, " + bob + "px, 0)";
+
+  // Connecting rod piston oscillation
+  var rodOffset = Math.sin(spinDeg * Math.PI / 180) * 3;
+  rodEl.style.transform = "translateX(" + rodOffset + "px)";
+-->

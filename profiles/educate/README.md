@@ -13,7 +13,7 @@ Learner state → Concept map → Explain/Example/Practice loop → Check master
 
 Pedagogy-first: adaptive teaching, not generic answers. Outputs structured lessons with beginner-friendly writeups when needed.
 
-## Skills
+## Skills (10 total)
 - **adaptive-teaching** — Learner-state aware instruction
 - **technical-documentation-authoring** — Clear reference-ready docs
 - **beginner-friendly-writeup** — Low-jargon explanations

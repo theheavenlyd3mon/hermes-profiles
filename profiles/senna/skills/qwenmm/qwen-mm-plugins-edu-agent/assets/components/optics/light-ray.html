@@ -1,0 +1,195 @@
+<!--
+  K12 Asset: 光线
+  ID: light-ray
+  Suitable: 光的直线传播, 光的反射, 光的折射, 凸透镜成像, 全反射
+  CSS Vars:
+    --ray-length (default 200px, beam length)
+    --ray-color (default rgba(255,210,80,1), beam color)
+    --ray-opacity (0-1, overall visibility)
+  JS Hooks: set --ray-length, --ray-color, --ray-opacity; animate glow via Math.sin
+  Size: variable (--ray-length)×6px at 1920×1080
+
+  Variants:
+    .light-ray           — default gold/yellow incident ray
+    .ray-incident        — gold incident ray (same as default)
+    .ray-refracted       — cyan/blue refracted ray
+    .ray-reflected       — green reflected ray
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .light-ray {
+    position: absolute;
+    width: var(--ray-length, 200px);
+    height: 6px;
+    margin-top: -3px;
+    transform-origin: 0% 50%;
+    --ray-length: 200px;
+    --ray-color: rgba(255,210,80,1);
+    --ray-opacity: 1;
+    opacity: var(--ray-opacity);
+    filter: drop-shadow(0 0 6px rgba(255,210,80,0.5));
+  }
+
+  /* Main beam — thin gradient line with glow */
+  .ray-beam {
+    position: absolute;
+    left: 0;
+    top: 1.5px;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.6) 0%, rgba(234,234,234,0.1) 8%, transparent 12%, transparent 88%, rgba(234,234,234,0.1) 92%, rgba(234,234,234,0.4) 100%),
+      linear-gradient(90deg, rgba(255,210,80,0.2), rgba(255,210,80,0.9) 10%, rgba(255,210,80,1) 50%, rgba(255,210,80,0.9) 90%, rgba(255,210,80,0.3)),
+      linear-gradient(180deg, rgba(234,234,234,0.3), rgba(255,210,80,1) 40%, rgba(220,170,40,1) 70%, rgba(200,150,30,0.8));
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.25),
+      0 0 4px rgba(255,210,80,0.6),
+      0 0 12px rgba(255,210,80,0.25);
+  }
+
+  /* Glow halo — soft ambient light around beam */
+  .ray-glow {
+    position: absolute;
+    left: 0;
+    top: -4px;
+    width: 100%;
+    height: 14px;
+    border-radius: 7px;
+    background:
+      linear-gradient(90deg, transparent 2%, rgba(255,210,80,0.08) 10%, rgba(255,210,80,0.12) 50%, rgba(255,210,80,0.08) 90%, transparent 98%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,210,80,0.1), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Arrowhead at tip */
+  .ray-arrow {
+    position: absolute;
+    right: -1px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid rgba(255,210,80,1);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    filter: drop-shadow(2px 0 4px rgba(255,210,80,0.5));
+  }
+
+  /* Arrow inner highlight */
+  .ray-arrow::before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid rgba(255,255,255,0.2);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  /* ============ VARIANT: INCIDENT RAY (gold, same as default) ============ */
+  .ray-incident {
+    --ray-color: rgba(255,210,80,1);
+    filter: drop-shadow(0 0 6px rgba(255,210,80,0.5));
+  }
+
+  /* ============ VARIANT: REFRACTED RAY (cyan/blue) ============ */
+  .ray-refracted {
+    --ray-color: rgba(80,210,255,1);
+    filter: drop-shadow(0 0 6px rgba(80,210,255,0.5));
+  }
+
+  .ray-refracted .ray-beam {
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.5) 0%, rgba(234,234,234,0.08) 8%, transparent 12%, transparent 88%, rgba(234,234,234,0.08) 92%, rgba(234,234,234,0.3) 100%),
+      linear-gradient(90deg, rgba(80,210,255,0.2), rgba(80,210,255,0.9) 10%, rgba(80,210,255,1) 50%, rgba(80,210,255,0.9) 90%, rgba(80,210,255,0.3)),
+      linear-gradient(180deg, rgba(234,234,234,0.25), rgba(80,210,255,1) 40%, rgba(40,170,220,1) 70%, rgba(30,150,200,0.8));
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.2),
+      0 0 4px rgba(80,210,255,0.6),
+      0 0 12px rgba(80,210,255,0.25);
+  }
+
+  .ray-refracted .ray-glow {
+    background:
+      linear-gradient(90deg, transparent 2%, rgba(80,210,255,0.08) 10%, rgba(80,210,255,0.12) 50%, rgba(80,210,255,0.08) 90%, transparent 98%),
+      radial-gradient(ellipse at 50% 50%, rgba(80,210,255,0.1), transparent 70%);
+  }
+
+  .ray-refracted .ray-arrow {
+    border-left-color: rgba(80,210,255,1);
+    filter: drop-shadow(2px 0 4px rgba(80,210,255,0.5));
+  }
+
+  /* ============ VARIANT: REFLECTED RAY (green) ============ */
+  .ray-reflected {
+    --ray-color: rgba(100,230,120,1);
+    filter: drop-shadow(0 0 6px rgba(100,230,120,0.5));
+  }
+
+  .ray-reflected .ray-beam {
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.5) 0%, rgba(234,234,234,0.08) 8%, transparent 12%, transparent 88%, rgba(234,234,234,0.08) 92%, rgba(234,234,234,0.3) 100%),
+      linear-gradient(90deg, rgba(100,230,120,0.2), rgba(100,230,120,0.9) 10%, rgba(100,230,120,1) 50%, rgba(100,230,120,0.9) 90%, rgba(100,230,120,0.3)),
+      linear-gradient(180deg, rgba(234,234,234,0.25), rgba(100,230,120,1) 40%, rgba(60,190,80,1) 70%, rgba(40,160,60,0.8));
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.2),
+      0 0 4px rgba(100,230,120,0.6),
+      0 0 12px rgba(100,230,120,0.25);
+  }
+
+  .ray-reflected .ray-glow {
+    background:
+      linear-gradient(90deg, transparent 2%, rgba(100,230,120,0.08) 10%, rgba(100,230,120,0.12) 50%, rgba(100,230,120,0.08) 90%, transparent 98%),
+      radial-gradient(ellipse at 50% 50%, rgba(100,230,120,0.1), transparent 70%);
+  }
+
+  .ray-reflected .ray-arrow {
+    border-left-color: rgba(100,230,120,1);
+    filter: drop-shadow(2px 0 4px rgba(100,230,120,0.5));
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="ray1" class="light-ray">
+  <div class="ray-glow"></div>
+  <div class="ray-beam"></div>
+  <div class="ray-arrow"></div>
+</div>
+
+<!-- ===== HTML: refracted variant ===== -->
+<!--
+<div id="ray2" class="light-ray ray-refracted">
+  <div class="ray-glow"></div>
+  <div class="ray-beam"></div>
+  <div class="ray-arrow"></div>
+</div>
+-->
+
+<!-- ===== HTML: reflected variant ===== -->
+<!--
+<div id="ray3" class="light-ray ray-reflected">
+  <div class="ray-glow"></div>
+  <div class="ray-beam"></div>
+  <div class="ray-arrow"></div>
+</div>
+-->
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set ray length dynamically
+  // ray1.style.setProperty("--ray-length", "300px");
+
+  // Glow pulse — subtle brightness oscillation
+  var glowPulse = 0.85 + Math.sin(time * 4.5) * 0.15;
+  ray1.style.opacity = glowPulse;
+
+  // Animate ray extending (e.g. for tracing light paths)
+  // var progress = Math.min(1, (time - rayStart) / rayDuration);
+  // var eased = progress * progress * (3 - 2 * progress);
+  // ray1.style.setProperty("--ray-length", (eased * 300) + "px");
+
+  // Set rotation for angle of incidence/reflection
+  // ray1.style.transform = "rotate(" + angle + "deg)";
+-->

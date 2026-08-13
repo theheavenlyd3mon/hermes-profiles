@@ -19,7 +19,7 @@ Content → Structure (atomic notes) → Link (backlinks/wikilinks) → Tag → 
 
 Obsidian-native. YAML frontmatter. Backlinks over folders. Atomic notes. Silent on vault unless asked.
 
-## Skills (35 total)
+## Skills (41 total)
 
 Key skills:
 - **obsidian** — Read, search, create, edit notes in Obsidian vaults

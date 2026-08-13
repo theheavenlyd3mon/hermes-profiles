@@ -1,0 +1,209 @@
+<!--
+  K12 Asset: 砝码组
+  ID: weight-set
+  Suitable: 天平使用, 质量测量, 等臂天平, 实验操作
+  CSS Vars: (static display, mainly for composition)
+  JS Hooks: none (static asset)
+  Size: 80x40px at 1920x1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .weight-set {
+    position: absolute;
+    width: 80px;
+    height: 40px;
+    margin-left: -40px;
+    margin-top: -20px;
+    transform-origin: 50% 100%;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .weight-set::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 88px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.34), transparent 68%);
+  }
+
+  /* Tray — flat metallic base */
+  .ws-tray {
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 6px;
+    border-radius: 2px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 25%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #64748b, #94a3b8 30%, #cbd5e1 50%, #94a3b8 70%, #64748b);
+    border: 1px solid rgba(71,85,105,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(0,0,0,0.15),
+      0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  /* Tray lip */
+  .ws-tray::before {
+    content: "";
+    position: absolute;
+    left: -1px; right: -1px; top: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(90deg, rgba(148,163,184,0.4), rgba(226,232,240,0.6) 50%, rgba(148,163,184,0.4));
+  }
+
+  /* Shared weight style — trapezoidal with metallic finish */
+  .ws-weight {
+    position: absolute;
+    bottom: 6px;
+    border-radius: 2px 2px 1px 1px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 20%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.18)),
+      linear-gradient(90deg, #b8860b, #daa520 25%, #f0c850 50%, #daa520 75%, #b8860b);
+    border: 1px solid rgba(184,134,11,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.25),
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      1px 0 3px rgba(0,0,0,0.1);
+  }
+
+  /* Weight knob — small handle on top */
+  .ws-weight::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: -3px;
+    width: 4px; height: 3px;
+    margin-left: -2px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent),
+      linear-gradient(90deg, #b8860b, #daa520, #b8860b);
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+  }
+
+  /* Weight label marking */
+  .ws-weight::after {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    color: rgba(120,80,10,0.6);
+    text-shadow: 0 0.5px rgba(255,255,255,0.2);
+  }
+
+  /* Individual weight sizes — graduated */
+  .ws-w1 {
+    left: 5px;
+    width: 16px; height: 22px;
+  }
+  .ws-w1::after { content: "200"; font-size: 4px; }
+  .ws-w1::before { width: 5px; margin-left: -2.5px; }
+
+  .ws-w2 {
+    left: 23px;
+    width: 14px; height: 18px;
+  }
+  .ws-w2::after { content: "100"; font-size: 4px; }
+
+  .ws-w3 {
+    left: 39px;
+    width: 12px; height: 14px;
+  }
+  .ws-w3::after { content: "50"; font-size: 4px; }
+
+  .ws-w4 {
+    left: 53px;
+    width: 10px; height: 10px;
+  }
+  .ws-w4::after { content: "20"; font-size: 3.5px; }
+
+  .ws-w5 {
+    left: 65px;
+    width: 8px; height: 7px;
+  }
+  .ws-w5::after { content: "10"; font-size: 3px; }
+
+  /* Tweezers/forceps */
+  .ws-tweezers {
+    position: absolute;
+    right: -2px; bottom: 6px;
+    width: 3px; height: 28px;
+    transform: rotate(15deg);
+    transform-origin: 50% 100%;
+  }
+
+  /* Tweezers arms — two prongs */
+  .ws-tweezers::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 1px; height: 28px;
+    background:
+      linear-gradient(180deg, #94a3b8, #cbd5e1 40%, #94a3b8 80%);
+    border-radius: 0.5px;
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  .ws-tweezers::after {
+    content: "";
+    position: absolute;
+    left: 2px; top: 0;
+    width: 1px; height: 28px;
+    background:
+      linear-gradient(180deg, #94a3b8, #cbd5e1 40%, #94a3b8 80%);
+    border-radius: 0.5px;
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  /* Tweezers tip — converging */
+  .ws-tweezers-tip {
+    position: absolute;
+    right: -2px; bottom: 6px;
+    width: 3px; height: 4px;
+    transform: rotate(15deg);
+    transform-origin: 50% 100%;
+  }
+
+  .ws-tweezers-tip::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 3px; height: 4px;
+    clip-path: polygon(0% 0%, 33% 0%, 50% 100%, 0% 100%);
+    background: #94a3b8;
+  }
+
+  .ws-tweezers-tip::after {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 3px; height: 4px;
+    clip-path: polygon(67% 0%, 100% 0%, 100% 100%, 50% 100%);
+    background: #94a3b8;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="weight-set">
+  <div class="ws-tray"></div>
+  <div class="ws-weight ws-w1"></div>
+  <div class="ws-weight ws-w2"></div>
+  <div class="ws-weight ws-w3"></div>
+  <div class="ws-weight ws-w4"></div>
+  <div class="ws-weight ws-w5"></div>
+  <div class="ws-tweezers"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Static display — no animation needed
+  // For composition: position individual weights on balance pan
+  // weight1El.style.left = "..."; weight1El.style.bottom = "...";
+-->

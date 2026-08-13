@@ -1,0 +1,213 @@
+<!--
+  K12 Asset: 水槽/容器
+  ID: water-container
+  Suitable: 浮力, 液体压强, 密度, 排水法, 阿基米德原理, 连通器
+  CSS Vars: --level (0-1, water fill), --liquid-color (water tint)
+  JS Hooks: set --level for water rise/fall; animate submerging objects
+  Size: 80×60px at 1920×1080
+
+  Variants:
+    .wc           — default (water-filled container)
+    .wc-empty     — empty container
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .water-container {
+    position: absolute;
+    width: 80px;
+    height: 60px;
+    margin-left: -40px;
+    transform-origin: 50% 100%;
+    --level: 0.7;
+    --liquid-color: rgba(34, 182, 238, 0.35);
+    filter: drop-shadow(0 12px 18px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .water-container::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: 0;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+    z-index: -1;
+  }
+
+  /* Tank body — thick transparent glass walls */
+  .wc-tank {
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 72px; height: 52px;
+    border-radius: 2px 2px 4px 4px;
+    background:
+      linear-gradient(90deg,
+        rgba(234,234,234,0.28) 0%,
+        rgba(200,225,255,0.04) 8%,
+        transparent 20%,
+        transparent 80%,
+        rgba(200,225,255,0.04) 92%,
+        rgba(234,234,234,0.16) 100%),
+      linear-gradient(180deg,
+        rgba(220,240,255,0.08),
+        rgba(200,225,255,0.04) 40%,
+        rgba(180,210,240,0.06));
+    border: 2px solid rgba(160,200,240,0.3);
+    border-top: 2px solid rgba(180,210,240,0.35);
+    box-shadow:
+      inset 3px 0 8px rgba(255,255,255,0.08),
+      inset -3px 0 6px rgba(255,255,255,0.04),
+      inset 0 -4px 10px rgba(0,0,0,0.05),
+      0 0 8px rgba(140,180,240,0.06);
+    overflow: hidden;
+  }
+
+  /* Left wall glass reflection */
+  .wc-tank::before {
+    content: "";
+    position: absolute;
+    left: 1px; top: 3px;
+    width: 2px; height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.1) 40%,
+      rgba(234,234,234,0.06) 80%,
+      transparent);
+  }
+
+  /* Right wall subtle reflection */
+  .wc-tank::after {
+    content: "";
+    position: absolute;
+    right: 2px; top: 6px;
+    width: 1.5px; height: 38px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      transparent 10%,
+      rgba(234,234,234,0.12) 40%,
+      rgba(234,234,234,0.04) 80%);
+  }
+
+  /* Water body — fill height driven by --level */
+  .wc-water {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    height: calc(var(--level) * 48px);
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg,
+        rgba(234,234,234,0.08),
+        var(--liquid-color) 6%,
+        var(--liquid-color) 85%,
+        color-mix(in srgb, var(--liquid-color) 70%, rgba(0,30,60,0.2)));
+    box-shadow:
+      inset 0 2px 6px rgba(255,255,255,0.1),
+      inset 0 -4px 10px rgba(0,20,60,0.08);
+    transition: height 0.8s ease;
+  }
+
+  /* Water surface — meniscus + reflection */
+  .wc-water::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: -2px;
+    height: 4px;
+    background:
+      linear-gradient(180deg,
+        rgba(234,234,234,0.2),
+        var(--liquid-color) 80%);
+    border-radius: 2px;
+  }
+
+  /* Surface highlight — light reflection on water */
+  .wc-water::after {
+    content: "";
+    position: absolute;
+    left: 8px; top: 2px;
+    width: 24px; height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(234,234,234,0.22) 30%,
+      rgba(234,234,234,0.28) 50%,
+      rgba(234,234,234,0.22) 70%,
+      transparent);
+  }
+
+  /* Rim — thickened top edge */
+  .wc-rim {
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 76px; height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg,
+        rgba(220,235,255,0.2),
+        rgba(180,210,240,0.15) 50%,
+        rgba(160,200,240,0.1));
+    border: 1px solid rgba(160,200,240,0.25);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  /* Bottom thickness — glass base visible through water */
+  .wc-base {
+    position: absolute;
+    left: 4px; bottom: 0;
+    width: 72px; height: 4px;
+    border-radius: 0 0 3px 3px;
+    background:
+      linear-gradient(180deg,
+        rgba(200,225,255,0.1),
+        rgba(180,210,240,0.18));
+    border: 1px solid rgba(160,200,240,0.2);
+    border-top: none;
+    box-shadow: inset 0 -1px 2px rgba(0,0,0,0.04);
+  }
+
+  /* Scale marks on the side — graduated levels */
+  .wc-scale {
+    position: absolute;
+    right: 6px; top: 8px;
+    width: 4px; height: 44px;
+    pointer-events: none;
+  }
+
+  .wc-scale::before {
+    content: "";
+    position: absolute;
+    right: 0; top: 0;
+    width: 4px; height: 44px;
+    background: repeating-linear-gradient(180deg,
+      rgba(100,140,180,0.25) 0px,
+      rgba(100,140,180,0.25) 0.5px,
+      transparent 0.5px,
+      transparent 8.8px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="water-container" class="water-container">
+  <div class="wc-tank">
+    <div class="wc-water"></div>
+  </div>
+  <div class="wc-rim"></div>
+  <div class="wc-scale"></div>
+  <div class="wc-base"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set water level (0 = empty, 1 = full)
+  wcEl.style.setProperty("--level", 0.7);
+
+  // Animate water rising (e.g., object submerged)
+  // var targetLevel = baseLevel + volumeDisplaced / tankVolume;
+  // wcEl.style.setProperty("--level", Math.min(1, targetLevel));
+
+  // Change liquid color (e.g., adding dye)
+  // wcEl.style.setProperty("--liquid-color", "rgba(220, 160, 50, 0.35)");
+-->

@@ -1,0 +1,55 @@
+<!--
+  K12 Asset: 电压表原理图符号（Schematic Symbol）
+  ID: sch-voltmeter
+  Suitable: 串联电路, 并联电路, 欧姆定律, 电路图作图题
+  Size: circle r=30, NO built-in wire stubs
+
+  CRITICAL PHYSICS RULES:
+    1. 电压表必须并联在被测元件两端 (voltmeter MUST be wired in PARALLEL)
+    2. 电压表的 + 接线柱接被测元件靠近电源正极的一端
+       + terminal connects to the side of the measured component closer to battery +
+    3. 电压表的 - 接线柱接被测元件靠近电源负极的一端
+       - terminal connects to the side closer to battery -
+    4. 并联支路用虚线绘制 (dashed lines for parallel branch wires)
+       stroke-dasharray="8,4"
+
+  WIRE STUBS REMOVED (导线短桩已移除):
+    Unlike other sch-* components, the voltmeter has NO built-in wire stubs.
+    All dashed connection wires must be drawn externally by the circuit layout,
+    from the main circuit junction point to the voltmeter circle edge.
+    This prevents wires from protruding past the T-junction on the main loop.
+
+  Default orientation: vertical (typical for parallel branch)
+  Terminal endpoints: top at (0, -30), bottom at (0, 30) — at the circle edge
+  Circle center: (0, 0), radius: 30
+-->
+
+<!-- ===== SVG: Voltmeter (电压表 V) — vertical orientation ===== -->
+<g class="sch-voltmeter" transform="translate(0, 0)">
+  <!-- Circle -->
+  <circle cx="0" cy="0" r="30"
+          fill="rgba(37,99,235,0.06)" stroke="#2563eb" stroke-width="3"/>
+  <!-- Label "V" -->
+  <text x="0" y="9" text-anchor="middle" font-size="32" font-weight="700"
+        fill="#2563eb" font-family="'Noto Sans SC','PingFang SC',sans-serif">V</text>
+  <!-- Terminal labels -->
+  <text x="12" y="-18" text-anchor="start" font-size="18" font-weight="600"
+        fill="#dc2626" font-family="'Noto Sans SC','PingFang SC',sans-serif">+</text>
+  <text x="12" y="26" text-anchor="start" font-size="18" font-weight="600"
+        fill="#2563eb" font-family="'Noto Sans SC','PingFang SC',sans-serif">-</text>
+</g>
+
+<!-- ===== SVG: Voltmeter (电压表 V) — horizontal orientation ===== -->
+<g class="sch-voltmeter-h" transform="translate(0, 0)">
+  <!-- Circle -->
+  <circle cx="0" cy="0" r="30"
+          fill="rgba(37,99,235,0.06)" stroke="#2563eb" stroke-width="3"/>
+  <!-- Label "V" -->
+  <text x="0" y="9" text-anchor="middle" font-size="32" font-weight="700"
+        fill="#2563eb" font-family="'Noto Sans SC','PingFang SC',sans-serif">V</text>
+  <!-- Terminal labels -->
+  <text x="-20" y="-18" text-anchor="middle" font-size="18" font-weight="600"
+        fill="#dc2626" font-family="'Noto Sans SC','PingFang SC',sans-serif">+</text>
+  <text x="20" y="-18" text-anchor="middle" font-size="18" font-weight="600"
+        fill="#2563eb" font-family="'Noto Sans SC','PingFang SC',sans-serif">-</text>
+</g>

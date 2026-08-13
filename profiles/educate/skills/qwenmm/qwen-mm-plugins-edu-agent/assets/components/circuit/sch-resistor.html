@@ -1,0 +1,30 @@
+<!--
+  K12 Asset: 电阻原理图符号（Schematic Symbol）
+  ID: sch-resistor
+  Suitable: 欧姆定律, 串联电路, 并联电路, 电功率
+  Size: rect 48×20, with terminal stubs
+
+  Anatomy:
+    - Rectangle (矩形框)
+    - Label below (e.g., R, R1, R2)
+
+  Default orientation: horizontal
+  Terminal endpoints: left at (-44, 0), right at (44, 0)
+  Rect center: (0, 0), width: 48, height: 20
+-->
+
+<!-- ===== SVG: Resistor (电阻) ===== -->
+<g class="sch-resistor" transform="translate(0, 0)">
+  <!-- Left wire stub -->
+  <line x1="-44" y1="0" x2="-24" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Rectangle body -->
+  <rect x="-24" y="-10" width="48" height="20" rx="2"
+        fill="rgba(255,255,255,0.6)" stroke="#1a1f36" stroke-width="3"/>
+  <!-- Right wire stub -->
+  <line x1="24" y1="0" x2="44" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Label (replace text content with actual label) -->
+  <text x="0" y="30" text-anchor="middle" font-size="22" font-weight="600"
+        fill="#0891b2" font-family="'Noto Sans SC','PingFang SC',sans-serif">R</text>
+</g>

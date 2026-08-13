@@ -1,0 +1,219 @@
+<!--
+  K12 Asset: 光屏
+  ID: screen
+  Suitable: 凸透镜成像, 焦距测量, 实像观察, 小孔成像
+  CSS Vars: --image-brightness (0-1 for projected image visibility on face)
+  JS Hooks: set --image-brightness for projected glow; animate via Math.sin
+  Size: 6×60px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .screen {
+    position: absolute;
+    width: 6px;
+    height: 60px;
+    margin-left: -3px;
+    transform-origin: 50% 100%;
+    --image-brightness: 0;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.28));
+  }
+
+  /* Ground shadow */
+  .screen::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    bottom: -8px;
+    width: 22px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* White/cream projection face — front surface */
+  .screen-face {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 60px;
+    border-radius: 1px 0 0 1px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.9) 0%, rgba(245,242,235,0.85) 50%, rgba(235,230,220,0.8) 100%),
+      linear-gradient(180deg, rgba(250,248,242,0.95), rgba(240,236,228,0.9) 25%, rgba(235,230,220,0.88) 50%, rgba(240,236,228,0.9) 75%, rgba(250,248,242,0.95)),
+      radial-gradient(ellipse at 30% 25%, rgba(234,234,234,0.2), transparent 50%),
+      linear-gradient(180deg, rgba(245,240,232,1), rgba(238,234,226,1) 50%, rgba(245,240,232,1));
+    box-shadow:
+      inset 1px 0 2px rgba(255,255,255,0.4),
+      inset 0 2px 3px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(200,195,185,0.15),
+      0 0 4px rgba(245,240,230,0.1);
+  }
+
+  /* Subtle surface texture — vertical grain */
+  .screen-face::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 3px;
+    width: 1px;
+    height: 54px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.5),
+      rgba(234,234,234,0.2) 30%,
+      rgba(234,234,234,0.15) 50%,
+      rgba(234,234,234,0.2) 70%,
+      rgba(234,234,234,0.5));
+  }
+
+  /* Projected image glow on face */
+  .screen-face::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 8px;
+    width: 12px;
+    height: 44px;
+    border-radius: 4px;
+    background: radial-gradient(ellipse at 80% 50%,
+      rgba(255,220,140,0.35),
+      rgba(255,200,100,0.15) 40%,
+      transparent 70%);
+    opacity: var(--image-brightness);
+    pointer-events: none;
+  }
+
+  /* Gray frame / edge — side thickness */
+  .screen-frame {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 3px;
+    height: 60px;
+    border-radius: 0 1px 1px 0;
+    background:
+      linear-gradient(90deg, rgba(140,138,132,0.9), rgba(110,108,102,0.85) 50%, rgba(130,128,122,0.8)),
+      linear-gradient(180deg, rgba(150,148,142,0.9), rgba(120,118,112,0.85) 50%, rgba(150,148,142,0.9)),
+      linear-gradient(180deg, rgba(135,133,127,1), rgba(115,113,107,1));
+    box-shadow:
+      inset -1px 0 2px rgba(0,0,0,0.2),
+      inset 0 2px 3px rgba(0,0,0,0.1),
+      inset 0 -2px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Frame edge line separator */
+  .screen-frame::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 0.5px;
+    height: 56px;
+    background: linear-gradient(180deg,
+      rgba(90,88,82,0.4),
+      rgba(90,88,82,0.6) 50%,
+      rgba(90,88,82,0.4));
+  }
+
+  /* Top edge cap */
+  .screen-cap-top {
+    position: absolute;
+    left: -1px;
+    top: -2px;
+    width: 8px;
+    height: 3px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, rgba(160,158,150,0.85), rgba(130,128,122,0.7)),
+      linear-gradient(90deg, rgba(150,148,142,0.8), rgba(120,118,112,0.6) 50%, rgba(150,148,142,0.8));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.12);
+  }
+
+  /* Bottom edge cap */
+  .screen-cap-bottom {
+    position: absolute;
+    left: -1px;
+    bottom: -2px;
+    width: 8px;
+    height: 3px;
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(130,128,122,0.7), rgba(160,158,150,0.85)),
+      linear-gradient(90deg, rgba(150,148,142,0.8), rgba(120,118,112,0.6) 50%, rgba(150,148,142,0.8));
+    box-shadow: inset 0 -1px 1px rgba(255,255,255,0.08);
+  }
+
+  /* Backside support stand — triangular brace */
+  .screen-stand {
+    position: absolute;
+    right: 0;
+    bottom: 4px;
+    width: 10px;
+    height: 1.5px;
+    background:
+      linear-gradient(90deg, rgba(100,98,92,0.8), rgba(80,78,72,0.6)),
+      linear-gradient(180deg, rgba(110,108,102,0.7), rgba(90,88,82,0.7));
+    transform: rotate(-25deg);
+    transform-origin: 0% 50%;
+    border-radius: 1px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* Stand foot */
+  .screen-stand::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -3px;
+    width: 6px;
+    height: 4px;
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(100,98,92,0.7), rgba(70,68,62,0.8));
+  }
+
+  /* Projected image spot — visible when brightness > 0 */
+  .screen-projection {
+    position: absolute;
+    left: -2px;
+    top: 15px;
+    width: 4px;
+    height: 30px;
+    border-radius: 2px;
+    background: radial-gradient(ellipse at 80% 50%,
+      rgba(255,240,200,0.4),
+      rgba(255,220,160,0.2) 50%,
+      transparent 80%);
+    opacity: var(--image-brightness);
+    box-shadow:
+      0 0 6px rgba(255,220,140,0.25),
+      0 0 14px rgba(255,200,100,0.12);
+    pointer-events: none;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="screen" class="screen">
+  <div class="screen-face"></div>
+  <div class="screen-frame"></div>
+  <div class="screen-cap-top"></div>
+  <div class="screen-cap-bottom"></div>
+  <div class="screen-stand"></div>
+  <div class="screen-projection"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set projected image brightness (0 = no image, 1 = bright image)
+  screen.style.setProperty("--image-brightness", 0.8);
+
+  // Animate image appearing (e.g. when lens focuses)
+  // var t = Math.min(1, (time - focusStart) / focusDuration);
+  // var eased = t * t * (3 - 2 * t);
+  // screen.style.setProperty("--image-brightness", eased);
+
+  // Subtle projected image flicker
+  var imgFlicker = 0.7 + Math.sin(time * 5.2) * 0.1 + Math.sin(time * 11.3) * 0.05;
+  screen.style.setProperty("--image-brightness", Math.max(0, Math.min(1, imgFlicker)));
+-->

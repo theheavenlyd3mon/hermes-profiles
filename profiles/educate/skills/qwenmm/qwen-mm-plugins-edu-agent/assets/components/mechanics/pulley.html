@@ -1,0 +1,183 @@
+<!--
+  K12 Asset: 滑轮 (Pulley)
+  ID: pulley
+  Suitable: 滑轮组, 定滑轮, 动滑轮, 简单机械, 功与机械效率
+  CSS Vars: --spin (rotation angle in deg, 0=default)
+  JS Hooks: set --spin in renderAt() to rotate wheel with rope pull
+  Size: 48×48px wheel + axle bracket at 1920×1080
+
+  Variants:
+    .pulley-fixed    — fixed pulley (bracket on top, attached to ceiling)
+    .pulley-movable  — movable pulley (bracket hangs down, moves with load)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .pulley {
+    position: absolute;
+    width: 48px;
+    height: 68px;
+    margin-left: -24px;
+    transform-origin: 50% 50%;
+    --spin: 0deg;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .pulley::after {
+    content: "";
+    position: absolute;
+    left: -4px; right: -4px; bottom: -10px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.38), transparent 68%);
+  }
+
+  /* Axle bracket — metallic inverted-U mounting shape */
+  .pulley-bracket {
+    position: absolute;
+    left: 10px; top: 0;
+    width: 28px; height: 18px;
+    border-radius: 6px 6px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.32), transparent 30%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.18)),
+      linear-gradient(90deg, #64748b, #94a3b8 35%, #cbd5e1 50%, #94a3b8 65%, #64748b);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-bottom: none;
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.25),
+      inset 0 -4px 6px rgba(15,23,42,0.2),
+      0 2px 6px rgba(0,0,0,0.22);
+  }
+
+  /* Bracket mounting bolt at top */
+  .pulley-bracket::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: -3px;
+    width: 8px; height: 6px;
+    margin-left: -4px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), rgba(148,163,184,0.6)),
+      linear-gradient(90deg, #475569, #94a3b8, #475569);
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+  }
+
+  /* Bracket side arms */
+  .pulley-bracket::after {
+    content: "";
+    position: absolute;
+    left: 0; top: 8px;
+    width: 28px; height: 12px;
+    border-left: 3px solid;
+    border-right: 3px solid;
+    border-image: linear-gradient(180deg, #94a3b8, #64748b) 1;
+    box-shadow:
+      inset 3px 0 4px rgba(255,255,255,0.08),
+      inset -3px 0 4px rgba(255,255,255,0.08);
+  }
+
+  /* Wheel — concentric rings with groove */
+  .pulley-wheel {
+    position: absolute;
+    left: 0; top: 16px;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    transform: rotate(var(--spin));
+    background:
+      radial-gradient(circle at 40% 36%, rgba(234,234,234,0.22), transparent 28%),
+      radial-gradient(circle, #e2e8f0 0 3px, #94a3b8 3px 5px, transparent 5px),
+      radial-gradient(circle, transparent 14px, #334155 14px 16px, transparent 16px),
+      radial-gradient(circle, transparent 20px, rgba(0,0,0,0.15) 20px 21px, rgba(71,85,105,0.4) 21px 23px, rgba(0,0,0,0.12) 23px 24px, transparent 24px),
+      linear-gradient(135deg, #475569, #64748b 30%, #94a3b8 50%, #64748b 70%, #475569);
+    border: 2px solid #334155;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.18),
+      inset 0 -4px 8px rgba(15,23,42,0.3),
+      0 4px 10px rgba(0,0,0,0.3);
+  }
+
+  /* Spokes — cross pattern */
+  .pulley-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background:
+      linear-gradient(0deg, transparent 42%, rgba(203,213,225,0.4) 46%, rgba(203,213,225,0.4) 54%, transparent 58%),
+      linear-gradient(90deg, transparent 42%, rgba(203,213,225,0.4) 46%, rgba(203,213,225,0.4) 54%, transparent 58%),
+      linear-gradient(45deg, transparent 44%, rgba(203,213,225,0.25) 47%, rgba(203,213,225,0.25) 53%, transparent 56%),
+      linear-gradient(-45deg, transparent 44%, rgba(203,213,225,0.25) 47%, rgba(203,213,225,0.25) 53%, transparent 56%);
+  }
+
+  /* Groove in rim — dark channel for rope */
+  .pulley-wheel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow:
+      inset 0 0 0 2px rgba(15,23,42,0.3),
+      inset 0 0 0 4px rgba(71,85,105,0.15);
+  }
+
+  /* Axle pin at center */
+  .pulley-axle {
+    position: absolute;
+    left: 50%; top: 36px;
+    width: 8px; height: 8px;
+    margin-left: -4px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.5), transparent 50%),
+      radial-gradient(circle, #cbd5e1, #94a3b8 40%, #64748b);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.3),
+      0 1px 3px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+
+  /* Movable variant — bracket flipped to bottom */
+  .pulley-movable .pulley-bracket {
+    top: auto;
+    bottom: 0;
+    border-radius: 0 0 6px 6px;
+    transform: rotate(180deg);
+  }
+
+  .pulley-movable .pulley-wheel {
+    top: 0;
+  }
+
+  .pulley-movable .pulley-axle {
+    top: 20px;
+  }
+
+  .pulley-movable .pulley-bracket::before {
+    top: auto;
+    bottom: -3px;
+    border-radius: 0 0 2px 2px;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="pulley pulley-fixed">
+  <div class="pulley-bracket"></div>
+  <div class="pulley-wheel"></div>
+  <div class="pulley-axle"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Rotate wheel proportional to rope pull distance
+  var spin = ropeDistance * 360 / (Math.PI * 0.048);
+  pulleyEl.style.setProperty("--spin", spin + "deg");
+
+  // For movable pulley, translate vertically with load
+  if (isMovable) {
+    var yOffset = ropeDistance * 0.5;
+    pulleyEl.style.transform = "translateY(" + yOffset + "px)";
+  }
+-->

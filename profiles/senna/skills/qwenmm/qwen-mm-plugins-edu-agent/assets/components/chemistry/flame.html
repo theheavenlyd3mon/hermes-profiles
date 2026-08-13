@@ -1,0 +1,162 @@
+<!--
+  K12 Asset: 焰色火焰
+  ID: flame
+  Suitable: 焰色反应, 金属元素鉴定, 化学实验
+  CSS Vars: --flame-core, --flame-mid, --flame-outer, --flame-edge, --flame-glow-a, --flame-glow-b
+  JS Hooks: flicker(time), sway(time) — sinusoidal flame animation (same pattern as candle)
+  Size: 40x65px at 1920x1080
+  Quality: Matches candle gold standard
+
+  Variants (preset color classes):
+    .flame-na  — sodium, yellow        (#fffde0 / #fde047 / #f59e0b / #d97706)
+    .flame-k   — potassium, purple     (#e9d5ff / #c084fc / #7c3aed / #6d28d9)
+    .flame-cu  — copper, green         (#dcfce7 / #4ade80 / #16a34a / #15803d)
+    .flame-ca  — calcium, brick-red    (#fff1e6 / #f97316 / #dc2626 / #b91c1c)
+    .flame-sr  — strontium, magenta    (#ffe4e8 / #fb7185 / #e11d48 / #be123c)
+    .flame-ba  — barium, yellow-green  (#f0ffd0 / #a3e635 / #65a30d / #4d7c0f)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .chem-flame {
+    position: absolute;
+    width: 40px;
+    height: 65px;
+    transform-origin: 50% 90%;
+    filter:
+      drop-shadow(0 0 10px var(--flame-glow-a, rgba(255,208,74,0.9)))
+      drop-shadow(0 0 28px var(--flame-glow-b, rgba(255,103,31,0.68)));
+  }
+
+  .chem-flame-body {
+    position: absolute;
+    inset: 0;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background:
+      radial-gradient(circle at 50% 64%,
+        var(--flame-core, #fffde0) 0 17%, transparent 18%),
+      radial-gradient(ellipse at 50% 52%,
+        var(--flame-mid, #fde047) 0 31%,
+        var(--flame-outer, #f59e0b) 49%,
+        var(--flame-edge, #d97706) 66%,
+        transparent 68%);
+  }
+
+  /* Ambient glow halo */
+  .chem-flame::before {
+    content: "";
+    position: absolute;
+    left: -22px; top: 4px;
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      var(--flame-glow-a, rgba(255,208,74,0.22)), transparent 66%);
+    z-index: -1;
+  }
+
+  /* Ground glow */
+  .chem-flame::after {
+    content: "";
+    position: absolute;
+    left: -16px; bottom: -8px;
+    width: 72px; height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse,
+      var(--flame-glow-a, rgba(255,208,74,0.25)), transparent 70%);
+    filter: blur(3px);
+    z-index: -1;
+  }
+
+  /* === Preset color classes === */
+
+  /* Na - Sodium - Yellow */
+  .flame-na {
+    --flame-core: #fffde0;
+    --flame-mid: #fde047;
+    --flame-outer: #f59e0b;
+    --flame-edge: #d97706;
+    --flame-glow-a: rgba(253,224,71,0.9);
+    --flame-glow-b: rgba(245,158,11,0.68);
+  }
+
+  /* K - Potassium - Purple */
+  .flame-k {
+    --flame-core: #e9d5ff;
+    --flame-mid: #c084fc;
+    --flame-outer: #7c3aed;
+    --flame-edge: #6d28d9;
+    --flame-glow-a: rgba(192,132,252,0.8);
+    --flame-glow-b: rgba(124,58,237,0.6);
+  }
+
+  /* Cu - Copper - Green */
+  .flame-cu {
+    --flame-core: #dcfce7;
+    --flame-mid: #4ade80;
+    --flame-outer: #16a34a;
+    --flame-edge: #15803d;
+    --flame-glow-a: rgba(74,222,128,0.8);
+    --flame-glow-b: rgba(22,163,74,0.6);
+  }
+
+  /* Ca - Calcium - Brick Red */
+  .flame-ca {
+    --flame-core: #fff1e6;
+    --flame-mid: #f97316;
+    --flame-outer: #dc2626;
+    --flame-edge: #b91c1c;
+    --flame-glow-a: rgba(249,115,22,0.8);
+    --flame-glow-b: rgba(220,38,38,0.6);
+  }
+
+  /* Sr - Strontium - Magenta */
+  .flame-sr {
+    --flame-core: #ffe4e8;
+    --flame-mid: #fb7185;
+    --flame-outer: #e11d48;
+    --flame-edge: #be123c;
+    --flame-glow-a: rgba(251,113,133,0.8);
+    --flame-glow-b: rgba(225,29,72,0.6);
+  }
+
+  /* Ba - Barium - Yellow-Green */
+  .flame-ba {
+    --flame-core: #f0ffd0;
+    --flame-mid: #a3e635;
+    --flame-outer: #65a30d;
+    --flame-edge: #4d7c0f;
+    --flame-glow-a: rgba(163,230,53,0.8);
+    --flame-glow-b: rgba(101,163,13,0.6);
+  }
+</style>
+
+<!-- ===== HTML: single flame (add preset class for color) ===== -->
+<div class="chem-flame flame-na">
+  <div class="chem-flame-body"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Flame flicker — sinusoidal scale variation (same pattern as candle)
+  var flicker = 1 + Math.sin(time * 11.7) * 0.06 + Math.sin(time * 23.1) * 0.035;
+  // Flame sway — sinusoidal horizontal drift
+  var sway = Math.sin(time * 7.2) * 4 + Math.sin(time * 13.1) * 1.6;
+
+  flameEl.style.transform = "translateX(" + sway + "px) scale(" + flicker + ") rotate(" + (sway * 0.8) + "deg)";
+-->
+
+<!-- ===== GSAP HOOKS (alternative — use in GSAP timeline compositions): =====
+  // For GSAP-driven compositions, use fromTo + yoyo instead of renderAt().
+  // Apply 3 overlapping yoyo tweens per flame for natural flicker:
+
+  // 1. Scale oscillation (fast frequency)
+  tl.fromTo(flameSelector, { scaleY: 1, scaleX: 1 },
+    { scaleY: 1.08, scaleX: 0.96, duration: 0.4, ease: "sine.inOut", yoyo: true, repeat: R(0.4) }, startTime);
+
+  // 2. Rotation wobble (medium frequency)
+  tl.fromTo(flameSelector, { rotation: 0 },
+    { rotation: 3, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: R(0.7) }, startTime + 0.1);
+
+  // 3. Horizontal sway (slow frequency)
+  tl.fromTo(flameSelector, { x: 0 },
+    { x: 4, duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: R(1.2) }, startTime);
+-->

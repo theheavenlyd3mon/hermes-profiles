@@ -1,0 +1,173 @@
+<!--
+  K12 Asset: 保险丝
+  ID: fuse
+  Suitable: 电路保护, 短路, 过载保护, 家庭电路
+  CSS Vars: --blown (0=intact, 1=blown/broken)
+  JS Hooks: set --blown in renderAt()
+  Size: 36×12px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .fuse {
+    position: absolute;
+    width: 36px;
+    height: 12px;
+    margin-left: -18px;
+    margin-top: -6px;
+    --blown: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .fuse::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -5px;
+    width: 36px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.25), transparent 68%);
+  }
+
+  /* Glass tube body — transparent cylindrical */
+  .fuse-tube {
+    position: absolute;
+    left: 6px; top: 2px;
+    width: 24px; height: 8px;
+    border-radius: 4px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.25), transparent 40%),
+      linear-gradient(180deg,
+        rgba(200,220,240,0.2),
+        rgba(180,200,220,0.12) 30%,
+        rgba(160,180,200,0.08) 60%,
+        rgba(140,160,180,0.15)),
+      linear-gradient(90deg, rgba(200,210,220,0.1), rgba(220,230,240,0.15) 50%, rgba(200,210,220,0.1));
+    border: 1px solid rgba(200,220,240,0.3);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -1px 2px rgba(0,0,0,0.08),
+      0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Internal wire — thin filament (intact state) */
+  .fuse-wire {
+    position: absolute;
+    left: 8px; top: 50%;
+    width: 20px; height: 1px;
+    margin-top: -0.5px;
+    background: linear-gradient(90deg,
+      rgba(192,192,192, calc(1 - var(--blown))),
+      rgba(220,220,220, calc(1 - var(--blown))) 30%,
+      rgba(200,200,200, calc(1 - var(--blown))) 50%,
+      rgba(220,220,220, calc(1 - var(--blown))) 70%,
+      rgba(192,192,192, calc(1 - var(--blown))));
+    box-shadow: 0 0 1px rgba(255,255,255, calc((1 - var(--blown)) * 0.3));
+  }
+
+  /* Blown wire — gap and scorch (visible when blown=1) */
+  .fuse-blown {
+    position: absolute;
+    left: 8px; top: 50%;
+    width: 20px; height: 1px;
+    margin-top: -0.5px;
+    opacity: var(--blown);
+    pointer-events: none;
+  }
+
+  /* Left wire stub */
+  .fuse-blown::before {
+    content: "";
+    position: absolute;
+    left: 0; top: -0.5px;
+    width: 7px; height: 2px;
+    background: linear-gradient(90deg,
+      rgba(160,160,160,0.9),
+      rgba(80,60,40,0.8));
+    border-radius: 0 1px 1px 0;
+  }
+
+  /* Right wire stub */
+  .fuse-blown::after {
+    content: "";
+    position: absolute;
+    right: 0; top: -0.5px;
+    width: 7px; height: 2px;
+    background: linear-gradient(90deg,
+      rgba(80,60,40,0.8),
+      rgba(160,160,160,0.9));
+    border-radius: 1px 0 0 1px;
+  }
+
+  /* Scorch marks inside tube */
+  .fuse-scorch {
+    position: absolute;
+    left: 14px; top: 3px;
+    width: 8px; height: 6px;
+    border-radius: 3px;
+    background: radial-gradient(ellipse,
+      rgba(60,40,20, calc(var(--blown) * 0.4)),
+      rgba(40,30,15, calc(var(--blown) * 0.2)) 50%,
+      transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Metal end cap — left */
+  .fuse-cap-l {
+    position: absolute;
+    left: 0; top: 1px;
+    width: 7px; height: 10px;
+    border-radius: 2px 0 0 2px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.2), transparent 35%),
+      linear-gradient(180deg, #94a3b8, #64748b 40%, #475569 70%, #334155),
+      linear-gradient(90deg, #64748b, #475569);
+    border: 0.5px solid rgba(100,116,139,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.12),
+      inset 0 -2px 3px rgba(0,0,0,0.2),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* Metal end cap — right */
+  .fuse-cap-r {
+    position: absolute;
+    right: 0; top: 1px;
+    width: 7px; height: 10px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.2), transparent 35%),
+      linear-gradient(180deg, #94a3b8, #64748b 40%, #475569 70%, #334155),
+      linear-gradient(90deg, #475569, #64748b);
+    border: 0.5px solid rgba(100,116,139,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.12),
+      inset 0 -2px 3px rgba(0,0,0,0.2),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="fuse">
+  <div class="fuse-cap-l"></div>
+  <div class="fuse-tube"></div>
+  <div class="fuse-wire"></div>
+  <div class="fuse-blown"></div>
+  <div class="fuse-scorch"></div>
+  <div class="fuse-cap-r"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Blown state: 0=intact, 1=blown
+  fuseEl.style.setProperty("--blown", isBlown ? 1 : 0);
+
+  // Blowing animation (transition from intact to blown):
+  // var blowProgress = Math.min(1, (time - blowTime) / 0.3);
+  // fuseEl.style.setProperty("--blown", blowProgress);
+
+  // Pre-blow heating glow (optional):
+  // if (current > ratedCurrent) {
+  //   var heat = Math.min(1, (current - ratedCurrent) / maxOverload);
+  //   // Add red glow to wire before it blows
+  // }
+-->

@@ -1,0 +1,132 @@
+<template id="mt-chart-template">
+<div id="mt-chart" data-composition-id="mt-chart" data-width="1920" data-height="1080">
+  <div class="scene-bg">
+    <div class="bg-texture"></div>
+    <div class="aurora-orb a1"></div>
+    <div class="aurora-orb a2"></div>
+    <div class="aurora-orb a3"></div>
+  </div>
+  <div class="scene-content">
+    <div class="glass-panel chart-panel">
+      <div class="ch-title">染色体数目随时期的变化</div>
+      <div class="ch-sub">复制不增数 · 后期翻倍 · 末期均分恢复（洋葱 2N = 16）</div>
+      <svg viewBox="0 0 1200 540" preserveAspectRatio="xMidYMid meet">
+          <line x1="150" y1="120" x2="150" y2="460" stroke="#334155" stroke-width="3"/>
+          <line x1="150" y1="460" x2="1120" y2="460" stroke="#334155" stroke-width="3"/>
+          <text x="150" y="100" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="22" font-weight="700" fill="#334155">染色体数</text>
+          
+          <line x1="150" y1="460" x2="1110" y2="460" stroke="rgba(15,23,42,0.08)" stroke-width="2"/>
+          <text x="130" y="467" text-anchor="end" font-family="Inter, sans-serif" font-size="24" fill="#475569">0</text>
+          <line x1="150" y1="300" x2="1110" y2="300" stroke="rgba(15,23,42,0.08)" stroke-width="2"/>
+          <text x="130" y="307" text-anchor="end" font-family="Inter, sans-serif" font-size="24" fill="#475569">16</text>
+          <line x1="150" y1="140" x2="1110" y2="140" stroke="rgba(15,23,42,0.08)" stroke-width="2"/>
+          <text x="130" y="147" text-anchor="end" font-family="Inter, sans-serif" font-size="24" fill="#475569">32</text>
+          
+          <text x="180" y="500" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="24" font-weight="700" fill="#0f172a">间期</text>
+          <text x="400" y="500" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="24" font-weight="700" fill="#0f172a">前期</text>
+          <text x="620" y="500" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="24" font-weight="700" fill="#0f172a">中期</text>
+          <text x="840" y="500" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="24" font-weight="700" fill="#0f172a">后期</text>
+          <text x="1060" y="500" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="24" font-weight="700" fill="#0f172a">末期</text>
+          
+          <line id="mt-chart-seg0" x1="180" y1="300.0" x2="400" y2="300.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          <line id="mt-chart-seg1" x1="400" y1="300.0" x2="620" y2="300.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          <line id="mt-chart-seg2" x1="620" y1="300.0" x2="840" y2="300.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          <line id="mt-chart-seg3" x1="840" y1="300.0" x2="840" y2="140.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          <line id="mt-chart-seg4" x1="840" y1="140.0" x2="1060" y2="140.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          <line id="mt-chart-seg5" x1="1060" y1="140.0" x2="1060" y2="300.0" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+          
+          <circle id="mt-chart-pt0" cx="180" cy="300.0" r="11" fill="#06b6d4" stroke="#fff" stroke-width="3"/>
+          <text id="mt-chart-vl0" x="180" y="276.0" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="900" fill="#0e7490">16</text>
+          <circle id="mt-chart-pt1" cx="400" cy="300.0" r="11" fill="#06b6d4" stroke="#fff" stroke-width="3"/>
+          <text id="mt-chart-vl1" x="400" y="276.0" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="900" fill="#0e7490">16</text>
+          <circle id="mt-chart-pt2" cx="620" cy="300.0" r="11" fill="#06b6d4" stroke="#fff" stroke-width="3"/>
+          <text id="mt-chart-vl2" x="620" y="276.0" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="900" fill="#0e7490">16</text>
+          <circle id="mt-chart-pt3" cx="840" cy="140.0" r="11" fill="#06b6d4" stroke="#fff" stroke-width="3"/>
+          <text id="mt-chart-vl3" x="840" y="116.0" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="900" fill="#0e7490">32</text>
+          <circle id="mt-chart-pt4" cx="1060" cy="300.0" r="11" fill="#06b6d4" stroke="#fff" stroke-width="3"/>
+          <text id="mt-chart-vl4" x="1080" y="340.0" text-anchor="start" font-family="Inter, sans-serif" font-size="26" font-weight="900" fill="#0e7490">16</text>
+          <text x="840" y="88.0" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="22" font-weight="800" fill="#d97706">着丝点分裂→翻倍</text>
+      </svg>
+    </div>
+  </div>
+  <style>
+    @font-face { font-family:"Noto Sans SC"; src:url("assets/fonts/NotoSansSC-Bold.woff2") format("woff2"); font-weight:400 700; font-display:swap; }
+    @font-face { font-family:"Noto Sans SC"; src:url("assets/fonts/NotoSansSC-ExtraBold.woff2") format("woff2"); font-weight:800; font-display:swap; }
+    @font-face { font-family:"Noto Sans SC"; src:url("assets/fonts/NotoSansSC-Black.woff2") format("woff2"); font-weight:900; font-display:swap; }
+    @font-face { font-family:"Inter"; src:url("assets/fonts/Inter-Variable.woff2") format("woff2"); font-weight:100 900; font-display:swap; }
+
+    #mt-chart { position:relative; width:1920px; height:1080px; background:#f8fafc;
+      color:#0f172a; font-family:"Noto Sans SC", Inter, sans-serif; overflow:hidden; }
+    #mt-chart .scene-bg { position:absolute; inset:0; z-index:0; }
+    #mt-chart .bg-texture { position:absolute; inset:0; background:url('bg-texture.jpg') center/cover no-repeat; }
+    #mt-chart .aurora-orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    #mt-chart .a1 { width:560px; height:560px; top:-12%; right:-6%; background:radial-gradient(circle, rgba(6,182,212,0.5) 0%, transparent 70%); }
+    #mt-chart .a2 { width:460px; height:460px; bottom:-16%; left:-6%; background:radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%); }
+    #mt-chart .a3 { width:400px; height:400px; top:38%; left:48%; background:radial-gradient(circle, rgba(20,184,166,0.32) 0%, transparent 70%); }
+    #mt-chart .scene-content { position:absolute; inset:0; z-index:1; display:flex; align-items:center;
+      justify-content:center; padding:36px 70px 180px; box-sizing:border-box; }
+    #mt-chart .glass-panel { background:#ffffff; border:1px solid rgba(99,102,241,0.3);
+      border-top:2px solid rgba(99,102,241,0.25); border-radius:22px;
+      box-shadow:0 4px 16px rgba(99,102,241,0.08), 0 16px 48px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.6); }
+    #mt-chart .katex, #mt-chart .katex * { color:#0f172a; }
+    #mt-chart .katex-mathml { display:none !important; }
+    #mt-chart table, #mt-chart th, #mt-chart td { color:#0f172a; }
+
+    #mt-chart .chart-panel { width:1500px; max-width:1500px; height:740px; padding:30px 44px; position:relative; }
+    #mt-chart .ch-title { font-size:44px; font-weight:900; color:#0f172a; text-align:center; }
+    #mt-chart .ch-sub { font-size:24px; color:#475569; text-align:center; margin-top:6px; }
+    #mt-chart .chart-panel svg { width:100%; max-height:520px; margin-top:6px; }
+
+  </style>
+  <script src="gsap/gsap.min.js"></script>
+  <script>
+  (function(){
+    window.__timelines = window.__timelines || {};
+    var SCENE_DURATION = 12.4;
+    var R = function(d){ return Math.max(0, Math.ceil(SCENE_DURATION / d) - 1); };
+    var tl = gsap.timeline({ paused:true });
+    try {
+      tl.fromTo("#mt-chart .scene-content", {autoAlpha:0}, {autoAlpha:1,duration:0.35,ease:"power2.out"}, 0);
+      tl.fromTo("#mt-chart .chart-panel", {y:50,autoAlpha:0}, {y:0,autoAlpha:1,duration:0.8,ease:"power3.out"}, 0.15);
+      // hide markers/values/segments initially
+      (function(){var el=document.getElementById("mt-chart-seg0"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      (function(){var el=document.getElementById("mt-chart-seg1"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      (function(){var el=document.getElementById("mt-chart-seg2"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      (function(){var el=document.getElementById("mt-chart-seg3"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      (function(){var el=document.getElementById("mt-chart-seg4"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      (function(){var el=document.getElementById("mt-chart-seg5"); if(el){var L=el.getTotalLength()||300; el.setAttribute("stroke-dasharray",L); el.setAttribute("stroke-dashoffset",L);}})();
+      tl.set("#mt-chart-pt0",{autoAlpha:0}); tl.set("#mt-chart-vl0",{autoAlpha:0});
+      tl.set("#mt-chart-pt1",{autoAlpha:0}); tl.set("#mt-chart-vl1",{autoAlpha:0});
+      tl.set("#mt-chart-pt2",{autoAlpha:0}); tl.set("#mt-chart-vl2",{autoAlpha:0});
+      tl.set("#mt-chart-pt3",{autoAlpha:0}); tl.set("#mt-chart-vl3",{autoAlpha:0});
+      tl.set("#mt-chart-pt4",{autoAlpha:0}); tl.set("#mt-chart-vl4",{autoAlpha:0});
+      tl.to("#mt-chart-seg0", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 1.40);
+      tl.to("#mt-chart-seg1", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 2.40);
+      tl.to("#mt-chart-seg2", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 3.40);
+      tl.to("#mt-chart-seg3", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 5.40);
+      tl.to("#mt-chart-seg4", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 7.00);
+      tl.to("#mt-chart-seg5", {attr:{"stroke-dashoffset":0},duration:0.8,ease:"power1.inOut"}, 8.60);
+      tl.fromTo("#mt-chart-pt0", {autoAlpha:0,scale:0.3,svgOrigin:"180 300.0"}, {autoAlpha:1,scale:1,duration:0.4,ease:"back.out(1.8)"}, 1.40);
+      tl.fromTo("#mt-chart-vl0", {autoAlpha:0,y:8}, {autoAlpha:1,y:0,duration:0.4}, 1.55);
+      tl.fromTo("#mt-chart-pt1", {autoAlpha:0,scale:0.3,svgOrigin:"400 300.0"}, {autoAlpha:1,scale:1,duration:0.4,ease:"back.out(1.8)"}, 2.40);
+      tl.fromTo("#mt-chart-vl1", {autoAlpha:0,y:8}, {autoAlpha:1,y:0,duration:0.4}, 2.55);
+      tl.fromTo("#mt-chart-pt2", {autoAlpha:0,scale:0.3,svgOrigin:"620 300.0"}, {autoAlpha:1,scale:1,duration:0.4,ease:"back.out(1.8)"}, 3.40);
+      tl.fromTo("#mt-chart-vl2", {autoAlpha:0,y:8}, {autoAlpha:1,y:0,duration:0.4}, 3.55);
+      tl.fromTo("#mt-chart-pt3", {autoAlpha:0,scale:0.3,svgOrigin:"840 140.0"}, {autoAlpha:1,scale:1,duration:0.4,ease:"back.out(1.8)"}, 5.90);
+      tl.fromTo("#mt-chart-vl3", {autoAlpha:0,y:8}, {autoAlpha:1,y:0,duration:0.4}, 6.05);
+      tl.fromTo("#mt-chart-pt4", {autoAlpha:0,scale:0.3,svgOrigin:"1060 300.0"}, {autoAlpha:1,scale:1,duration:0.4,ease:"back.out(1.8)"}, 9.00);
+      tl.fromTo("#mt-chart-vl4", {autoAlpha:0,y:8}, {autoAlpha:1,y:0,duration:0.4}, 9.15);
+      tl.to("#mt-chart-pt3", {attr:{r:15},fill:"#d97706",duration:0.5,ease:"sine.inOut",yoyo:true,repeat:3}, 6.0);
+
+    } catch(e) { console.error("timeline err mt-chart", e); }
+
+  try{
+    tl.fromTo("#mt-chart .a1", {x:0,y:0}, {x:-42,y:28,duration:4,ease:"sine.inOut",yoyo:true,repeat:R(4)}, 0);
+    tl.fromTo("#mt-chart .a2", {x:0,y:0}, {x:32,y:-22,duration:3.5,ease:"sine.inOut",yoyo:true,repeat:R(3.5)}, 0.4);
+    tl.fromTo("#mt-chart .a3", {x:0,y:0}, {x:-24,y:24,duration:3,ease:"sine.inOut",yoyo:true,repeat:R(3)}, 0.2);
+  }catch(e){}
+    window.__timelines["mt-chart"] = tl;
+  })();
+  </script>
+</div>
+</template>

@@ -1,0 +1,233 @@
+<!--
+  K12 Asset: 锥形瓶
+  ID: flask
+  Suitable: 化学反应, 滴定实验, 溶解, 加热, 蒸馏, 混合
+  CSS Vars:
+    --fill (0=empty, 1=full, controls liquid level)
+    --liquid-color (default: rgba(96,165,250,0.5))
+    --bubble-phase (0-6.28, controls boiling bubble animation — driven by JS)
+  JS Hooks: set --fill for liquid level, --bubble-phase for boiling animation
+  Size: 48×72px at 1920×1080
+
+  Note: Triangular Erlenmeyer flask body with narrow neck and rim at top.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .flask {
+    position: absolute;
+    width: 48px;
+    height: 72px;
+    margin-left: -24px;
+    transform-origin: 50% 100%;
+    --fill: 0.6;
+    --liquid-color: rgba(96,165,250,0.5);
+    --bubble-phase: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .flask::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 68%);
+  }
+
+  /* Glass body — triangular flask shape via clip-path */
+  .flk-body {
+    position: absolute;
+    left: 2px; top: 6px;
+    width: 44px; height: 64px;
+    clip-path: polygon(
+      38% 0%, 62% 0%,
+      64% 28%, 100% 100%,
+      0% 100%, 36% 28%
+    );
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 22%, transparent 78%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06) 50%, rgba(160,200,240,0.08)),
+      radial-gradient(ellipse at 25% 30%, rgba(234,234,234,0.12), transparent 45%),
+      linear-gradient(90deg, rgba(140,180,230,0.1), rgba(120,160,220,0.06) 50%, rgba(140,180,230,0.08));
+    box-shadow:
+      inset 0 -4px 8px rgba(0,0,0,0.05),
+      inset 1px 0 3px rgba(255,255,255,0.06),
+      inset -1px 0 3px rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+
+  /* Glass outline — visible border that follows the flask shape */
+  .flk-outline {
+    position: absolute;
+    left: 2px; top: 6px;
+    width: 44px; height: 64px;
+    clip-path: polygon(
+      38% 0%, 62% 0%,
+      64% 28%, 100% 100%,
+      0% 100%, 36% 28%
+    );
+    border: 1.2px solid rgba(180,210,240,0.28);
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  /* Glass highlight — vertical reflection stripe on left of body */
+  .flk-body::before {
+    content: "";
+    position: absolute;
+    left: 8px; top: 22px;
+    width: 2px; height: 38px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.12) 50%,
+      transparent 85%);
+    transform: rotate(8deg);
+  }
+
+  /* Glass bottom thickness */
+  .flk-body::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 3px;
+    background:
+      linear-gradient(180deg, rgba(180,210,240,0.15), rgba(140,180,220,0.1));
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Neck — narrow tube at top */
+  .flk-neck {
+    position: absolute;
+    left: 17px; top: 2px;
+    width: 14px; height: 22px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 30%, transparent 70%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06)),
+      radial-gradient(ellipse at 30% 30%, rgba(234,234,234,0.1), transparent 50%),
+      linear-gradient(90deg, rgba(140,180,230,0.12), rgba(120,160,220,0.08));
+    border: 1.2px solid rgba(180,210,240,0.28);
+    border-bottom: none;
+    box-shadow:
+      inset 1px 0 2px rgba(255,255,255,0.06),
+      inset -1px 0 2px rgba(255,255,255,0.04);
+  }
+
+  /* Neck highlight stripe */
+  .flk-neck::before {
+    content: "";
+    position: absolute;
+    left: 1px; top: 2px;
+    width: 1.5px; height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.1) 60%,
+      transparent);
+  }
+
+  /* Rim — top edge of neck */
+  .flk-rim {
+    position: absolute;
+    left: 15px; top: 0;
+    width: 18px; height: 3px;
+    border-radius: 1.5px;
+    background:
+      linear-gradient(180deg, rgba(200,220,240,0.28), rgba(160,190,230,0.15));
+    border: 0.8px solid rgba(180,210,240,0.22);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  /* Liquid body — fills from bottom within the triangular shape */
+  .flk-liquid {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 1px;
+    height: calc(var(--fill) * 42px);
+    max-height: 42px;
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.06) 90%),
+      radial-gradient(ellipse at 30% 20%, rgba(234,234,234,0.12), transparent 50%),
+      linear-gradient(180deg, var(--liquid-color), var(--liquid-color));
+    border-radius: 0 0 2px 2px;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.08),
+      inset 0 -3px 6px rgba(0,0,0,0.08);
+  }
+
+  /* Liquid meniscus surface */
+  .flk-liquid::before {
+    content: "";
+    position: absolute;
+    left: -1px; right: -1px; top: -2px;
+    height: 4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 50% 50%,
+        rgba(234,234,234,0.2), transparent 60%),
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent);
+  }
+
+  /* Liquid internal refraction */
+  .flk-liquid::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: 4px;
+    height: 40%;
+    background:
+      radial-gradient(ellipse at 40% 60%, rgba(234,234,234,0.06), transparent 50%),
+      radial-gradient(ellipse at 70% 30%, rgba(234,234,234,0.04), transparent 40%);
+  }
+
+  /* Bubble — for boiling animation, positioned via JS */
+  .flk-bubble {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(234,234,234,0.35), transparent 70%);
+    border: 0.5px solid rgba(255,255,255,0.15);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .flk-bubble:nth-child(2) { width: 2px; height: 2px; }
+  .flk-bubble:nth-child(3) { width: 2.5px; height: 2.5px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="flask">
+  <div class="flk-body">
+    <div class="flk-liquid">
+      <div class="flk-bubble"></div>
+      <div class="flk-bubble"></div>
+      <div class="flk-bubble"></div>
+    </div>
+  </div>
+  <div class="flk-outline"></div>
+  <div class="flk-neck"></div>
+  <div class="flk-rim"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set fill level (0 = empty, 1 = full)
+  var fill = Math.max(0, Math.min(1, fillLevel));
+  flaskEl.style.setProperty("--fill", fill);
+
+  // Animate boiling bubbles
+  var bp = (time * 3.0) % (Math.PI * 2);
+  flaskEl.style.setProperty("--bubble-phase", bp);
+  var bubbles = flaskEl.querySelectorAll(".flk-bubble");
+  for (var i = 0; i < bubbles.length; i++) {
+    var phase = bp + i * 2.1;
+    var t = (phase % (Math.PI * 2)) / (Math.PI * 2);
+    var liqH = fill * 42;
+    bubbles[i].style.opacity = (t < 0.8) ? 0.7 : 0;
+    bubbles[i].style.left = (10 + i * 8 + Math.sin(phase * 1.5) * 3) + "px";
+    bubbles[i].style.bottom = (2 + t * liqH) + "px";
+  }
+
+  // Change liquid color (e.g. for chemical reactions)
+  // flaskEl.style.setProperty("--liquid-color", "rgba(239,68,68,0.5)");
+-->

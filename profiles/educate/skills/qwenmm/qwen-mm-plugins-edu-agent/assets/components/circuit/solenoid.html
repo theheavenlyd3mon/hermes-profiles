@@ -1,0 +1,207 @@
+<!--
+  K12 Asset: 螺线管
+  ID: solenoid
+  Suitable: 螺线管磁场, 安培定则, 电磁感应, 磁场方向
+  CSS Vars: --current-flow (0-1), --field-glow (0-1)
+  JS Hooks: set --current-flow and --field-glow in renderAt()
+  Size: 80×30px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .solenoid {
+    position: absolute;
+    width: 80px;
+    height: 30px;
+    margin-left: -40px;
+    margin-top: -15px;
+    --current-flow: 0;
+    --field-glow: 0;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .solenoid::after {
+    content: "";
+    position: absolute;
+    left: 2px; bottom: -7px;
+    width: 76px; height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.28), transparent 68%);
+  }
+
+  /* Coil body — helical wire loops (air core) */
+  .sol-coil {
+    position: absolute;
+    left: 10px; top: 6px;
+    width: 60px; height: 18px;
+    border-radius: 9px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(180,140,80,0.75) 0px, rgba(212,175,55,0.9) 2px,
+        rgba(160,120,60,0.7) 4px, rgba(100,80,40,0.4) 5px,
+        rgba(30,30,30,0.3) 5.5px, rgba(100,80,40,0.4) 6px),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 30%),
+      linear-gradient(180deg, #6b4f10, #4a3508 60%, #362a06);
+    border: 1px solid rgba(139,105,20,0.4);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.1),
+      inset 0 -4px 6px rgba(0,0,0,0.25),
+      0 3px 6px rgba(0,0,0,0.15);
+  }
+
+  /* Transparent air core interior (visible through coil gaps) */
+  .sol-core {
+    position: absolute;
+    left: 14px; top: 10px;
+    width: 52px; height: 10px;
+    border-radius: 5px;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0.6), rgba(30,41,59,0.4));
+    box-shadow:
+      inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* Magnetic field direction arrow — inside coil (points right by default) */
+  .sol-field-arrow {
+    position: absolute;
+    left: 22px; top: 13px;
+    width: 36px; height: 4px;
+    background: linear-gradient(90deg,
+      rgba(59,130,246, calc(var(--field-glow) * 0.5)),
+      rgba(96,165,250, calc(var(--field-glow) * 0.7)),
+      rgba(59,130,246, calc(var(--field-glow) * 0.5)));
+    border-radius: 2px;
+    opacity: var(--field-glow);
+  }
+
+  /* Arrow head */
+  .sol-field-arrow::after {
+    content: "";
+    position: absolute;
+    right: -4px; top: -2px;
+    width: 0; height: 0;
+    border-left: 6px solid rgba(96,165,250, calc(var(--field-glow) * 0.8));
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  /* External field glow — surrounds coil */
+  .sol-field-outer {
+    position: absolute;
+    left: 4px; top: 2px;
+    width: 72px; height: 26px;
+    border-radius: 13px;
+    background: radial-gradient(ellipse,
+      rgba(59,130,246, calc(var(--field-glow) * 0.12)),
+      transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Wire lead — left */
+  .sol-lead-l {
+    position: absolute;
+    left: 4px; top: 12px;
+    width: 8px; height: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(90deg, #94a3b8, #64748b);
+    border-radius: 1px;
+  }
+
+  /* Wire lead — right */
+  .sol-lead-r {
+    position: absolute;
+    right: 4px; top: 12px;
+    width: 8px; height: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(90deg, #64748b, #94a3b8);
+    border-radius: 1px;
+  }
+
+  /* Current direction indicators — dots on wire */
+  .sol-current-in {
+    position: absolute;
+    left: 6px; top: 24px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    border: 1px solid rgba(251,191,36, calc(var(--current-flow) * 0.7));
+    background: radial-gradient(circle,
+      rgba(251,191,36, calc(var(--current-flow) * 0.4)),
+      transparent 60%);
+  }
+
+  /* X mark (current into page) */
+  .sol-current-in::before {
+    content: "×";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 6px;
+    font-weight: 700;
+    color: rgba(251,191,36, calc(var(--current-flow) * 0.8));
+  }
+
+  /* Current out indicator — dot (current out of page) */
+  .sol-current-out {
+    position: absolute;
+    right: 6px; top: 24px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    border: 1px solid rgba(251,191,36, calc(var(--current-flow) * 0.7));
+    background: radial-gradient(circle,
+      rgba(251,191,36, calc(var(--current-flow) * 0.4)),
+      transparent 60%);
+  }
+
+  .sol-current-out::before {
+    content: "·";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(251,191,36, calc(var(--current-flow) * 0.9));
+    line-height: 1;
+  }
+
+  /* N/S labels at poles */
+  .sol-pole {
+    position: absolute;
+    top: 0px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 700;
+    color: rgba(148,163,184, calc(0.3 + var(--field-glow) * 0.7));
+  }
+  .sol-pole-n { right: 10px; }
+  .sol-pole-s { left: 12px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="solenoid">
+  <div class="sol-field-outer"></div>
+  <div class="sol-core"></div>
+  <div class="sol-coil"></div>
+  <div class="sol-field-arrow"></div>
+  <div class="sol-lead-l"></div>
+  <div class="sol-lead-r"></div>
+  <div class="sol-current-in"></div>
+  <div class="sol-current-out"></div>
+  <div class="sol-pole sol-pole-n">N</div>
+  <div class="sol-pole sol-pole-s">S</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Current flow: 0=off, 1=full current
+  solenoidEl.style.setProperty("--current-flow", currentLevel);
+
+  // Field glow: proportional to current
+  solenoidEl.style.setProperty("--field-glow", currentLevel);
+
+  // Pulsing current effect (AC):
+  // var flow = Math.abs(Math.sin(time * Math.PI * 2 * freq));
+  // solenoidEl.style.setProperty("--current-flow", flow);
+  // solenoidEl.style.setProperty("--field-glow", flow);
+-->

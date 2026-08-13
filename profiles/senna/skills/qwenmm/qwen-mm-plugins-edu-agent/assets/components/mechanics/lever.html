@@ -1,0 +1,157 @@
+<!--
+  K12 Asset: 杠杆
+  ID: lever
+  Suitable: 杠杆原理, 力矩, 简单机械, 功与机械效率, 天平
+  CSS Vars: --tilt (rotation angle, default 0deg), --fulcrum-pos (0-1 position along beam, default 0.5)
+  JS Hooks: set --tilt for rotation; combine with separate fulcrum/weight components
+  Size: 180×8px (beam only) at 1920×1080
+
+  Notes:
+    - Fulcrum position along beam controlled by --fulcrum-pos (0=left, 1=right)
+    - Beam rotates around the fulcrum point
+    - Scale markings every ~18px along beam
+    - Compatible with weight.html and force-arrow.html components
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .lever {
+    position: absolute;
+    width: 180px;
+    height: 8px;
+    margin-left: -90px;
+    transform-origin: calc(var(--fulcrum-pos, 0.5) * 100%) 50%;
+    transform: rotate(var(--tilt, 0deg));
+    --tilt: 0deg;
+    --fulcrum-pos: 0.5;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .lever::after {
+    content: "";
+    position: absolute;
+    left: 8px; right: 8px; bottom: -8px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Main beam body — metallic bar with 5-layer gradient */
+  .lever-beam {
+    position: absolute;
+    left: 0; top: 0;
+    width: 180px; height: 8px;
+    border-radius: 2px;
+    background:
+      radial-gradient(ellipse at 50% 15%, rgba(234,234,234,0.12) 0 3px, transparent 10px),
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 25%),
+      linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.22)),
+      linear-gradient(90deg, #5a6370, #7a8595 10%, #94a3b8 30%, #a8b5c4 50%, #94a3b8 70%, #7a8595 90%, #5a6370),
+      linear-gradient(180deg, #8494a7, #5a6a7d);
+    border: 0.5px solid rgba(100,120,140,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      inset 0 -2px 4px rgba(30,40,55,0.25),
+      0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Scale markings along beam — evenly spaced tick marks */
+  .lever-beam::before {
+    content: "";
+    position: absolute;
+    left: 8px; right: 8px;
+    top: 0; bottom: 0;
+    background:
+      repeating-linear-gradient(90deg,
+        transparent 0 7px,
+        rgba(234,234,234,0.2) 7px 8px,
+        transparent 8px 17px,
+        rgba(234,234,234,0.35) 17px 18px);
+  }
+
+  /* Top highlight line */
+  .lever-beam::after {
+    content: "";
+    position: absolute;
+    left: 6px; right: 6px;
+    top: 1px;
+    height: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, rgba(234,234,234,0.22) 15%, rgba(234,234,234,0.28) 50%, rgba(234,234,234,0.22) 85%, transparent);
+  }
+
+  /* Left end cap */
+  .lever-cap-l {
+    position: absolute;
+    left: -1px; top: -1px;
+    width: 4px; height: 10px;
+    border-radius: 2px 0 0 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 35%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.18)),
+      linear-gradient(90deg, #64748b, #94a3b8, #64748b);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.25),
+      -1px 0 2px rgba(0,0,0,0.15);
+  }
+
+  /* Right end cap */
+  .lever-cap-r {
+    position: absolute;
+    right: -1px; top: -1px;
+    width: 4px; height: 10px;
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 35%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.18)),
+      linear-gradient(90deg, #64748b, #94a3b8, #64748b);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,0.25),
+      1px 0 2px rgba(0,0,0,0.15);
+  }
+
+  /* Fulcrum marker — small triangle indicator on bottom of beam */
+  .lever-fulcrum-mark {
+    position: absolute;
+    left: calc(var(--fulcrum-pos, 0.5) * 100%);
+    top: 8px;
+    width: 0; height: 0;
+    margin-left: -4px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #94a3b8;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+
+  /* Fulcrum marker top highlight */
+  .lever-fulcrum-mark::before {
+    content: "";
+    position: absolute;
+    left: -3px; top: -6px;
+    width: 6px; height: 2px;
+    border-radius: 1px;
+    background: #ffffff;
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="lever">
+  <div class="lever-beam"></div>
+  <div class="lever-cap-l"></div>
+  <div class="lever-cap-r"></div>
+  <div class="lever-fulcrum-mark"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Tilt the lever (e.g. based on torque imbalance)
+  var tiltDeg = torqueImbalance * maxAngle;
+  leverEl.style.setProperty("--tilt", tiltDeg + "deg");
+
+  // Reposition fulcrum along beam (0=left end, 1=right end)
+  // leverEl.style.setProperty("--fulcrum-pos", 0.5);
+
+  // Gentle oscillation for dynamic demonstrations
+  // var tilt = amplitude * Math.sin(time * freq);
+  // leverEl.style.setProperty("--tilt", tilt + "deg");
+-->

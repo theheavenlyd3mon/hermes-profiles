@@ -1,0 +1,197 @@
+<!--
+  K12 Asset: 火箭
+  ID: rocket
+  Suitable: 牛顿第三定律, 动量守恒, 反冲运动, 加速运动, 变质量系统
+  CSS Vars: --thrust (0-1, exhaust flame size/glow), --paint-a (body lighter), --paint-b (body darker)
+  JS Hooks: thrust controls exhaust flicker; wobble = Math.sin(time*5)*0.5
+  Size: 32×80px at 1920×1080
+
+  Variants:
+    .rocket-a { --paint-a: #f1f5f9; --paint-b: #dc2626; }  (white/red, default)
+    .rocket-b { --paint-a: #cbd5e1; --paint-b: #1d4ed8; }  (silver/blue)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .rocket {
+    position: absolute;
+    width: 32px;
+    height: 80px;
+    margin-left: -16px;
+    transform-origin: 50% 50%;
+    z-index: 12;
+    --paint-a: #f1f5f9;
+    --paint-b: #dc2626;
+    --thrust: 0.5;
+    filter: drop-shadow(0 14px 20px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .rocket::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 44px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.4), transparent 68%);
+    z-index: -1;
+  }
+
+  /* Nose cone — pointed triangular top */
+  .rocket-nose {
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: 16px;
+    height: 22px;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.5) 0%, transparent 40%),
+      linear-gradient(90deg, rgba(0,0,0,0.1), transparent 30%, transparent 70%, rgba(0,0,0,0.1)),
+      linear-gradient(180deg, var(--paint-b) 20%, var(--paint-a) 100%);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+  }
+
+  /* Rocket body — main cylinder */
+  .rocket-body {
+    position: absolute;
+    left: 6px;
+    top: 20px;
+    width: 20px;
+    height: 40px;
+    border-radius: 3px;
+    background:
+      radial-gradient(ellipse at 35% 30%, rgba(234,234,234,0.4) 0 4px, transparent 12px),
+      linear-gradient(90deg, rgba(0,0,0,0.12), transparent 25%, transparent 75%, rgba(0,0,0,0.12)),
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 20%),
+      linear-gradient(180deg, var(--paint-a) 0%, var(--paint-a) 30%, var(--paint-b) 50%, var(--paint-b) 70%, var(--paint-a) 100%);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow:
+      inset 2px 2px 6px rgba(255,255,255,0.2),
+      inset -2px -4px 8px rgba(0,0,0,0.25),
+      inset 0 1px 2px rgba(255,255,255,0.3),
+      0 4px 10px rgba(0,0,0,0.2);
+  }
+
+  /* Window porthole */
+  .rocket-body::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.6) 0 2px, transparent 4px),
+      radial-gradient(circle at 50% 50%, rgba(147,197,253,0.5), rgba(30,58,138,0.4) 60%, rgba(15,23,42,0.4));
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Red/blue stripe band */
+  .rocket-body::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 6px;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.1), var(--paint-b) 20%, var(--paint-b) 80%, rgba(0,0,0,0.1));
+  }
+
+  /* Left fin */
+  .rocket-fin-l {
+    position: absolute;
+    left: 0;
+    bottom: 8px;
+    width: 8px;
+    height: 18px;
+    clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
+    background:
+      linear-gradient(135deg, var(--paint-b), rgba(0,0,0,0.3)),
+      linear-gradient(180deg, var(--paint-b), rgba(0,0,0,0.2));
+    box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1);
+  }
+
+  /* Right fin */
+  .rocket-fin-r {
+    position: absolute;
+    right: 0;
+    bottom: 8px;
+    width: 8px;
+    height: 18px;
+    clip-path: polygon(0% 0%, 100% 100%, 0% 100%);
+    background:
+      linear-gradient(-135deg, var(--paint-b), rgba(0,0,0,0.3)),
+      linear-gradient(180deg, var(--paint-b), rgba(0,0,0,0.2));
+    box-shadow: inset -1px 1px 3px rgba(255,255,255,0.1);
+  }
+
+  /* Exhaust flame — dual-gradient fire */
+  .rocket-exhaust {
+    position: absolute;
+    left: 9px;
+    bottom: 0;
+    width: 14px;
+    height: 20px;
+    border-radius: 4px 4px 50% 50%;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(234,234,234,0.9) 0 2px, transparent 6px),
+      radial-gradient(ellipse at 50% 40%, rgba(255,220,80,0.9), rgba(255,140,20,0.7) 40%, rgba(255,60,20,0.5) 70%, transparent 100%);
+    box-shadow:
+      0 4px 12px rgba(255,140,20,0.5),
+      0 8px 20px rgba(255,60,20,0.3);
+    transform-origin: 50% 0%;
+  }
+
+  /* Inner flame core */
+  .rocket-exhaust::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    width: 8px;
+    height: 12px;
+    border-radius: 3px 3px 50% 50%;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(234,234,234,0.7), rgba(255,240,150,0.6) 40%, rgba(255,180,50,0.4) 70%, transparent);
+  }
+
+  /* Color variants */
+  .rocket-a { --paint-a: #f1f5f9; --paint-b: #dc2626; }
+  .rocket-b { --paint-a: #cbd5e1; --paint-b: #1d4ed8; }
+  .rocket-b .rocket-body {
+    box-shadow:
+      inset 2px 2px 6px rgba(255,255,255,0.2),
+      inset -2px -4px 8px rgba(0,0,0,0.25),
+      inset 0 1px 2px rgba(255,255,255,0.3),
+      0 4px 10px rgba(29,78,216,0.25);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="rocket" class="rocket rocket-a">
+  <div class="rocket-nose"></div>
+  <div class="rocket-body"></div>
+  <div class="rocket-fin-l"></div>
+  <div class="rocket-fin-r"></div>
+  <div class="rocket-exhaust"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Thrust controls exhaust size and glow
+  var thrust = parseFloat(getComputedStyle(rocketEl).getPropertyValue("--thrust")) || 0.5;
+  var flicker = 1 + Math.sin(time * 18) * 0.1 + Math.sin(time * 27) * 0.05;
+  var flameScale = thrust * flicker;
+  exhaustEl.style.transform = "scaleY(" + flameScale + ") scaleX(" + (0.8 + thrust * 0.2 * flicker) + ")";
+  exhaustEl.style.opacity = thrust > 0.01 ? (0.6 + thrust * 0.4) : 0;
+
+  // Slight wobble when thrusting
+  var wobble = Math.sin(time * 5) * 0.5 * thrust;
+  rocketEl.style.transform = "translate3d(" + xPx + "px, " + yPx + "px, 0) rotate(" + wobble + "deg)";
+-->

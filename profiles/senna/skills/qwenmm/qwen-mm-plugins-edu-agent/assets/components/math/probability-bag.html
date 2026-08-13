@@ -1,0 +1,248 @@
+<!--
+  K12 Asset: 概率袋
+  ID: probability-bag
+  Suitable: 概率, 随机抽样, 不放回抽取, 古典概型, 条件概率
+  CSS Vars: --open (0=closed, 1=open showing contents)
+  JS Hooks: set --open in renderAt() to open/close the bag
+  Size: 50×60px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .probability-bag {
+    position: absolute;
+    width: 50px;
+    height: 60px;
+    margin-left: -25px;
+    transform-origin: 50% 100%;
+    --open: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .probability-bag::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: -7px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Bag body — soft fabric shape */
+  .pb-body {
+    position: absolute;
+    left: 6px; bottom: 0;
+    width: 38px; height: 44px;
+    border-radius: 6px 6px 12px 12px;
+    background:
+      radial-gradient(ellipse at 35% 25%, rgba(234,234,234,0.12), transparent 45%),
+      linear-gradient(180deg, rgba(234,234,234,0.08), transparent 20%),
+      linear-gradient(180deg, transparent 75%, rgba(0,0,0,0.15)),
+      linear-gradient(135deg, #7c2d12, #9a3412 20%, #b91c1c 40%, #991b1b 60%, #7f1d1d 80%, #6b1010);
+    border: 1px solid rgba(127,29,29,0.4);
+    box-shadow:
+      inset 0 3px 6px rgba(255,255,255,0.08),
+      inset 0 -4px 8px rgba(0,0,0,0.2),
+      inset 3px 0 6px rgba(0,0,0,0.08),
+      inset -3px 0 6px rgba(0,0,0,0.08);
+  }
+
+  /* Fabric texture */
+  .pb-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 6px 6px 12px 12px;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        transparent 0px, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 3px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0px, transparent 2px,
+        rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 3px
+      );
+  }
+
+  /* Bag fold/crease */
+  .pb-body::after {
+    content: "";
+    position: absolute;
+    left: 12px; top: 10px;
+    width: 1px; height: 20px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.1) 70%, transparent);
+    border-radius: 1px;
+  }
+
+  /* Bag neck (gathered top) */
+  .pb-neck {
+    position: absolute;
+    left: 12px; top: calc(14px - var(--open) * 4px);
+    width: 26px;
+    height: calc(8px + var(--open) * 4px);
+    border-radius: calc(4px + var(--open) * 6px) calc(4px + var(--open) * 6px) 0 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 30%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.1)),
+      linear-gradient(90deg, #7f1d1d, #991b1b 30%, #b91c1c 50%, #991b1b 70%, #7f1d1d);
+    border: 1px solid rgba(127,29,29,0.3);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.06),
+      inset 0 -2px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Dark interior visible when open */
+  .pb-neck::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 1px;
+    width: calc(16px + var(--open) * 2px);
+    height: calc(var(--open) * 6px);
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(15,10,5,0.85), rgba(40,20,10,0.6) 70%, transparent);
+    opacity: var(--open);
+  }
+
+  /* Drawstring — left */
+  .pb-string-l {
+    position: absolute;
+    left: 14px; top: calc(12px - var(--open) * 3px);
+    width: 8px; height: 10px;
+    border: none;
+    border-top: 1.5px solid #92400e;
+    border-left: 1.5px solid #92400e;
+    border-radius: 4px 0 0 0;
+    transform: rotate(calc(-5deg - var(--open) * 15deg));
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  /* Drawstring — right */
+  .pb-string-r {
+    position: absolute;
+    right: 14px; top: calc(12px - var(--open) * 3px);
+    width: 8px; height: 10px;
+    border: none;
+    border-top: 1.5px solid #92400e;
+    border-right: 1.5px solid #92400e;
+    border-radius: 0 4px 0 0;
+    transform: rotate(calc(5deg + var(--open) * 15deg));
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  /* Drawstring knot */
+  .pb-knot {
+    position: absolute;
+    left: 50%; top: calc(10px - var(--open) * 5px);
+    width: 4px; height: 3px;
+    margin-left: -2px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.2), transparent 50%),
+      radial-gradient(circle, #d97706, #b45309 60%, #92400e);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Ball container — visible when open */
+  .pb-balls {
+    position: absolute;
+    left: 10px; top: 20px;
+    width: 30px; height: 24px;
+    opacity: var(--open);
+  }
+
+  /* Red ball */
+  .pb-ball-red {
+    position: absolute;
+    left: 3px; top: 10px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.45), transparent 45%),
+      radial-gradient(circle, #ef4444 20%, #dc2626 50%, #991b1b 80%, #7f1d1d);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(0,0,0,0.2),
+      0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* Blue ball */
+  .pb-ball-blue {
+    position: absolute;
+    left: 12px; top: 8px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.45), transparent 45%),
+      radial-gradient(circle, #3b82f6 20%, #2563eb 50%, #1d4ed8 80%, #1e3a8a);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 3px rgba(0,0,0,0.2),
+      0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  /* White ball */
+  .pb-ball-white {
+    position: absolute;
+    right: 4px; top: 11px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.7), transparent 45%),
+      radial-gradient(circle, #f8fafc 20%, #e2e8f0 50%, #cbd5e1 80%, #94a3b8);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.3),
+      inset 0 -2px 3px rgba(0,0,0,0.1),
+      0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* Second red ball (partially hidden) */
+  .pb-ball-red2 {
+    position: absolute;
+    left: 8px; top: 16px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.4), transparent 45%),
+      radial-gradient(circle, #ef4444 20%, #dc2626 50%, #991b1b 80%);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.15),
+      inset 0 -2px 3px rgba(0,0,0,0.2);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="probability-bag">
+  <div class="pb-body"></div>
+  <div class="pb-neck"></div>
+  <div class="pb-string-l"></div>
+  <div class="pb-string-r"></div>
+  <div class="pb-knot"></div>
+  <div class="pb-balls">
+    <div class="pb-ball-red"></div>
+    <div class="pb-ball-blue"></div>
+    <div class="pb-ball-white"></div>
+    <div class="pb-ball-red2"></div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Open/close the bag
+  // bagEl.style.setProperty("--open", isOpen ? "1" : "0");
+
+  // Animated opening
+  // var openProgress = Math.min(1, time / openDuration);
+  // var eased = 1 - Math.pow(1 - openProgress, 2);
+  // bagEl.style.setProperty("--open", eased);
+
+  // Shake bag before drawing
+  // var shake = Math.sin(time * 18) * 2 * Math.exp(-time * 3);
+  // bagEl.style.transform = "rotate(" + shake + "deg)";
+
+  // Ball being drawn out (animate one ball upward)
+  // var ballY = -drawnProgress * 30;
+  // drawnBallEl.style.transform = "translateY(" + ballY + "px)";
+  // drawnBallEl.style.opacity = 1 - drawnProgress * 0.5;
+-->

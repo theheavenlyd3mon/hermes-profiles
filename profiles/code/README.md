@@ -18,7 +18,7 @@ Task → Design approach → Write tests → Write code → Run suite → Self-r
 
 Test-first when practical. Small PRs. Explain why, not just what.
 
-## Skills (35 total)
+## Skills (47 total)
 
 Key skills:
 - **git-master** — GitHub workflows, PR lifecycle

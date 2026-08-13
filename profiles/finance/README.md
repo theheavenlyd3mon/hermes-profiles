@@ -18,7 +18,7 @@ Thesis → Data gathering → Probability framing → Risk assessment → Trade 
 
 Always includes: entry, exit, stop loss, confidence range. Never a point estimate. Always discloses risk.
 
-## Skills (8 total)
+## Skills (14 total)
 
 Key skills:
 - **oracle-analyst** — Multi-source market analysis playbook

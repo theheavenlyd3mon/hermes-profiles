@@ -1,0 +1,277 @@
+<!--
+  K12 Asset: 骰子
+  ID: dice
+  Suitable: 概率, 随机事件, 统计, 样本空间, 排列组合
+  CSS Vars: --face (1-6, which face to show on front), --roll-angle (rotation in deg)
+  JS Hooks: set --face and --roll-angle in renderAt()
+  Size: 40×40px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .dice {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    margin-left: -20px;
+    transform-origin: 50% 50%;
+    --face: 1;
+    --roll-angle: 0deg;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+    perspective: 120px;
+  }
+
+  /* Ground shadow */
+  .dice::after {
+    content: "";
+    position: absolute;
+    left: 2px; bottom: 0;
+    width: 36px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 68%);
+  }
+
+  /* Cube wrapper with 3D transform */
+  .dc-cube {
+    position: absolute;
+    inset: 4px;
+    width: 32px; height: 32px;
+    transform-style: preserve-3d;
+    transform: rotateX(-15deg) rotateY(25deg) rotate(var(--roll-angle));
+  }
+
+  /* Front face */
+  .dc-front {
+    position: absolute;
+    inset: 0;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: translateZ(16px);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.2), transparent 40%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.08)),
+      linear-gradient(180deg, #f8fafc, #f1f5f9 40%, #e2e8f0 80%, #cbd5e1);
+    border: 1px solid rgba(148,163,184,0.3);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.5),
+      inset 0 -2px 4px rgba(0,0,0,0.08);
+  }
+
+  /* Right face */
+  .dc-right {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: rotateY(90deg) translateZ(16px);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.08), transparent 40%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(180deg, #e2e8f0, #cbd5e1 40%, #94a3b8 80%, #64748b);
+    border: 1px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.2),
+      inset 0 -2px 4px rgba(0,0,0,0.12);
+  }
+
+  /* Top face */
+  .dc-top {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: rotateX(90deg) translateZ(16px);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.25), transparent 50%),
+      linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.05)),
+      linear-gradient(180deg, #ffffff, #f8fafc 40%, #f1f5f9 80%, #e2e8f0);
+    border: 1px solid rgba(148,163,184,0.25);
+    box-shadow:
+      inset 0 2px 5px rgba(255,255,255,0.6),
+      inset 0 -1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* Back face (opposite front, showing 1) */
+  .dc-back {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: translateZ(-16px) rotateY(180deg);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.1), transparent 40%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.1)),
+      linear-gradient(180deg, #e2e8f0, #cbd5e1 40%, #94a3b8);
+    border: 1px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* Left face (opposite right, showing 4) */
+  .dc-left {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: rotateY(-90deg) translateZ(16px);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.12), transparent 40%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.1)),
+      linear-gradient(180deg, #e2e8f0, #d1d5db 40%, #94a3b8 80%, #64748b);
+    border: 1px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 1px 3px rgba(255,255,255,0.2),
+      inset 0 -2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* Bottom face (opposite top, showing 2) */
+  .dc-bottom {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    transform: rotateX(-90deg) translateZ(16px);
+    background:
+      linear-gradient(135deg, rgba(234,234,234,0.08), transparent 40%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(180deg, #cbd5e1, #94a3b8 50%, #64748b);
+    border: 1px solid rgba(100,116,139,0.3);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -2px 4px rgba(0,0,0,0.15);
+  }
+
+  /* Dot styles */
+  .dc-dot {
+    position: absolute;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(80,80,80,0.8), rgba(15,23,42,0.95) 60%);
+    box-shadow:
+      inset 0 1px 2px rgba(0,0,0,0.5),
+      0 0.5px 1px rgba(255,255,255,0.1);
+  }
+
+  /* Dot positions for face 1 (center) */
+  .dc-front .dc-d-center { left: 13.5px; top: 13.5px; }
+
+  /* Dot positions for face 2 (top-right, bottom-left) */
+  .dc-front .dc-d-tr { right: 5px; top: 5px; }
+  .dc-front .dc-d-bl { left: 5px; bottom: 5px; }
+
+  /* Dot positions for face 3 */
+  .dc-front .dc-d-trc { right: 5px; top: 5px; }
+  .dc-front .dc-d-c3 { left: 13.5px; top: 13.5px; }
+  .dc-front .dc-d-blc { left: 5px; bottom: 5px; }
+
+  /* Dot positions for face 4 (corners) */
+  .dc-front .dc-d-tl { left: 5px; top: 5px; }
+  .dc-front .dc-d-tr4 { right: 5px; top: 5px; }
+  .dc-front .dc-d-bl4 { left: 5px; bottom: 5px; }
+  .dc-front .dc-d-br { right: 5px; bottom: 5px; }
+
+  /* Dot positions for face 5 (corners + center) */
+  .dc-front .dc-d-tl5 { left: 5px; top: 5px; }
+  .dc-front .dc-d-tr5 { right: 5px; top: 5px; }
+  .dc-front .dc-d-c5 { left: 13.5px; top: 13.5px; }
+  .dc-front .dc-d-bl5 { left: 5px; bottom: 5px; }
+  .dc-front .dc-d-br5 { right: 5px; bottom: 5px; }
+
+  /* Dot positions for face 6 (two columns of 3) */
+  .dc-front .dc-d-lt { left: 6px; top: 5px; }
+  .dc-front .dc-d-lm { left: 6px; top: 13.5px; }
+  .dc-front .dc-d-lb { left: 6px; bottom: 5px; }
+  .dc-front .dc-d-rt { right: 6px; top: 5px; }
+  .dc-front .dc-d-rm { right: 6px; top: 13.5px; }
+  .dc-front .dc-d-rb { right: 6px; bottom: 5px; }
+
+  /* Back face dots — 1 (center) */
+  .dc-back .dc-dot { width: 5px; height: 5px; }
+  .dc-back .dc-bd1 { left: 13.5px; top: 13.5px; }
+
+  /* Left face dots — 4 (corners) */
+  .dc-left .dc-dot { width: 4px; height: 4px; }
+  .dc-left .dc-ld1 { left: 5px; top: 5px; }
+  .dc-left .dc-ld2 { right: 5px; top: 5px; }
+  .dc-left .dc-ld3 { left: 5px; bottom: 5px; }
+  .dc-left .dc-ld4 { right: 5px; bottom: 5px; }
+
+  /* Bottom face dots — 2 (diagonal) */
+  .dc-bottom .dc-dot { width: 4px; height: 4px; }
+  .dc-bottom .dc-obd1 { right: 5px; top: 5px; }
+  .dc-bottom .dc-obd2 { left: 5px; bottom: 5px; }
+
+  /* Side face dots (showing 3 on right, 5 on top as common view) */
+  .dc-right .dc-dot { width: 4px; height: 4px; }
+  .dc-right .dc-sd1 { left: 5px; top: 5px; }
+  .dc-right .dc-sd2 { left: 13.5px; top: 13.5px; }
+  .dc-right .dc-sd3 { right: 5px; bottom: 5px; }
+
+  .dc-top .dc-dot { width: 4px; height: 4px; }
+  .dc-top .dc-td1 { left: 5px; top: 5px; }
+  .dc-top .dc-td2 { right: 5px; top: 5px; }
+  .dc-top .dc-td3 { left: 13.5px; top: 13.5px; }
+  .dc-top .dc-td4 { left: 5px; bottom: 5px; }
+  .dc-top .dc-td5 { right: 5px; bottom: 5px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="dice">
+  <div class="dc-cube">
+    <!-- Front face — default showing face 6 (most common visual) -->
+    <div class="dc-front">
+      <div class="dc-dot dc-d-lt"></div>
+      <div class="dc-dot dc-d-lm"></div>
+      <div class="dc-dot dc-d-lb"></div>
+      <div class="dc-dot dc-d-rt"></div>
+      <div class="dc-dot dc-d-rm"></div>
+      <div class="dc-dot dc-d-rb"></div>
+    </div>
+    <!-- Right face — showing 3 -->
+    <div class="dc-right">
+      <div class="dc-dot dc-sd1"></div>
+      <div class="dc-dot dc-sd2"></div>
+      <div class="dc-dot dc-sd3"></div>
+    </div>
+    <!-- Top face — showing 5 -->
+    <div class="dc-top">
+      <div class="dc-dot dc-td1"></div>
+      <div class="dc-dot dc-td2"></div>
+      <div class="dc-dot dc-td3"></div>
+      <div class="dc-dot dc-td4"></div>
+      <div class="dc-dot dc-td5"></div>
+    </div>
+    <!-- Back face — showing 1 -->
+    <div class="dc-back">
+      <div class="dc-dot dc-bd1"></div>
+    </div>
+    <!-- Left face — showing 4 -->
+    <div class="dc-left">
+      <div class="dc-dot dc-ld1"></div>
+      <div class="dc-dot dc-ld2"></div>
+      <div class="dc-dot dc-ld3"></div>
+      <div class="dc-dot dc-ld4"></div>
+    </div>
+    <!-- Bottom face — showing 2 -->
+    <div class="dc-bottom">
+      <div class="dc-dot dc-obd1"></div>
+      <div class="dc-dot dc-obd2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Rotate dice to show different face
+  // Map face number to rotation angles:
+  // var faceRotations = {
+  //   1: "rotateX(-15deg) rotateY(25deg)",
+  //   2: "rotateX(-15deg) rotateY(115deg)",
+  //   3: "rotateX(-15deg) rotateY(205deg)",
+  //   4: "rotateX(-15deg) rotateY(295deg)",
+  //   5: "rotateX(75deg) rotateY(25deg)",
+  //   6: "rotateX(-105deg) rotateY(25deg)"
+  // };
+  // cubeEl.style.transform = faceRotations[face] + " rotate(" + rollAngle + "deg)";
+
+  // Rolling animation
+  // var roll = time * 720; // 2 full rotations per second
+  // diceEl.style.setProperty("--roll-angle", roll + "deg");
+  // cubeEl.style.transform = "rotateX(" + (roll * 0.7) + "deg) rotateY(" + roll + "deg)";
+-->

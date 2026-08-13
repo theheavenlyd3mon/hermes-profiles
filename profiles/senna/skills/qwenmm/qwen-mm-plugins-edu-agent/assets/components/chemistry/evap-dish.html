@@ -1,0 +1,194 @@
+<!--
+  K12 Asset: 蒸发皿
+  ID: evap-dish
+  Suitable: 蒸发结晶, 加热, 溶液浓缩, 固体灼烧
+  CSS Vars:
+    --fill (0=empty, 1=full, controls liquid level inside dish)
+    --liquid-color (default: rgba(96,165,250,0.5))
+    --steam-opacity (0=no steam, 1=full steam, for evaporation effect)
+  JS Hooks: set --fill for liquid level, --steam-opacity for evaporation steam
+  Size: 56×20px at 1920×1080
+
+  Note: Shallow wide ceramic dish with a handle stub. Steam wisps via ::before.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .evap-dish {
+    position: absolute;
+    width: 56px;
+    height: 20px;
+    margin-left: -28px;
+    transform-origin: 50% 100%;
+    --fill: 0.5;
+    --liquid-color: rgba(96,165,250,0.5);
+    --steam-opacity: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .evap-dish::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: -7px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Steam wisps — rises from dish when heated */
+  .evap-dish::before {
+    content: "";
+    position: absolute;
+    left: 8px; right: 8px;
+    top: -18px;
+    height: 18px;
+    opacity: var(--steam-opacity);
+    background:
+      radial-gradient(ellipse at 25% 80%, rgba(200,210,220,0.2), transparent 50%),
+      radial-gradient(ellipse at 60% 70%, rgba(200,210,220,0.15), transparent 45%),
+      radial-gradient(ellipse at 80% 90%, rgba(200,210,220,0.12), transparent 40%);
+    pointer-events: none;
+  }
+
+  /* Ceramic body — shallow bowl shape */
+  .ed-body {
+    position: absolute;
+    left: 2px; top: 4px;
+    width: 52px; height: 14px;
+    border-radius: 4px 4px 26px 26px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.18), transparent 40%),
+      linear-gradient(90deg, rgba(245,240,235,0.9), rgba(235,228,220,0.85) 50%, rgba(225,218,210,0.88)),
+      radial-gradient(ellipse at 30% 20%, rgba(234,234,234,0.15), transparent 50%),
+      linear-gradient(180deg, rgba(240,235,228,0.95), rgba(220,212,202,0.9) 60%, rgba(200,192,182,0.92));
+    border: 1px solid rgba(195,185,172,0.5);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.2),
+      inset 0 -3px 6px rgba(0,0,0,0.08),
+      inset 1px 0 2px rgba(255,255,255,0.1),
+      inset -1px 0 2px rgba(0,0,0,0.03),
+      0 0 4px rgba(180,170,155,0.1);
+    overflow: hidden;
+  }
+
+  /* Ceramic glaze highlight — rim reflection */
+  .ed-body::before {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; top: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(234,234,234,0.3) 20%,
+      rgba(234,234,234,0.4) 50%,
+      rgba(234,234,234,0.3) 80%,
+      transparent);
+  }
+
+  /* Ceramic bottom interior shadow */
+  .ed-body::after {
+    content: "";
+    position: absolute;
+    left: 6px; right: 6px; bottom: 0;
+    height: 5px;
+    border-radius: 0 0 20px 20px;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.06), transparent 70%);
+  }
+
+  /* Liquid pool inside dish */
+  .ed-liquid {
+    position: absolute;
+    left: 3px; right: 3px;
+    bottom: 1px;
+    height: calc(var(--fill) * 8px);
+    max-height: 8px;
+    border-radius: 0 0 22px 22px;
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.04) 90%),
+      radial-gradient(ellipse at 40% 30%, rgba(234,234,234,0.1), transparent 50%),
+      linear-gradient(180deg, var(--liquid-color), var(--liquid-color));
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.08),
+      inset 0 -1px 3px rgba(0,0,0,0.06);
+  }
+
+  /* Liquid surface highlight */
+  .ed-liquid::before {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; top: -1px;
+    height: 2px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at 50% 50%,
+        rgba(234,234,234,0.18), transparent 60%);
+  }
+
+  /* Rim — thickened upper edge */
+  .ed-rim {
+    position: absolute;
+    left: 0; top: 2px;
+    width: 56px; height: 4px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, rgba(240,235,228,0.6), rgba(220,212,202,0.4));
+    border: 0.8px solid rgba(195,185,172,0.35);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  /* Handle stub — small protrusion on right */
+  .ed-handle {
+    position: absolute;
+    right: 0; top: 6px;
+    width: 8px; height: 6px;
+    border-radius: 0 3px 3px 0;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 40%),
+      linear-gradient(180deg, rgba(235,228,220,0.9), rgba(215,208,198,0.85));
+    border: 0.8px solid rgba(195,185,172,0.4);
+    border-left: none;
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.1);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="evap-dish">
+  <div class="ed-body">
+    <div class="ed-liquid"></div>
+  </div>
+  <div class="ed-rim"></div>
+  <div class="ed-handle"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set fill level (0 = empty, 1 = full)
+  var fill = Math.max(0, Math.min(1, fillLevel));
+  dishEl.style.setProperty("--fill", fill);
+
+  // Animate steam wisps (move the pseudo-element via steam-opacity)
+  // Steam intensity increases as liquid heats up
+  var steamOp = Math.max(0, Math.min(1, steamIntensity));
+  dishEl.style.setProperty("--steam-opacity", steamOp);
+
+  // Animate steam wisp drift using a wrapper approach:
+  // Since ::before cannot be directly moved by JS, use a child div
+  // or animate --steam-opacity with subtle fluctuation:
+  var flicker = 0.8 + Math.sin(time * 3.0) * 0.15 + Math.sin(time * 7.1) * 0.05;
+  dishEl.style.setProperty("--steam-opacity", steamOp * flicker);
+
+  // Change liquid color
+  // dishEl.style.setProperty("--liquid-color", "rgba(251,191,36,0.5)");
+
+  // Evaporation animation (fill decreasing while steam rises):
+  // var t = Math.min(1, (time - evapStart) / evapDuration);
+  // var eased = t * t * (3 - 2 * t);
+  // dishEl.style.setProperty("--fill", startFill * (1 - eased));
+  // dishEl.style.setProperty("--steam-opacity", eased);
+-->

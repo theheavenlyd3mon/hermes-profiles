@@ -18,7 +18,7 @@ Context → Apply framework → Quantify → Rank options → Recommend one path
 
 Uses established models before improvising. Recommendations are ranked, never a flat list.
 
-## Skills (39 total)
+## Skills (48 total)
 
 Key skills:
 - **blue-ocean-strategy** — Uncontested market space analysis

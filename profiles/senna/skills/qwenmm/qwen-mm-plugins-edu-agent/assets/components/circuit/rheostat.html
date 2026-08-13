@@ -1,0 +1,153 @@
+<!--
+  K12 Asset: 滑动变阻器
+  ID: rheostat
+  Suitable: 动态电路, 欧姆定律, 电功率, 实验探究
+  CSS Vars: --slider-pos (0=left/max resistance, 1=right/min resistance)
+  JS Hooks: set --slider-pos in renderAt() to move the slider
+  Size: 88×48px at 1920×1080
+
+  Note: Terminal layout (left-to-right): A接线柱, D接线柱, 滑片, C接线柱, B接线柱
+  Resistance: max at slider-pos=0, min at slider-pos=1
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .rheostat {
+    position: absolute;
+    width: 88px;
+    height: 48px;
+    margin-left: -44px;
+    transform-origin: 50% 100%;
+    --slider-pos: 0.5;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .rheostat::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Ceramic base — insulating body */
+  .rheo-base {
+    position: absolute;
+    left: 6px; right: 6px; bottom: 0;
+    height: 16px;
+    border-radius: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 25%),
+      linear-gradient(180deg, #78716c, #57534e 50%, #44403c);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -4px 6px rgba(0,0,0,0.2),
+      0 3px 6px rgba(0,0,0,0.18);
+  }
+
+  /* Resistance coil — wound wire on ceramic core */
+  .rheo-coil {
+    position: absolute;
+    left: 14px; right: 14px; bottom: 14px;
+    height: 18px;
+    border-radius: 4px 4px 2px 2px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(180,140,80,0.7) 0px, rgba(212,175,55,0.8) 1px,
+        rgba(160,120,60,0.6) 2px, rgba(140,100,40,0.5) 3px),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 30%),
+      linear-gradient(180deg, #8b6914, #6b4f10);
+    border: 1px solid rgba(139,105,20,0.4);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.12),
+      inset 0 -4px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Slider rail — horizontal guide bar */
+  .rheo-rail {
+    position: absolute;
+    left: 10px; right: 10px; bottom: 34px;
+    height: 3px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, #94a3b8, #cbd5e1 50%, #94a3b8);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.2),
+      0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* Slider contact — moves along rail */
+  .rheo-slider {
+    position: absolute;
+    bottom: 30px;
+    left: calc(10px + var(--slider-pos) * 52px);
+    width: 12px; height: 14px;
+    margin-left: -6px;
+    border-radius: 2px 2px 1px 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 25%),
+      linear-gradient(90deg, #64748b, #94a3b8 30%, #cbd5e1 50%, #94a3b8 70%, #64748b);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.3),
+      0 2px 4px rgba(0,0,0,0.25);
+    z-index: 2;
+  }
+
+  /* Slider knob top */
+  .rheo-slider::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: -4px;
+    width: 8px; height: 5px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, #e2e8f0, #94a3b8);
+    box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Terminal posts — 4 binding screws */
+  .rheo-term {
+    position: absolute;
+    bottom: 2px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.35), transparent 45%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .rheo-term-a { left: 10px; }
+  .rheo-term-b { right: 10px; }
+  .rheo-term-c { right: 24px; }
+  .rheo-term-d { left: 24px; }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="rheostat">
+  <div class="rheo-base"></div>
+  <div class="rheo-coil"></div>
+  <div class="rheo-rail"></div>
+  <div class="rheo-slider"></div>
+  <div class="rheo-term rheo-term-a"></div>
+  <div class="rheo-term rheo-term-d"></div>
+  <div class="rheo-term rheo-term-c"></div>
+  <div class="rheo-term rheo-term-b"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Slider position: 0 = leftmost (max R), 1 = rightmost (min R)
+  var pos = sliderPosition; // 0..1
+  pos = Math.max(0, Math.min(1, pos));
+  rheostatEl.style.setProperty("--slider-pos", pos);
+
+  // Animated slide (smooth transition):
+  // var t = Math.min(1, (time - slideStartTime) / slideDuration);
+  // var eased = t < 1 ? t * (2 - t) : 1; // easeOutQuad
+  // var pos = startPos + (endPos - startPos) * eased;
+  // rheostatEl.style.setProperty("--slider-pos", pos);
+-->

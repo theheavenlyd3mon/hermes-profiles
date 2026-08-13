@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>video-edit · 本地资产浏览器</title>
+<style>
+  :root { --bg:#0b0b0f; --card:#17171d; --ink:#e8e8ec; --sub:#9a9aa5; --accent:#ffd76a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang SC",sans-serif; padding:28px 32px 80px; }
+  h1 { font-size:22px; margin-bottom:6px; }
+  .sub { color:var(--sub); font-size:13px; margin-bottom:14px; }
+  .sub code { color:var(--accent); }
+  #toolbar { display:flex; gap:12px; align-items:center; margin-bottom:8px; }
+  #search { background:#101016; border:1px solid #2c2c36; border-radius:8px; color:var(--ink); font-size:13px; padding:8px 12px; width:260px; }
+  #counts { color:var(--sub); font-size:12px; }
+  h2.batch { margin:26px 0 12px; font-size:17px; color:var(--accent); }
+  h2.batch small { color:var(--sub); font-size:12px; font-weight:normal; margin-left:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .grid.wide { grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); }
+  .card { background:var(--card); border-radius:12px; padding:14px 16px; }
+  .card h3 { font-size:14px; word-break:break-all; }
+  .meta { color:var(--sub); font-size:11px; margin-top:4px; }
+  .note { color:#c9b98a; font-size:11px; margin-top:6px; line-height:1.5; }
+  .copy { float:right; background:#26262e; color:var(--sub); border:1px solid #33333d; border-radius:6px; font-size:11px; padding:3px 8px; cursor:pointer; }
+  .copy:hover { color:var(--accent); }
+  /* fonts */
+  .specimen { margin-top:10px; line-height:1.35; overflow:hidden; }
+  .specimen .lat { font-size:26px; }
+  .specimen .zh  { font-size:20px; margin-top:2px; }
+  .specimen .num { font-size:15px; color:var(--sub); margin-top:2px; }
+  /* images */
+  .thumb { margin-top:10px; border-radius:8px; height:150px; display:flex; align-items:center; justify-content:center; cursor:zoom-in;
+    background:repeating-conic-gradient(#1d1d25 0% 25%, #14141a 0% 50%) 0 0 / 20px 20px; }
+  .thumb img { max-width:100%; max-height:100%; object-fit:contain; }
+  /* media */
+  audio { width:100%; margin-top:10px; }
+  video { width:100%; margin-top:10px; border-radius:8px; background:#000; }
+  .empty { color:var(--sub); font-size:13px; padding:18px; background:#101016; border:1px dashed #2c2c36; border-radius:10px; }
+  .empty code { color:var(--accent); }
+  #lightbox { position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:center; z-index:99; cursor:zoom-out; }
+  #lightbox img { max-width:92vw; max-height:92vh; }
+  #stale { display:none; background:#7a5a13; color:#fff; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<h1>video-edit · 本地资产浏览器</h1>
+<p class="sub">渲染 <code>manifest.json</code>（新增/删除资产后跑 <code>python3 scan.py</code> 再刷新）。
+资产旁的同名 <code>.txt</code> 会作为 license/来源备注显示。需通过本地 HTTP 服务打开（字体/媒体加载需要）。</p>
+<div id="stale">⚠️ 读不到 manifest.json — 先运行 <b>python3 scan.py</b>，并确认是通过 http:// 打开本页（不是 file://）</div>
+
+<div id="toolbar">
+  <input id="search" placeholder="按名称过滤…">
+  <span id="counts"></span>
+</div>
+
+<div id="sections"></div>
+<div id="lightbox" onclick="this.style.display='none'"><img></div>
+
+<script>
+const SECTION_META = {
+  fonts:  { title: '字体 Fonts',   hint: '丢 .ttf/.otf/.woff2 进 fonts/，实时字样预览' },
+  sfx:    { title: '音效 SFX',     hint: '丢 whoosh/chime/pop 等短音效进 sfx/' },
+  bgm:    { title: '配乐 BGM',     hint: '丢可复用的 BGM 进 bgm/' },
+  images: { title: '图片 Images',  hint: '贴纸/纹理/Logo/背板进 images/（棋盘格底可查透明度）' },
+  clips:  { title: '视频 Clips',   hint: '可复用的短视频素材进 clips/' },
+};
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dur = d => d == null ? '' : ` · ${d}s`;
+
+function fontCard(it, i) {
+  const fam = `af-${i}`;
+  const style = `<style>@font-face{font-family:'${fam}';src:url('${it.file}');}</style>`;
+  return `${style}<div class="card" data-name="${esc(it.name)}">
+    <button class="copy" data-p="${it.file}">复制路径</button>
+    <h3>${esc(it.name)}</h3>
+    <div class="meta">${it.ext} · ${it.size_kb} KB</div>
+    <div class="specimen" style="font-family:'${fam}'">
+      <div class="lat">Aa Bb Qq — The quick fox</div>
+      <div class="zh">山谷里的一餐 视频剪辑</div>
+      <div class="num">0123456789 · ¥18 · 2,380km</div>
+    </div>
+    ${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}</div>`;
+}
+function audioCard(it) {
+  return `<div class="card" data-name="${esc(it.name)}">
+    <button class="copy" data-p="${it.file}">复制路径</button>
+    <h3>${esc(it.name)}</h3>
+    <div class="meta">${it.ext} · ${it.size_kb} KB${dur(it.duration)}</div>
+    <audio controls preload="none" src="${it.file}"></audio>
+    ${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}</div>`;
+}
+function imageCard(it) {
+  return `<div class="card" data-name="${esc(it.name)}">
+    <button class="copy" data-p="${it.file}">复制路径</button>
+    <h3>${esc(it.name)}</h3>
+    <div class="meta">${it.ext} · ${it.size_kb} KB</div>
+    <div class="thumb" data-full="${it.file}"><img loading="lazy" src="${it.file}"></div>
+    ${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}</div>`;
+}
+function videoCard(it) {
+  return `<div class="card" data-name="${esc(it.name)}">
+    <button class="copy" data-p="${it.file}">复制路径</button>
+    <h3>${esc(it.name)}</h3>
+    <div class="meta">${it.ext} · ${it.size_kb} KB${dur(it.duration)}</div>
+    <video controls preload="metadata" src="${it.file}"></video>
+    ${it.note ? `<div class="note">${esc(it.note)}</div>` : ''}</div>`;
+}
+const RENDER = { font: fontCard, audio: audioCard, image: imageCard, video: videoCard };
+
+fetch('manifest.json?t=' + Date.now()).then(r => r.json()).then(man => {
+  const root = document.getElementById('sections');
+  let total = 0, counts = [];
+  for (const [bucket, meta] of Object.entries(SECTION_META)) {
+    const data = man[bucket] || { kind: 'image', items: [] };
+    total += data.items.length;
+    counts.push(`${meta.title.split(' ')[1] || bucket} ${data.items.length}`);
+    const wide = data.kind === 'video' ? ' wide' : '';
+    const body = data.items.length
+      ? `<div class="grid${wide}">${data.items.map((it, i) => RENDER[data.kind](it, bucket + i)).join('')}</div>`
+      : `<div class="empty">空 — ${meta.hint}，然后 <code>python3 scan.py</code> + 刷新</div>`;
+    root.insertAdjacentHTML('beforeend',
+      `<h2 class="batch">${meta.title}<small>${data.items.length} 项</small></h2>${body}`);
+  }
+  document.getElementById('counts').textContent = `共 ${total} 项 · ${counts.join(' / ')}`;
+
+  root.addEventListener('click', e => {
+    const cp = e.target.closest('.copy');
+    if (cp) { navigator.clipboard.writeText(location.pathname.replace(/index\.html$/, '') + cp.dataset.p);
+      cp.textContent = '已复制 ✓'; setTimeout(() => cp.textContent = '复制路径', 1000); return; }
+    const th = e.target.closest('.thumb');
+    if (th) { const lb = document.getElementById('lightbox');
+      lb.querySelector('img').src = th.dataset.full; lb.style.display = 'flex'; }
+  });
+  document.getElementById('search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.card').forEach(c =>
+      c.style.display = c.dataset.name.toLowerCase().includes(q) ? '' : 'none');
+  });
+}).catch(() => document.getElementById('stale').style.display = 'block');
+</script>
+</body>
+</html>

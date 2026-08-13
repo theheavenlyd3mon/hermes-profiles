@@ -1,0 +1,180 @@
+<!--
+  K12 Asset: 数轴
+  ID: number-line
+  Suitable: 有理数, 数的大小比较, 绝对值, 不等式, 区间
+  CSS Vars: --range-start (-5 default), --range-end (5 default), --highlight-pos (position to highlight)
+  JS Hooks: set --highlight-pos in renderAt() to move indicator point
+  Size: 300×20px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .number-line {
+    position: absolute;
+    width: 300px;
+    height: 20px;
+    margin-left: -150px;
+    transform-origin: 50% 50%;
+    --range-start: -5;
+    --range-end: 5;
+    --highlight-pos: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  }
+
+  /* Main axis line */
+  .nl-axis {
+    position: absolute;
+    left: 10px; top: 10px;
+    width: 278px; height: 1.5px;
+    background:
+      linear-gradient(90deg, rgba(226,232,240,0.4), rgba(226,232,240,0.9) 5%, rgba(226,232,240,0.9) 95%, rgba(226,232,240,0.4));
+    box-shadow: 0 0 3px rgba(226,232,240,0.2);
+  }
+
+  /* Right arrowhead */
+  .nl-axis::after {
+    content: "";
+    position: absolute;
+    right: -2px; top: -4px;
+    width: 0; height: 0;
+    border-top: 4.5px solid transparent;
+    border-bottom: 4.5px solid transparent;
+    border-left: 9px solid rgba(226,232,240,0.9);
+  }
+
+  /* Left arrowhead (optional for full number line) */
+  .nl-axis::before {
+    content: "";
+    position: absolute;
+    left: -2px; top: -4px;
+    width: 0; height: 0;
+    border-top: 4.5px solid transparent;
+    border-bottom: 4.5px solid transparent;
+    border-right: 9px solid rgba(226,232,240,0.9);
+  }
+
+  /* Tick marks container */
+  .nl-ticks {
+    position: absolute;
+    left: 35px; top: 7px;
+    width: 230px; height: 7px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(226,232,240,0.7) 0px, rgba(226,232,240,0.7) 1px,
+        transparent 1px, transparent 23px
+      );
+  }
+
+  /* Minor ticks (half-intervals) */
+  .nl-ticks-minor {
+    position: absolute;
+    left: 46.5px; top: 8px;
+    width: 230px; height: 4px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(148,163,184,0.5) 0px, rgba(148,163,184,0.5) 0.5px,
+        transparent 0.5px, transparent 23px
+      );
+  }
+
+  /* Origin mark — emphasized */
+  .nl-origin {
+    position: absolute;
+    left: 150px; top: 6px;
+    width: 1.5px; height: 9px;
+    margin-left: -0.75px;
+    background: rgba(248,250,252,0.9);
+    box-shadow: 0 0 3px rgba(248,250,252,0.3);
+  }
+
+  /* Number labels */
+  .nl-labels {
+    position: absolute;
+    left: 35px; top: 0;
+    width: 230px; height: 20px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .nl-num {
+    position: relative;
+    top: 13px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 5.5px;
+    font-weight: 500;
+    color: rgba(203,213,225,0.85);
+    width: 0;
+    text-align: center;
+  }
+
+  /* Origin label emphasis */
+  .nl-num-origin {
+    font-weight: 700;
+    color: rgba(248,250,252,0.95);
+    font-size: 6px;
+  }
+
+  /* Highlight point — movable indicator */
+  .nl-highlight {
+    position: absolute;
+    left: calc(35px + (var(--highlight-pos) - var(--range-start)) / (var(--range-end) - var(--range-start)) * 230px);
+    top: 6px;
+    width: 6px; height: 6px;
+    margin-left: -3px;
+    margin-top: -0px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.5), transparent 50%),
+      radial-gradient(circle, #ef4444, #dc2626 60%, #991b1b);
+    box-shadow:
+      0 0 4px rgba(239,68,68,0.5),
+      0 0 8px rgba(239,68,68,0.2),
+      inset 0 1px rgba(255,255,255,0.3);
+    z-index: 3;
+  }
+
+  /* Highlight glow pulse */
+  .nl-highlight::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,68,68,0.3), transparent 70%);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="number-line">
+  <div class="nl-axis"></div>
+  <div class="nl-ticks"></div>
+  <div class="nl-ticks-minor"></div>
+  <div class="nl-origin"></div>
+  <div class="nl-labels">
+    <span class="nl-num">-5</span>
+    <span class="nl-num">-4</span>
+    <span class="nl-num">-3</span>
+    <span class="nl-num">-2</span>
+    <span class="nl-num">-1</span>
+    <span class="nl-num nl-num-origin">0</span>
+    <span class="nl-num">1</span>
+    <span class="nl-num">2</span>
+    <span class="nl-num">3</span>
+    <span class="nl-num">4</span>
+    <span class="nl-num">5</span>
+  </div>
+  <div class="nl-highlight"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Move highlight point to a specific value
+  // numberLineEl.style.setProperty("--highlight-pos", targetValue);
+
+  // Animate point sliding along the line
+  // var pos = startPos + (endPos - startPos) * Math.min(1, time / duration);
+  // numberLineEl.style.setProperty("--highlight-pos", pos);
+
+  // Pulse effect on highlight
+  // var scale = 1 + Math.sin(time * 4) * 0.15;
+  // highlightEl.style.transform = "scale(" + scale + ")";
+-->

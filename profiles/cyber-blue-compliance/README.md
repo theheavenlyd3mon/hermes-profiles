@@ -13,7 +13,7 @@ Scope → Map controls → Evidence → Gap analysis → Remediation → Artifac
 
 Framework-aligned. Policy-first mind. Produces repeatable, reviewable evidence.
 
-## Skills
+## Skills (30 total)
 - Policy/code review: dogfood templates and issue taxonomy
 - Governance workflow and reporting
 - Framework mappings from Anthropic Cybersecurity Skills collection

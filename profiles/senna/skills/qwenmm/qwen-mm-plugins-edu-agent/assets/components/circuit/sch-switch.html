@@ -1,0 +1,59 @@
+<!--
+  K12 Asset: 开关原理图符号（Schematic Symbol）
+  ID: sch-switch
+  Suitable: 串联电路, 并联电路, 电路图作图题
+  Size: ~80px wide with terminal stubs
+
+  Anatomy:
+    - Left: fixed pivot (solid dot, r=5)
+    - Right: contact point (solid dot, r=5)
+    - Blade: line from pivot, angled up when open, horizontal when closed
+    - Label "S" below
+
+  Variants:
+    Open switch:  blade angled up (default, ~30deg from horizontal)
+    Closed switch: blade horizontal (touching contact point)
+
+  Default orientation: horizontal
+  Terminal endpoints: left at (-40, 0), right at (40, 0)
+-->
+
+<!-- ===== SVG: Switch OPEN (断开的开关) ===== -->
+<g class="sch-switch-open" transform="translate(0, 0)">
+  <!-- Left wire stub -->
+  <line x1="-40" y1="0" x2="-12" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Fixed pivot dot (left) -->
+  <circle cx="-12" cy="0" r="5" fill="#1a1f36"/>
+  <!-- Blade (angled up = open) -->
+  <line x1="-12" y1="0" x2="10" y2="-20"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Contact point (right, open circle when open) -->
+  <circle cx="12" cy="0" r="5" fill="none" stroke="#1a1f36" stroke-width="3"/>
+  <!-- Right wire stub -->
+  <line x1="12" y1="0" x2="40" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Label -->
+  <text x="0" y="24" text-anchor="middle" font-size="22" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">S</text>
+</g>
+
+<!-- ===== SVG: Switch CLOSED (闭合的开关) ===== -->
+<g class="sch-switch-closed" transform="translate(0, 0)">
+  <!-- Left wire stub -->
+  <line x1="-40" y1="0" x2="-12" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Fixed pivot dot (left) -->
+  <circle cx="-12" cy="0" r="5" fill="#1a1f36"/>
+  <!-- Blade (horizontal = closed) -->
+  <line x1="-12" y1="0" x2="12" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Contact point (right, solid when closed) -->
+  <circle cx="12" cy="0" r="5" fill="#1a1f36"/>
+  <!-- Right wire stub -->
+  <line x1="12" y1="0" x2="40" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Label -->
+  <text x="0" y="24" text-anchor="middle" font-size="22" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">S</text>
+</g>

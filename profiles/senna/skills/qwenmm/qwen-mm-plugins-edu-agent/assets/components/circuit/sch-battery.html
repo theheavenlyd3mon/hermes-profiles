@@ -1,0 +1,85 @@
+<!--
+  K12 Asset: 电池原理图符号（Schematic Symbol）
+  ID: sch-battery
+  Suitable: 串联电路, 并联电路, 欧姆定律, 电路图作图题
+  Size: viewBox centered at origin; single cell ~16×40, two cells ~48×40
+
+  CRITICAL PHYSICS RULE:
+    长线 = 正极(+)    Long line  = positive terminal
+    短线 = 负极(-)    Short line = negative terminal
+    This is a universal convention — never reverse the labels.
+
+  Variants:
+    Single cell:  one long + one short line
+    Two cells:    two long-short pairs connected in series
+
+  Default orientation: horizontal, positive terminal on RIGHT
+  Use transform="rotate(-90, cx, cy)" for vertical placement
+
+  Integration:
+    Paste the <g> element inside your circuit <svg>.
+    Position with transform="translate(x, y)".
+    Connect terminal endpoints to wire paths.
+    Terminal endpoints: left at (-24, 0), right at (24, 0) for single cell
+                        left at (-40, 0), right at (40, 0) for two cells
+-->
+
+<!-- ===== SVG: Single Cell (单节电池) ===== -->
+<!--
+  Terminal endpoints: (-24, 0) left wire, (24, 0) right wire
+  Negative terminal on LEFT, Positive terminal on RIGHT
+-->
+<g class="sch-battery-1" transform="translate(0, 0)">
+  <!-- Left wire stub (connects to negative side) -->
+  <line x1="-24" y1="0" x2="-6" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Short line = NEGATIVE terminal (shorter, 24px tall) -->
+  <line x1="-6" y1="-12" x2="-6" y2="12"
+        stroke="#1a1f36" stroke-width="4" stroke-linecap="round"/>
+  <!-- Long line = POSITIVE terminal (longer, 40px tall) -->
+  <line x1="6" y1="-20" x2="6" y2="20"
+        stroke="#1a1f36" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right wire stub (connects to positive side) -->
+  <line x1="6" y1="0" x2="24" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Terminal labels -->
+  <text x="-14" y="-16" text-anchor="middle" font-size="20" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">-</text>
+  <text x="14" y="-16" text-anchor="middle" font-size="20" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">+</text>
+</g>
+
+<!-- ===== SVG: Two Cells in Series (两节干电池) ===== -->
+<!--
+  Terminal endpoints: (-40, 0) left wire, (40, 0) right wire
+  Negative terminal on LEFT, Positive terminal on RIGHT
+  Internal: cell1(-) -- cell1(+) == cell2(-) -- cell2(+)
+-->
+<g class="sch-battery-2" transform="translate(0, 0)">
+  <!-- Left wire stub -->
+  <line x1="-40" y1="0" x2="-22" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Cell 1: short line (neg, left) -->
+  <line x1="-22" y1="-12" x2="-22" y2="12"
+        stroke="#1a1f36" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cell 1: long line (pos) -->
+  <line x1="-10" y1="-20" x2="-10" y2="20"
+        stroke="#1a1f36" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Internal connection between cells -->
+  <line x1="-10" y1="0" x2="10" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Cell 2: short line (neg) -->
+  <line x1="10" y1="-12" x2="10" y2="12"
+        stroke="#1a1f36" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cell 2: long line (pos, right) -->
+  <line x1="22" y1="-20" x2="22" y2="20"
+        stroke="#1a1f36" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right wire stub -->
+  <line x1="22" y1="0" x2="40" y2="0"
+        stroke="#1a1f36" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Terminal labels: overall battery polarity -->
+  <text x="-30" y="-16" text-anchor="middle" font-size="20" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">-</text>
+  <text x="30" y="-16" text-anchor="middle" font-size="20" font-weight="600"
+        fill="#1a1f36" font-family="'Noto Sans SC','PingFang SC',sans-serif">+</text>
+</g>

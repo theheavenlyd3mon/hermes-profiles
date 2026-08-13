@@ -18,7 +18,7 @@ Brief → Mood board + references → Draft → Iterate → Accessibility pass �
 
 Design systems over one-offs. Mobile first. Show don't tell.
 
-## Skills (24 total)
+## Skills (56 total)
 
 Key skills:
 - **claude-design** — HTML artifacts (landing pages, decks, prototypes)

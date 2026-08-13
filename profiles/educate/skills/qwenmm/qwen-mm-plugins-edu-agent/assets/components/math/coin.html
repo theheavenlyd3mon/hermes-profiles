@@ -1,0 +1,182 @@
+<!--
+  K12 Asset: 硬币
+  ID: coin
+  Suitable: 概率, 随机事件, 二项分布, 正反面, 独立事件
+  CSS Vars: --flip-progress (0-1 for flip animation, 0=heads, 0.5=edge, 1=tails)
+  JS Hooks: set --flip-progress in renderAt() for flip animation
+  Size: 36×36px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .coin {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    margin-left: -18px;
+    transform-origin: 50% 50%;
+    --flip-progress: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.32));
+    perspective: 200px;
+  }
+
+  /* Ground shadow */
+  .coin::after {
+    content: "";
+    position: absolute;
+    left: 2px; bottom: -7px;
+    width: 32px; height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.3), transparent 68%);
+  }
+
+  /* Coin body container — handles the flip rotation */
+  .cn-body {
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    transform-style: preserve-3d;
+    transform: rotateY(calc(var(--flip-progress) * 180deg));
+  }
+
+  /* Heads face (front) — gold */
+  .cn-heads {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.35), transparent 40%),
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 50%),
+      radial-gradient(circle, #fbbf24 10%, #f59e0b 30%, #d97706 55%, #b45309 75%, #92400e 90%);
+    border: 1.5px solid rgba(180,83,9,0.5);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.3),
+      inset 0 -3px 6px rgba(0,0,0,0.2),
+      inset 2px 0 4px rgba(255,255,255,0.1),
+      inset -2px 0 4px rgba(0,0,0,0.1);
+  }
+
+  /* Heads embossed profile (simplified circle relief) */
+  .cn-heads::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 14px; height: 14px;
+    margin-left: -7px; margin-top: -7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 40% 35%, rgba(234,234,234,0.2), transparent 50%),
+      radial-gradient(circle, rgba(251,191,36,0.6), rgba(217,119,6,0.4) 70%, transparent);
+    border: 1px solid rgba(217,119,6,0.3);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.2),
+      inset 0 -1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Heads rim text indicator */
+  .cn-heads::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 0.5px dashed rgba(217,119,6,0.4);
+  }
+
+  /* Tails face (back) — gold with different pattern */
+  .cn-tails {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    background:
+      radial-gradient(circle at 35% 30%, rgba(234,234,234,0.3), transparent 40%),
+      linear-gradient(145deg, rgba(234,234,234,0.12), transparent 50%),
+      radial-gradient(circle, #fbbf24 10%, #f59e0b 30%, #d97706 55%, #b45309 75%, #92400e 90%);
+    border: 1.5px solid rgba(180,83,9,0.5);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.3),
+      inset 0 -3px 6px rgba(0,0,0,0.2),
+      inset 2px 0 4px rgba(255,255,255,0.1),
+      inset -2px 0 4px rgba(0,0,0,0.1);
+  }
+
+  /* Tails design — numeral/pattern */
+  .cn-tails::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 10px; height: 12px;
+    margin-left: -5px; margin-top: -6px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent 40%),
+      linear-gradient(180deg, rgba(217,119,6,0.5), rgba(180,83,9,0.4));
+    border: 0.5px solid rgba(217,119,6,0.3);
+    box-shadow: inset 0 1px rgba(255,255,255,0.15);
+  }
+
+  /* Tails rim */
+  .cn-tails::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(217,119,6,0.3);
+  }
+
+  /* Edge — visible during mid-flip */
+  .cn-edge {
+    position: absolute;
+    left: 4px; top: 4px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    transform: translateZ(-0.5px);
+    box-shadow:
+      0 0 0 1.5px rgba(180,83,9,0.7),
+      0 0 0 3px rgba(146,64,14,0.5);
+  }
+
+  /* Edge ridges — subtle radial pattern */
+  .cn-edge::before {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        rgba(217,119,6,0.6) 0deg, rgba(217,119,6,0.6) 3deg,
+        rgba(146,64,14,0.6) 3deg, rgba(146,64,14,0.6) 6deg
+      );
+    mask: radial-gradient(circle, transparent 12px, black 12px, black 15px, transparent 15px);
+    -webkit-mask: radial-gradient(circle, transparent 12px, black 12px, black 15px, transparent 15px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="coin">
+  <div class="cn-edge"></div>
+  <div class="cn-body">
+    <div class="cn-heads"></div>
+    <div class="cn-tails"></div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Flip animation (0=heads, 1=tails)
+  // coinEl.style.setProperty("--flip-progress", progress);
+
+  // Spinning flip with multiple rotations
+  // var flipProgress = Math.min(1, time / flipDuration);
+  // var eased = 1 - Math.pow(1 - flipProgress, 3); // ease-out
+  // var totalRotations = 3; // number of full flips
+  // var rotY = eased * totalRotations * 180;
+  // cnBodyEl.style.transform = "rotateY(" + rotY + "deg)";
+
+  // Bounce effect at landing
+  // var bounceY = Math.abs(Math.sin(time * 8)) * 10 * Math.exp(-time * 3);
+  // coinEl.style.transform = "translateY(" + (-bounceY) + "px)";
+-->

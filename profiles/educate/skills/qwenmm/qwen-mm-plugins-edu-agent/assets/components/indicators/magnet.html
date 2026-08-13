@@ -1,0 +1,268 @@
+<!--
+  K12 Asset: 磁铁
+  ID: magnet
+  Suitable: 磁场, 磁极, 电磁感应, 磁力线, 磁化
+  CSS Vars: --field-glow (0-1, magnetic field line visibility)
+  JS Hooks: set --field-glow in renderAt() to animate field lines
+  Size: 60x20px (bar) / 48x40px (horseshoe) at 1920x1080
+
+  Variants:
+    .magnet-bar       — rectangular bar magnet (default)
+    .magnet-horseshoe — U-shape horseshoe magnet
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .magnet {
+    position: absolute;
+    --field-glow: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+  }
+
+  /* ====== BAR MAGNET ====== */
+  .magnet-bar {
+    width: 60px;
+    height: 20px;
+    margin-left: -30px;
+    margin-top: -10px;
+  }
+
+  /* Ground shadow */
+  .magnet-bar::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 68px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* North pole — red half */
+  .magnet-pole-n {
+    position: absolute;
+    left: 0; top: 0;
+    width: 30px; height: 20px;
+    border-radius: 3px 0 0 3px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.18), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 20%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #ef4444, #dc2626 40%, #b91c1c 80%);
+    border: 1px solid rgba(153,27,27,0.5);
+    border-right: none;
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.2),
+      inset 0 -3px 6px rgba(0,0,0,0.2);
+  }
+
+  /* N label */
+  .magnet-pole-n::before {
+    content: "N";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* South pole — blue half */
+  .magnet-pole-s {
+    position: absolute;
+    right: 0; top: 0;
+    width: 30px; height: 20px;
+    border-radius: 0 3px 3px 0;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.18), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 20%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #2563eb, #1d4ed8 40%, #1e40af 80%);
+    border: 1px solid rgba(30,64,175,0.5);
+    border-left: none;
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.2),
+      inset 0 -3px 6px rgba(0,0,0,0.2);
+  }
+
+  /* S label */
+  .magnet-pole-s::before {
+    content: "S";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* Center divider line */
+  .magnet-divider {
+    position: absolute;
+    left: 29px; top: 0;
+    width: 2px; height: 20px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.25), rgba(0,0,0,0.1));
+  }
+
+  /* Field line glow — on the bar itself */
+  .magnet-bar .magnet-field {
+    position: absolute;
+    inset: -6px -10px;
+    border-radius: 12px;
+    background:
+      radial-gradient(ellipse at 15% 50%, rgba(239,68,68,0.25), transparent 40%),
+      radial-gradient(ellipse at 85% 50%, rgba(37,99,235,0.25), transparent 40%);
+    opacity: var(--field-glow);
+    pointer-events: none;
+    filter: blur(3px);
+  }
+
+  /* ====== HORSESHOE MAGNET ====== */
+  .magnet-horseshoe {
+    width: 48px;
+    height: 40px;
+    margin-left: -24px;
+    margin-top: -20px;
+  }
+
+  /* Ground shadow */
+  .magnet-horseshoe::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 56px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* U-shape body — achieved via arc + two arms */
+  .magnet-horseshoe .magnet-u-arc {
+    position: absolute;
+    left: 4px; top: 0;
+    width: 40px; height: 22px;
+    border-radius: 20px 20px 0 0;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.18), transparent 30%),
+      linear-gradient(180deg, rgba(234,234,234,0.12), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #94a3b8, #cbd5e1 40%, #94a3b8 80%);
+    border: 1px solid rgba(148,163,184,0.4);
+    border-bottom: none;
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,0.25),
+      inset 0 -3px 5px rgba(0,0,0,0.15);
+  }
+
+  .magnet-horseshoe .magnet-u-arc::before {
+    content: "";
+    position: absolute;
+    left: 8px; top: 8px;
+    width: 24px; height: 14px;
+    border-radius: 12px 12px 0 0;
+    background: #05070b;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  /* Left arm — red (N pole) */
+  .magnet-horseshoe .magnet-arm-n {
+    position: absolute;
+    left: 4px; top: 18px;
+    width: 12px; height: 22px;
+    border-radius: 0 0 3px 3px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #ef4444, #dc2626 50%, #b91c1c);
+    border: 1px solid rgba(153,27,27,0.4);
+    border-top: none;
+    box-shadow:
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      inset 2px 0 3px rgba(255,255,255,0.1);
+  }
+
+  .magnet-horseshoe .magnet-arm-n::after {
+    content: "N";
+    position: absolute;
+    left: 50%; bottom: 3px;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* Right arm — blue (S pole) */
+  .magnet-horseshoe .magnet-arm-s {
+    position: absolute;
+    right: 4px; top: 18px;
+    width: 12px; height: 22px;
+    border-radius: 0 0 3px 3px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #2563eb, #1d4ed8 50%, #1e40af);
+    border: 1px solid rgba(30,64,175,0.4);
+    border-top: none;
+    box-shadow:
+      inset 0 -3px 5px rgba(0,0,0,0.2),
+      inset 2px 0 3px rgba(255,255,255,0.1);
+  }
+
+  .magnet-horseshoe .magnet-arm-s::after {
+    content: "S";
+    position: absolute;
+    left: 50%; bottom: 3px;
+    transform: translateX(-50%);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  /* Field line glow — horseshoe */
+  .magnet-horseshoe .magnet-field {
+    position: absolute;
+    inset: -8px -12px;
+    border-radius: 16px;
+    background:
+      radial-gradient(ellipse at 20% 90%, rgba(239,68,68,0.2), transparent 35%),
+      radial-gradient(ellipse at 80% 90%, rgba(37,99,235,0.2), transparent 35%),
+      radial-gradient(ellipse at 50% 60%, rgba(168,85,247,0.12), transparent 45%);
+    opacity: var(--field-glow);
+    pointer-events: none;
+    filter: blur(3px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<!-- Bar magnet variant -->
+<div class="magnet magnet-bar">
+  <div class="magnet-pole-n"></div>
+  <div class="magnet-pole-s"></div>
+  <div class="magnet-divider"></div>
+  <div class="magnet-field"></div>
+</div>
+
+<!-- Horseshoe magnet variant -->
+<!--
+<div class="magnet magnet-horseshoe">
+  <div class="magnet-u-arc"></div>
+  <div class="magnet-arm-n"></div>
+  <div class="magnet-arm-s"></div>
+  <div class="magnet-field"></div>
+</div>
+-->
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set field glow: 0 = no field lines, 1 = full glow
+  magnetEl.style.setProperty("--field-glow", glowValue);
+
+  // Animate field glow pulsing
+  // var glow = 0.5 + 0.5 * Math.sin(time * 3);
+  // magnetEl.style.setProperty("--field-glow", glow);
+-->

@@ -1,0 +1,270 @@
+<!--
+  K12 Asset: 平面镜/凹面镜/凸面镜
+  ID: mirror
+  Suitable: 光的反射, 平面镜成像, 凹面镜聚光, 凸面镜扩视野, 反射定律
+  CSS Vars: --reflection-glow (0-1 for reflective surface brightness)
+  JS Hooks: set --reflection-glow for surface glint; animate via Math.sin
+  Size: 8×60px at 1920×1080
+
+  Variants:
+    .mirror          — flat plane mirror (default)
+    .mirror-concave  — concave mirror (curved inward, left border-radius)
+    .mirror-convex   — convex mirror (curved outward)
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .mirror {
+    position: absolute;
+    width: 8px;
+    height: 60px;
+    margin-left: -4px;
+    transform-origin: 50% 50%;
+    --reflection-glow: 0;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .mirror::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    bottom: -8px;
+    width: 24px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Reflective front surface — silver/chrome gradient */
+  .mirror-face {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 60px;
+    border-radius: 1px 0 0 1px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.5) 0%, rgba(220,225,235,0.4) 40%, rgba(180,190,210,0.3) 100%),
+      linear-gradient(180deg, rgba(240,245,255,0.7), rgba(200,210,230,0.5) 25%, rgba(180,190,210,0.6) 50%, rgba(200,210,230,0.5) 75%, rgba(240,245,255,0.7)),
+      radial-gradient(ellipse at 30% 30%, rgba(234,234,234,0.3), transparent 50%),
+      linear-gradient(180deg, rgba(190,200,220,1), rgba(160,170,190,1) 50%, rgba(190,200,220,1));
+    box-shadow:
+      inset 1px 0 2px rgba(255,255,255,0.4),
+      inset 0 2px 4px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(0,0,0,0.1),
+      0 0 6px rgba(200,210,230,0.15);
+  }
+
+  /* Bright vertical highlight streak */
+  .mirror-face::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 1.5px;
+    height: 52px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.6),
+      rgba(234,234,234,0.3) 30%,
+      rgba(234,234,234,0.15) 50%,
+      rgba(234,234,234,0.3) 70%,
+      rgba(234,234,234,0.6));
+  }
+
+  /* Reflection glow overlay */
+  .mirror-face::after {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 12px;
+    height: 60px;
+    border-radius: 6px 0 0 6px;
+    background: radial-gradient(ellipse at 80% 50%,
+      rgba(234,234,234,0.2),
+      transparent 60%);
+    opacity: var(--reflection-glow);
+    pointer-events: none;
+  }
+
+  /* Dark backing / coating */
+  .mirror-back {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 4px;
+    height: 60px;
+    border-radius: 0 1px 1px 0;
+    background:
+      linear-gradient(90deg, rgba(60,65,75,1), rgba(40,44,52,1) 50%, rgba(50,55,65,0.9)),
+      linear-gradient(180deg, rgba(70,75,85,1), rgba(35,40,50,1) 50%, rgba(70,75,85,1)),
+      linear-gradient(180deg, rgba(55,60,70,1), rgba(45,50,60,1));
+    box-shadow:
+      inset -1px 0 2px rgba(0,0,0,0.3),
+      inset 0 2px 3px rgba(0,0,0,0.15),
+      inset 0 -2px 3px rgba(0,0,0,0.15);
+  }
+
+  /* Dark backing edge line */
+  .mirror-back::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 0.5px;
+    height: 56px;
+    background: linear-gradient(180deg,
+      rgba(100,105,115,0.3),
+      rgba(100,105,115,0.5) 50%,
+      rgba(100,105,115,0.3));
+  }
+
+  /* Top edge cap */
+  .mirror-cap-top {
+    position: absolute;
+    left: -1px;
+    top: -2px;
+    width: 10px;
+    height: 3px;
+    border-radius: 2px 2px 0 0;
+    background:
+      linear-gradient(180deg, rgba(160,170,190,0.8), rgba(120,130,150,0.6)),
+      linear-gradient(90deg, rgba(180,190,210,0.7), rgba(140,150,170,0.5) 50%, rgba(180,190,210,0.7));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.15);
+  }
+
+  /* Bottom edge cap */
+  .mirror-cap-bottom {
+    position: absolute;
+    left: -1px;
+    bottom: -2px;
+    width: 10px;
+    height: 3px;
+    border-radius: 0 0 2px 2px;
+    background:
+      linear-gradient(180deg, rgba(120,130,150,0.6), rgba(160,170,190,0.8)),
+      linear-gradient(90deg, rgba(180,190,210,0.7), rgba(140,150,170,0.5) 50%, rgba(180,190,210,0.7));
+    box-shadow: inset 0 -1px 1px rgba(255,255,255,0.1);
+  }
+
+  /* ============ CONCAVE MIRROR VARIANT ============ */
+  .mirror-concave .mirror-face {
+    border-radius: 8px 0 0 8px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.45) 0%, rgba(220,225,235,0.35) 50%, rgba(180,190,210,0.25) 100%),
+      linear-gradient(180deg, rgba(240,245,255,0.65), rgba(200,210,230,0.45) 25%, rgba(180,190,210,0.55) 50%, rgba(200,210,230,0.45) 75%, rgba(240,245,255,0.65)),
+      radial-gradient(ellipse at 20% 30%, rgba(234,234,234,0.25), transparent 45%),
+      linear-gradient(180deg, rgba(190,200,220,1), rgba(160,170,190,1) 50%, rgba(190,200,220,1));
+    box-shadow:
+      inset 2px 0 4px rgba(255,255,255,0.3),
+      inset 0 3px 6px rgba(255,255,255,0.12),
+      inset 0 -3px 6px rgba(0,0,0,0.08),
+      0 0 8px rgba(200,210,230,0.12);
+  }
+
+  .mirror-concave .mirror-face::before {
+    left: 1px;
+    top: 8px;
+    width: 1px;
+    height: 44px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.5),
+      rgba(234,234,234,0.2) 30%,
+      rgba(234,234,234,0.1) 50%,
+      rgba(234,234,234,0.2) 70%,
+      rgba(234,234,234,0.5));
+  }
+
+  .mirror-concave .mirror-back {
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ============ CONVEX MIRROR VARIANT ============ */
+  .mirror-convex .mirror-face {
+    border-radius: 0 8px 8px 0;
+    left: auto;
+    right: 4px;
+    background:
+      linear-gradient(90deg, rgba(180,190,210,0.3) 0%, rgba(220,225,235,0.4) 60%, rgba(234,234,234,0.45) 100%),
+      linear-gradient(180deg, rgba(240,245,255,0.65), rgba(200,210,230,0.45) 25%, rgba(180,190,210,0.55) 50%, rgba(200,210,230,0.45) 75%, rgba(240,245,255,0.65)),
+      radial-gradient(ellipse at 70% 30%, rgba(234,234,234,0.25), transparent 45%),
+      linear-gradient(180deg, rgba(190,200,220,1), rgba(160,170,190,1) 50%, rgba(190,200,220,1));
+    box-shadow:
+      inset -2px 0 4px rgba(255,255,255,0.3),
+      inset 0 3px 6px rgba(255,255,255,0.12),
+      inset 0 -3px 6px rgba(0,0,0,0.08),
+      0 0 8px rgba(200,210,230,0.12);
+  }
+
+  .mirror-convex .mirror-face::before {
+    left: auto;
+    right: 1px;
+    top: 8px;
+    width: 1px;
+    height: 44px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.5),
+      rgba(234,234,234,0.2) 30%,
+      rgba(234,234,234,0.1) 50%,
+      rgba(234,234,234,0.2) 70%,
+      rgba(234,234,234,0.5));
+  }
+
+  .mirror-convex .mirror-back {
+    left: 0;
+    right: auto;
+    border-radius: 2px 0 0 2px;
+  }
+
+  .mirror-convex .mirror-face::after {
+    left: auto;
+    right: -4px;
+    border-radius: 0 6px 6px 0;
+    background: radial-gradient(ellipse at 20% 50%,
+      rgba(234,234,234,0.2),
+      transparent 60%);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div id="mirror" class="mirror">
+  <div class="mirror-face"></div>
+  <div class="mirror-back"></div>
+  <div class="mirror-cap-top"></div>
+  <div class="mirror-cap-bottom"></div>
+</div>
+
+<!-- ===== HTML: concave variant ===== -->
+<!--
+<div id="mirror" class="mirror mirror-concave">
+  <div class="mirror-face"></div>
+  <div class="mirror-back"></div>
+  <div class="mirror-cap-top"></div>
+  <div class="mirror-cap-bottom"></div>
+</div>
+-->
+
+<!-- ===== HTML: convex variant ===== -->
+<!--
+<div id="mirror" class="mirror mirror-convex">
+  <div class="mirror-face"></div>
+  <div class="mirror-back"></div>
+  <div class="mirror-cap-top"></div>
+  <div class="mirror-cap-bottom"></div>
+</div>
+-->
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Reflection glint pulse
+  var reflGlow = 0.4 + Math.sin(time * 3.5) * 0.3;
+  mirror.style.setProperty("--reflection-glow", Math.max(0, Math.min(1, reflGlow)));
+
+  // Or set static reflection
+  // mirror.style.setProperty("--reflection-glow", 0.8);
+
+  // Subtle surface shimmer
+  // var shimmerX = Math.sin(time * 2.0) * 0.5;
+  // mirrorFace.style.backgroundPosition = shimmerX + "px 0";
+-->

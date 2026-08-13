@@ -1,0 +1,170 @@
+<!--
+  K12 Asset: 发电机
+  ID: generator
+  Suitable: 电磁感应, 交流电, 发电机原理, 能量转换
+  CSS Vars: --shaft-spin (rotation angle in deg), --output-glow (0-1)
+  JS Hooks: set --shaft-spin and --output-glow in renderAt()
+  Size: 60×50px at 1920×1080
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .generator {
+    position: absolute;
+    width: 60px;
+    height: 50px;
+    margin-left: -30px;
+    margin-top: -25px;
+    --shaft-spin: 0deg;
+    --output-glow: 0;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+  }
+
+  /* Ground shadow */
+  .generator::after {
+    content: "";
+    position: absolute;
+    left: -4px; bottom: -8px;
+    width: 68px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.32), transparent 68%);
+  }
+
+  /* Metal casing body */
+  .gen-body {
+    position: absolute;
+    left: 6px; top: 8px;
+    width: 48px; height: 34px;
+    border-radius: 4px;
+    background:
+      linear-gradient(145deg, rgba(234,234,234,0.15), transparent 30%),
+      linear-gradient(180deg, #64748b, #475569 40%, #334155 70%, #1e293b),
+      linear-gradient(90deg, #475569, #334155);
+    border: 1px solid rgba(100,116,139,0.4);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.12),
+      inset 0 -4px 8px rgba(0,0,0,0.3),
+      0 4px 10px rgba(0,0,0,0.25);
+  }
+
+  /* Cutaway window — shows internal armature */
+  .gen-window {
+    position: absolute;
+    left: 14px; top: 14px;
+    width: 24px; height: 18px;
+    border-radius: 2px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
+    border: 1px solid rgba(71,85,105,0.5);
+    box-shadow:
+      inset 0 1px 3px rgba(0,0,0,0.4),
+      inset 0 -1px 2px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+
+  /* Internal armature/coil — rotates */
+  .gen-armature {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 16px; height: 12px;
+    margin-left: -8px;
+    margin-top: -6px;
+    border-radius: 2px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(180,140,80,0.8) 0px, rgba(212,175,55,0.9) 1.5px,
+        rgba(160,120,60,0.7) 3px),
+      linear-gradient(180deg, #8b6914, #6b4f10);
+    border: 0.5px solid rgba(139,105,20,0.5);
+    transform: rotate(var(--shaft-spin));
+    transform-origin: 50% 50%;
+  }
+
+  /* Shaft — left side protruding */
+  .gen-shaft {
+    position: absolute;
+    left: -4px; top: 21px;
+    width: 12px; height: 6px;
+    border-radius: 1px 0 0 1px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.2), transparent 30%),
+      linear-gradient(180deg, #94a3b8, #64748b 50%, #475569);
+    box-shadow:
+      inset 0 1px rgba(255,255,255,0.15),
+      0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* Shaft rotation indicator line */
+  .gen-shaft::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 50%;
+    width: 4px; height: 1px;
+    margin-top: -0.5px;
+    background: rgba(30,41,59,0.6);
+    transform: rotate(var(--shaft-spin));
+    transform-origin: 50% 50%;
+  }
+
+  /* Terminal posts on top */
+  .gen-term {
+    position: absolute;
+    top: 2px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 35%, rgba(234,234,234,0.35), transparent 45%),
+      radial-gradient(circle, #fbbf24, #b45309);
+    border: 1px solid rgba(180,83,9,0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .gen-term-l { left: 18px; }
+  .gen-term-r { right: 18px; }
+
+  /* Output glow on terminals */
+  .gen-term-l::after,
+  .gen-term-r::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(251,191,36, calc(var(--output-glow) * 0.6)), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* "G" label */
+  .gen-label {
+    position: absolute;
+    right: 8px; bottom: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(148,163,184,0.7);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="generator">
+  <div class="gen-body"></div>
+  <div class="gen-window">
+    <div class="gen-armature"></div>
+  </div>
+  <div class="gen-shaft"></div>
+  <div class="gen-term gen-term-l"></div>
+  <div class="gen-term gen-term-r"></div>
+  <div class="gen-label">G</div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Shaft rotation: continuous spin based on time
+  var spinAngle = time * 360; // degrees per second
+  generatorEl.style.setProperty("--shaft-spin", spinAngle + "deg");
+
+  // Output glow: pulses with rotation (AC output)
+  var glow = Math.abs(Math.sin(time * Math.PI * 2));
+  generatorEl.style.setProperty("--output-glow", glow);
+
+  // Or set manually:
+  // generatorEl.style.setProperty("--shaft-spin", angle + "deg");
+  // generatorEl.style.setProperty("--output-glow", glowValue);
+-->

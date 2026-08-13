@@ -1,0 +1,362 @@
+<!--
+  K12 Asset: 天平 (Balance Scale)
+  ID: balance
+  Suitable: 质量测量, 等臂杠杆, 力矩平衡, 密度实验, 浮力实验
+  CSS Vars: --tilt (tilt angle in deg, 0=level, positive=right heavy)
+  JS Hooks: set --tilt in renderAt() based on mass difference
+  Size: 120×90px at 1920×1080
+
+  Variants:
+    (none — single canonical form)
+  Note: base at bottom center, beam tilts around central pivot
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .balance {
+    position: absolute;
+    width: 120px;
+    height: 90px;
+    margin-left: -60px;
+    transform-origin: 50% 100%;
+    --tilt: 0deg;
+    filter: drop-shadow(0 12px 18px rgba(0,0,0,0.3));
+  }
+
+  /* Ground shadow */
+  .balance::after {
+    content: "";
+    position: absolute;
+    left: 10px; right: 10px; bottom: -8px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.38), transparent 68%);
+  }
+
+  /* Base platform — wide flat foot */
+  .bal-base {
+    position: absolute;
+    left: 30px; bottom: 0;
+    width: 60px; height: 8px;
+    border-radius: 3px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.28), transparent 35%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #475569, #64748b 20%, #94a3b8 40%, #cbd5e1 50%, #94a3b8 60%, #64748b 80%, #475569);
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.2),
+      inset 0 -2px 4px rgba(15,23,42,0.2),
+      0 3px 8px rgba(0,0,0,0.25);
+  }
+
+  /* Triangular fulcrum pillar */
+  .bal-pillar {
+    position: absolute;
+    left: 50%; bottom: 8px;
+    width: 0; height: 0;
+    margin-left: -10px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 40px solid #64748b;
+    filter: none;
+  }
+
+  /* Pillar metallic overlay */
+  .bal-pillar::before {
+    content: "";
+    position: absolute;
+    left: -8px; top: 4px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 35px solid transparent;
+    background:
+      linear-gradient(90deg, rgba(71,85,105,0.9), rgba(148,163,184,0.8) 40%, rgba(203,213,225,0.7) 50%, rgba(148,163,184,0.8) 60%, rgba(71,85,105,0.9));
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    width: 16px;
+    height: 35px;
+  }
+
+  /* Pillar highlight */
+  .bal-pillar::after {
+    content: "";
+    position: absolute;
+    left: -2px; top: 12px;
+    width: 4px; height: 20px;
+    background: linear-gradient(180deg, rgba(234,234,234,0.18), transparent);
+    border-radius: 1px;
+  }
+
+  /* Pivot point — metallic circle at top of pillar */
+  .bal-pivot {
+    position: absolute;
+    left: 50%; top: 24px;
+    width: 10px; height: 10px;
+    margin-left: -5px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 38% 35%, rgba(234,234,234,0.5), transparent 42%),
+      radial-gradient(circle, #e2e8f0 15%, #94a3b8 40%, #64748b 70%, #475569);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow:
+      inset 0 1px 2px rgba(255,255,255,0.3),
+      inset 0 -2px 3px rgba(15,23,42,0.25),
+      0 2px 4px rgba(0,0,0,0.25);
+    z-index: 5;
+  }
+
+  /* Beam — horizontal bar that tilts */
+  .bal-beam {
+    position: absolute;
+    left: 4px; right: 4px; top: 27px;
+    height: 6px;
+    border-radius: 2px;
+    transform-origin: 50% 50%;
+    transform: rotate(var(--tilt));
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.3), transparent 30%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.15)),
+      linear-gradient(90deg, #475569, #64748b 15%, #94a3b8 35%, #cbd5e1 50%, #94a3b8 65%, #64748b 85%, #475569);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.18),
+      inset 0 -2px 4px rgba(15,23,42,0.2),
+      0 2px 6px rgba(0,0,0,0.2);
+    z-index: 3;
+  }
+
+  /* Beam end knobs */
+  .bal-beam::before {
+    content: "";
+    position: absolute;
+    left: -2px; top: -1px;
+    width: 6px; height: 8px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.25), rgba(148,163,184,0.6)),
+      linear-gradient(90deg, #64748b, #94a3b8, #64748b);
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+  }
+
+  .bal-beam::after {
+    content: "";
+    position: absolute;
+    right: -2px; top: -1px;
+    width: 6px; height: 8px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.25), rgba(148,163,184,0.6)),
+      linear-gradient(90deg, #64748b, #94a3b8, #64748b);
+    box-shadow: inset 0 1px rgba(255,255,255,0.2);
+  }
+
+  /* Center pointer — vertical needle showing tilt */
+  .bal-pointer {
+    position: absolute;
+    left: 50%; top: 28px;
+    width: 2px; height: 18px;
+    margin-left: -1px;
+    transform-origin: 50% 0%;
+    transform: rotate(calc(var(--tilt) * -1));
+    background:
+      linear-gradient(180deg, #ef4444, #dc2626, #991b1b);
+    border-radius: 0 0 1px 1px;
+    box-shadow:
+      0 0 3px rgba(239,68,68,0.3),
+      inset 0 1px rgba(255,255,255,0.2);
+    z-index: 4;
+  }
+
+  /* Pointer tip */
+  .bal-pointer::after {
+    content: "";
+    position: absolute;
+    left: -2px; bottom: -3px;
+    width: 0; height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #dc2626;
+  }
+
+  /* Left chain/string group */
+  .bal-chain-l {
+    position: absolute;
+    left: 6px; top: 33px;
+    width: 1.5px; height: 18px;
+    transform-origin: 50% 0%;
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(203,213,225,0.6) 0px, rgba(203,213,225,0.6) 2px,
+        rgba(148,163,184,0.3) 2px, rgba(148,163,184,0.3) 3px);
+    /* Counter-rotate to keep chains vertical */
+    transform: rotate(calc(var(--tilt) * -1));
+    z-index: 2;
+  }
+
+  .bal-chain-l::before {
+    content: "";
+    position: absolute;
+    left: -1px; top: 0;
+    width: 3.5px; height: 18px;
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0px, transparent 1px,
+        rgba(203,213,225,0.4) 1px, rgba(203,213,225,0.4) 2px,
+        transparent 2px, transparent 3px);
+  }
+
+  /* Right chain/string group */
+  .bal-chain-r {
+    position: absolute;
+    right: 6px; top: 33px;
+    width: 1.5px; height: 18px;
+    transform-origin: 50% 0%;
+    background:
+      repeating-linear-gradient(180deg,
+        rgba(203,213,225,0.6) 0px, rgba(203,213,225,0.6) 2px,
+        rgba(148,163,184,0.3) 2px, rgba(148,163,184,0.3) 3px);
+    transform: rotate(calc(var(--tilt) * -1));
+    z-index: 2;
+  }
+
+  .bal-chain-r::before {
+    content: "";
+    position: absolute;
+    left: -1px; top: 0;
+    width: 3.5px; height: 18px;
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0px, transparent 1px,
+        rgba(203,213,225,0.4) 1px, rgba(203,213,225,0.4) 2px,
+        transparent 2px, transparent 3px);
+  }
+
+  /* Left pan */
+  .bal-pan-l {
+    position: absolute;
+    left: 0; top: 50px;
+    width: 30px; height: 6px;
+    border-radius: 2px 2px 50% 50%;
+    /* Pan position adjusts with tilt via JS */
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(234,234,234,0.2), transparent 60%),
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #475569, #64748b 20%, #94a3b8 40%, #cbd5e1 50%, #94a3b8 60%, #64748b 80%, #475569);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(15,23,42,0.2),
+      0 3px 6px rgba(0,0,0,0.22);
+    z-index: 2;
+  }
+
+  /* Pan interior */
+  .bal-pan-l::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 2px;
+    width: 22px; height: 2px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(71,85,105,0.4), transparent 70%);
+  }
+
+  /* Right pan */
+  .bal-pan-r {
+    position: absolute;
+    right: 0; top: 50px;
+    width: 30px; height: 6px;
+    border-radius: 2px 2px 50% 50%;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(234,234,234,0.2), transparent 60%),
+      linear-gradient(180deg, rgba(234,234,234,0.25), transparent 30%),
+      linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.12)),
+      linear-gradient(90deg, #475569, #64748b 20%, #94a3b8 40%, #cbd5e1 50%, #94a3b8 60%, #64748b 80%, #475569);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      inset 0 2px 2px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(15,23,42,0.2),
+      0 3px 6px rgba(0,0,0,0.22);
+    z-index: 2;
+  }
+
+  /* Pan interior */
+  .bal-pan-r::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 2px;
+    width: 22px; height: 2px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(71,85,105,0.4), transparent 70%);
+  }
+
+  /* Small scale plate behind pillar */
+  .bal-scale {
+    position: absolute;
+    left: 50%; bottom: 10px;
+    width: 20px; height: 12px;
+    margin-left: -10px;
+    border-radius: 2px;
+    background:
+      linear-gradient(180deg, rgba(234,234,234,0.1), transparent 30%),
+      linear-gradient(135deg, rgba(30,41,59,0.8), rgba(51,65,85,0.6));
+    border: 1px solid rgba(255,255,255,0.08);
+    z-index: 1;
+  }
+
+  /* Scale tick marks */
+  .bal-scale::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 3px;
+    width: 16px; height: 6px;
+    background:
+      linear-gradient(90deg,
+        transparent 0px, transparent 3px,
+        rgba(234,234,234,0.3) 3px, rgba(234,234,234,0.3) 3.5px,
+        transparent 3.5px, transparent 7px,
+        rgba(234,234,234,0.4) 7.5px, rgba(234,234,234,0.4) 8.5px,
+        transparent 8.5px, transparent 12px,
+        rgba(234,234,234,0.3) 12px, rgba(234,234,234,0.3) 12.5px,
+        transparent 12.5px);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="balance">
+  <div class="bal-base"></div>
+  <div class="bal-pillar"></div>
+  <div class="bal-scale"></div>
+  <div class="bal-pivot"></div>
+  <div class="bal-beam"></div>
+  <div class="bal-pointer"></div>
+  <div class="bal-chain-l"></div>
+  <div class="bal-chain-r"></div>
+  <div class="bal-pan-l"></div>
+  <div class="bal-pan-r"></div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Calculate tilt from mass difference
+  var tiltAngle = (rightMass - leftMass) * sensitivity;
+  tiltAngle = Math.max(-15, Math.min(15, tiltAngle));
+  balanceEl.style.setProperty("--tilt", tiltAngle + "deg");
+
+  // Position pans based on tilt (vertical offset from beam rotation)
+  var beamHalf = 52; // half beam length in px
+  var panDropL = Math.sin(tiltAngle * Math.PI / 180) * beamHalf * -1;
+  var panDropR = Math.sin(tiltAngle * Math.PI / 180) * beamHalf;
+  panLEl.style.top = (50 + panDropL) + "px";
+  panREl.style.top = (50 + panDropR) + "px";
+
+  // Position chains to follow beam ends
+  chainLEl.style.top = (33 + panDropL * 0.3) + "px";
+  chainREl.style.top = (33 + panDropR * 0.3) + "px";
+
+  // Optional: damped oscillation when mass just changed
+  if (justChanged) {
+    var damped = tiltAngle + Math.sin(time * 8) * 3 * Math.exp(-time * 2);
+    balanceEl.style.setProperty("--tilt", damped + "deg");
+  }
+-->

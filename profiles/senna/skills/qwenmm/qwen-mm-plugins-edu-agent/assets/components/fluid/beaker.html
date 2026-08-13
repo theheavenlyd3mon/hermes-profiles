@@ -1,0 +1,207 @@
+<!--
+  K12 Asset: 烧杯
+  ID: beaker
+  Suitable: 浮力实验, 液体密度, 溶解, 化学反应, 物态变化, 热传递
+  CSS Vars:
+    --fill (0=empty, 1=full, controls liquid level)
+    --liquid-color (default: rgba(96,165,250,0.5))
+    --wave-offset (0-6.28, controls surface wave phase — driven by JS)
+  JS Hooks: set --fill for liquid level, --wave-offset for surface animation
+  Size: 64×72px at 1920×1080
+
+  Note: Spout on upper-left. Graduated markings on right side.
+-->
+
+<!-- ===== CSS: paste into <style> ===== -->
+<style>
+  .beaker {
+    position: absolute;
+    width: 64px;
+    height: 72px;
+    margin-left: -32px;
+    transform-origin: 50% 100%;
+    --fill: 0.6;
+    --liquid-color: rgba(96,165,250,0.5);
+    --wave-offset: 0;
+    filter: drop-shadow(0 10px 16px rgba(0,0,0,0.32));
+  }
+
+  /* Ground shadow */
+  .beaker::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: -8px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.35), transparent 68%);
+  }
+
+  /* Glass body — trapezoidal beaker shape */
+  .bkr-body {
+    position: absolute;
+    left: 4px; top: 8px;
+    width: 56px; height: 62px;
+    border-radius: 2px 2px 4px 4px;
+    background:
+      linear-gradient(90deg, rgba(234,234,234,0.18) 0%, transparent 20%, transparent 80%, rgba(234,234,234,0.06)),
+      linear-gradient(180deg, rgba(200,220,255,0.1), rgba(180,210,250,0.06) 50%, rgba(160,200,240,0.08)),
+      radial-gradient(ellipse at 20% 25%, rgba(234,234,234,0.12), transparent 45%),
+      linear-gradient(90deg, rgba(140,180,230,0.1), rgba(120,160,220,0.06) 50%, rgba(140,180,230,0.08));
+    border: 1.2px solid rgba(180,210,240,0.28);
+    border-top: none;
+    box-shadow:
+      inset 0 -4px 8px rgba(0,0,0,0.05),
+      inset 1px 0 3px rgba(255,255,255,0.06),
+      inset -1px 0 3px rgba(255,255,255,0.04),
+      0 0 6px rgba(140,180,230,0.08);
+    overflow: hidden;
+  }
+
+  /* Glass highlight — vertical reflection on left */
+  .bkr-body::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 2px; height: 56px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,
+      rgba(234,234,234,0.3),
+      rgba(234,234,234,0.12) 50%,
+      transparent 85%);
+  }
+
+  /* Glass bottom thickness */
+  .bkr-body::after {
+    content: "";
+    position: absolute;
+    left: 2px; right: 2px; bottom: 0;
+    height: 3px;
+    background:
+      linear-gradient(180deg, rgba(180,210,240,0.15), rgba(140,180,220,0.1));
+    border-radius: 0 0 3px 3px;
+  }
+
+  /* Spout — pouring lip on upper left */
+  .bkr-spout {
+    position: absolute;
+    left: 0; top: 4px;
+    width: 8px; height: 10px;
+    border-radius: 0 0 0 6px;
+    border-left: 1.2px solid rgba(180,210,240,0.28);
+    border-bottom: 1.2px solid rgba(180,210,240,0.2);
+    background:
+      linear-gradient(135deg, rgba(200,220,255,0.1), transparent);
+  }
+
+  /* Liquid body — fills from bottom */
+  .bkr-liquid {
+    position: absolute;
+    left: 1px; right: 1px;
+    bottom: 2px;
+    height: calc(var(--fill) * 56px);
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.06) 90%),
+      radial-gradient(ellipse at 30% 20%, rgba(234,234,234,0.12), transparent 50%),
+      linear-gradient(180deg, var(--liquid-color), var(--liquid-color));
+    border-radius: 0 0 3px 3px;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.08),
+      inset 0 -3px 6px rgba(0,0,0,0.08);
+  }
+
+  /* Liquid surface — meniscus with wave effect */
+  .bkr-liquid::before {
+    content: "";
+    position: absolute;
+    left: -1px; right: -1px; top: -2px;
+    height: 4px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at calc(50% + sin(var(--wave-offset)) * 8px) 50%,
+        rgba(234,234,234,0.25), transparent 60%),
+      linear-gradient(180deg, rgba(234,234,234,0.15), transparent);
+  }
+
+  /* Liquid caustic light — internal refraction */
+  .bkr-liquid::after {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; bottom: 4px;
+    height: 40%;
+    background:
+      radial-gradient(ellipse at 40% 60%, rgba(234,234,234,0.06), transparent 50%),
+      radial-gradient(ellipse at 70% 30%, rgba(234,234,234,0.04), transparent 40%);
+  }
+
+  /* Graduated markings — tick marks on right side */
+  .bkr-marks {
+    position: absolute;
+    right: 6px; top: 14px;
+    width: 6px; height: 52px;
+  }
+
+  .bkr-mark {
+    position: absolute;
+    right: 0;
+    width: 4px; height: 0.8px;
+    background: rgba(180,210,240,0.3);
+  }
+  .bkr-mark-major {
+    width: 6px; height: 1px;
+    background: rgba(180,210,240,0.45);
+  }
+  .bkr-mark:nth-child(1) { top: 0; }
+  .bkr-mark:nth-child(2) { top: 10px; }
+  .bkr-mark:nth-child(3) { top: 20px; }
+  .bkr-mark:nth-child(4) { top: 30px; }
+  .bkr-mark:nth-child(5) { top: 40px; }
+  .bkr-mark:nth-child(6) { top: 52px; }
+
+  /* Rim — top edge of beaker */
+  .bkr-rim {
+    position: absolute;
+    left: 4px; right: 4px; top: 6px;
+    height: 3px;
+    border-radius: 1px;
+    background:
+      linear-gradient(180deg, rgba(200,220,240,0.25), rgba(160,190,230,0.15));
+    border: 0.8px solid rgba(180,210,240,0.2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+</style>
+
+<!-- ===== HTML: paste into world panel ===== -->
+<div class="beaker">
+  <div class="bkr-body">
+    <div class="bkr-liquid"></div>
+  </div>
+  <div class="bkr-spout"></div>
+  <div class="bkr-rim"></div>
+  <div class="bkr-marks">
+    <div class="bkr-mark bkr-mark-major"></div>
+    <div class="bkr-mark"></div>
+    <div class="bkr-mark bkr-mark-major"></div>
+    <div class="bkr-mark"></div>
+    <div class="bkr-mark bkr-mark-major"></div>
+    <div class="bkr-mark bkr-mark-major"></div>
+  </div>
+</div>
+
+<!-- ===== JS HOOKS (paste into renderAt): =====
+  // Set fill level (0 = empty, 1 = full)
+  var fill = Math.max(0, Math.min(1, fillLevel));
+  beakerEl.style.setProperty("--fill", fill);
+
+  // Animate wave on liquid surface
+  var waveOffset = (time * 2.5) % (Math.PI * 2);
+  beakerEl.style.setProperty("--wave-offset", waveOffset);
+
+  // Change liquid color (e.g. for chemical reactions)
+  // beakerEl.style.setProperty("--liquid-color", "rgba(239,68,68,0.5)");
+
+  // Smooth fill animation:
+  // var t = Math.min(1, (time - fillStart) / fillDuration);
+  // var eased = t * t * (3 - 2 * t); // smoothstep
+  // var fill = startFill + (endFill - startFill) * eased;
+  // beakerEl.style.setProperty("--fill", fill);
+-->
